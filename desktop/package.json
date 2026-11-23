@@ -18,10 +18,14 @@
       "app": "app",
       "output": "dist"
     },
-    "files": ["**/*"],
-    "asar": true,
+    "files": [
+      "**/*"
+    ],
+    "asar": false,
     "win": {
-      "target": ["nsis"]
+      "target": [
+        "nsis"
+      ]
     },
     "nsis": {
       "oneClick": false,
