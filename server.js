@@ -152,6 +152,40 @@ function processSync(user, body) {
   const res = { rejected: [] }, changes = body.changes || {}, savedRev = REV;
   let wrote = false;
   const R = () => { if (!wrote) { wrote = true; REV++; } return REV; };
+  // Una venta y sus movimientos de salida se aceptan como una sola unidad.
+  // Si falta un movimiento o el stock no alcanza, se rechaza el ticket completo.
+  const incomingSales = Array.isArray(changes.sales && changes.sales.up) ? changes.sales.up : [];
+  const incomingMoves = Array.isArray(changes.moves && changes.moves.up) ? changes.moves.up : [];
+  const rejectedTickets = new Set();
+  const ticketMoves = new Map();
+  for (const move of incomingMoves) {
+    const match = /^Ticket (\\d+)$/.exec(String(move && move.note || ''));
+    if (!match) continue;
+    const ticket = Number(match[1]);
+    if (!ticketMoves.has(ticket)) ticketMoves.set(ticket, []);
+    ticketMoves.get(ticket).push(move);
+  }
+  for (const sale of incomingSales) {
+    const saleId = Number(sale && sale.id);
+    if (!Number.isInteger(saleId) || saleId <= 0 || getRec('sales', saleId)) continue;
+    const moves = ticketMoves.get(saleId) || [];
+    const required = new Map(), delivered = new Map();
+    for (const item of (Array.isArray(sale.items) ? sale.items : [])) {
+      const pid = Number(item && item.id), qty = Number(item && item.qty);
+      if (!Number.isInteger(pid) || pid <= 0 || !Number.isFinite(qty) || qty <= 0) { rejectedTickets.add(saleId); break; }
+      required.set(pid, round3((required.get(pid) || 0) + qty));
+    }
+    if (!rejectedTickets.has(saleId)) {
+      for (const move of moves) {
+        const pid = Number(move.pid), qty = Number(move.qty);
+        if (!Number.isInteger(pid) || !Number.isFinite(qty) || qty >= 0) continue;
+        delivered.set(pid, round3((delivered.get(pid) || 0) - qty));
+      }
+      for (const [pid, qty] of required) if (Math.abs((delivered.get(pid) || 0) - qty) > 0.001) rejectedTickets.add(saleId);
+      for (const pid of delivered.keys()) if (!required.has(pid)) rejectedTickets.add(saleId);
+    }
+    if (!moves.length) rejectedTickets.add(saleId);
+  }
   try {
     tx(() => {
       for (const coll of ORDER) {
@@ -162,6 +196,11 @@ function processSync(user, body) {
           if (!rec || !Number.isInteger(id) || id <= 0) { res.rejected.push({ coll, id }); continue; }
           const row = getRec(coll, id);
           if (row && row.del) { res.rejected.push({ coll, id }); continue; }
+          if (coll === 'sales' && !row && rejectedTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
+          if (coll === 'moves' && !row) {
+            const ticket = /^Ticket (\\d+)$/.exec(String(rec.note || ''));
+            if (ticket && rejectedTickets.has(Number(ticket[1]))) { res.rejected.push({ coll, id }); continue; }
+          }
           const ex = row ? JSON.parse(row.j) : null, op = ex ? 'upd' : 'ins';
           if (!allowed(user, coll, op, rec, ex)) { res.rejected.push({ coll, id }); continue; }
           // Validar cada movimiento contra el stock vigente dentro de la transacción.
