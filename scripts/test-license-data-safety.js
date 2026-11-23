@@ -53,4 +53,6 @@ assert.match(server, /if \(Math\.abs\(\(delivered\.get\(pid\) \|\| 0\) - qty\) >
 assert.match(server, /coll === 'sales' && !row && rejectedTickets\.has\(id\)/);
 assert.match(server, /coll === 'moves' && !row[\s\S]{0,180}rejectedTickets\.has\(Number\(ticket\[1\]\)\)/);
 
+assert.match(server, /const virtualStock = new Map\(\)/);
+assert.match(server, /round3\(current - qty\) < 0/);
 console.log('OK: activación, restauración, sincronización y cierre controlado de turnos verificados.');
