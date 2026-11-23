@@ -89,7 +89,7 @@ const nowIso = () => new Date().toISOString();
 const hashPin = (pin, salt) => crypto.scryptSync(String(pin), salt, 32).toString('hex');
 function mkPin(pin) { const salt = crypto.randomBytes(16).toString('hex'); return { salt, hash: hashPin(pin, salt) }; }
 function checkPin(u, pin) {
-  if (!u || !u.salt || !u.hash) return false;
+  if (!u || !u.salt || !u.hash || String(pin).length > 64) return false;
   const a = Buffer.from(hashPin(pin, u.salt), 'hex'), b = Buffer.from(u.hash, 'hex');
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
@@ -715,6 +715,8 @@ async function handle(req, res) {
   if (p === '/api/users' && m === 'POST') {
     const b = await readBody(req), name = String(b.name || '').trim().slice(0, 40), role = String(b.role), pin = String(b.pin || '');
     const id = b.id ? Number(b.id) : 0, ex = id ? prep('SELECT * FROM users WHERE id=?').get(id) : null, active = b.active === false ? 0 : 1;
+    if (b.id && (!Number.isSafeInteger(id) || id <= 0)) return fail(res, 400, 'Identificador de usuario invalido.');
+    if (id && !ex) return fail(res, 404, 'El usuario que intentas modificar no existe.');
     if (!name) return fail(res, 400, 'Escribi el nombre.');
     if (!ROLES.includes(role)) return fail(res, 400, 'Tipo invalido.');
     if (allUsers().some(o => o.name.toLowerCase() === name.toLowerCase() && (!ex || o.id !== ex.id))) return fail(res, 400, 'Ya existe un usuario con ese nombre.');
