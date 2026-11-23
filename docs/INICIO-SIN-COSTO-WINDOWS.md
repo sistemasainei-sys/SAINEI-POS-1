@@ -15,7 +15,15 @@ El iniciador configura `SAINEI_DATA` en `%LOCALAPPDATA%\\SAINEI-POS\\datos`. La 
 
 ## Acceso desde otras computadoras de la misma red
 
-El servidor muestra las direcciones disponibles al iniciar. En las otras computadoras, abrir la dirección LAN indicada por el servidor, usando el mismo puerto. No publicar esa dirección ni abrir el puerto del router hacia internet.
+El servidor muestra las direcciones disponibles al iniciar. En las otras computadoras, abrir la dirección LAN indicada por el servidor, usando el mismo puerto (8080). No publicar esa dirección ni abrir el puerto del router hacia internet.
+
+Para limitar el acceso entrante en Windows:
+
+1. Configurar la red del comercio como perfil **Privado** en Windows.
+2. Abrir PowerShell como administrador en la PC servidor.
+3. Ejecutar `configurar-firewall-sainei.ps1` desde la carpeta del sistema.
+
+El script permite TCP 8080 solo desde la subred local y el perfil Privado. No crea reglas públicas ni reenvía puertos del router. Si la red no es Privada, la regla no habilitará el acceso.
 
 ## Copias externas
 
