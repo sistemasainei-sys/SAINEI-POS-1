@@ -25,13 +25,13 @@ window.SAINEI_POS_MODULES.push({
    var s=api.state(),g=document.getElementById('var-group'),sel=document.getElementById('var-product'),n=document.getElementById('var-name'),err=document.getElementById('var-error');if(!g||!sel||!n||!err)return;
    var group=String(g.value||'').trim(),name=String(n.value||'').trim(),p=(s.products||[]).filter(function(x){return Number(x.id)===Number(sel.value);})[0];
    if(!group||!name||!p){err.textContent='Completá el grupo, el producto y el nombre de la variante.';return;}
-   p.variantGroup=group;p.variantName=name;
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){err.textContent='No se confirmó el guardado.';return;}api.closeModal();api.refresh();api.toast('Variante vinculada.');}).catch(function(){err.textContent='No se pudo guardar. Revisá la conexión.';});
+   var oldGroup=p.variantGroup,oldName=p.variantName;p.variantGroup=group;p.variantName=name;
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){p.variantGroup=oldGroup;p.variantName=oldName;err.textContent='No se confirmó el guardado. El producto quedó sin cambios.';return;}api.closeModal();api.refresh();api.toast('Variante vinculada.');}).catch(function(){p.variantGroup=oldGroup;p.variantName=oldName;err.textContent='No se pudo guardar. El producto quedó sin cambios.';});
   }
   function detach(el){
    var s=api.state(),id=Number(el&&el.dataset&&el.dataset.id),p=(s.products||[]).filter(function(x){return Number(x.id)===id;})[0];if(!p)return;
-   p.variantGroup='';p.variantName='';
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){api.toast('No se confirmó el cambio.');return;}api.refresh();api.toast('Producto desvinculado; su stock no cambió.');}).catch(function(){api.toast('No se pudo guardar el cambio.');});
+   var oldGroup=p.variantGroup,oldName=p.variantName;p.variantGroup='';p.variantName='';
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){p.variantGroup=oldGroup;p.variantName=oldName;api.toast('No se confirmó el cambio. La variante se conservó.');return;}api.refresh();api.toast('Producto desvinculado; su stock no cambió.');}).catch(function(){p.variantGroup=oldGroup;p.variantName=oldName;api.toast('No se pudo guardar. La variante se conservó.');});
   }
  }
 });
