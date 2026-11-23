@@ -12,7 +12,7 @@ const ORDER=['products','clients','budgets','purchases','expenses','spay','shift
 const SING=['shop','scale','print','scan','sec','check'],DELETABLE={products:1,clients:1};
 const PERM={cajero:{sales:{ins:1},moves:{ins:1},clients:{ins:1,upd:1},budgets:{ins:1,upd:1},payments:{ins:1},shifts:{ins:1,upd:1}},encargado:{products:{ins:1,upd:1,del:1},sales:{ins:1,upd:1},clients:{ins:1,upd:1,del:1},budgets:{ins:1,upd:1},purchases:{ins:1,upd:1},payments:{ins:1},expenses:{ins:1,upd:1},shifts:{ins:1,upd:1},moves:{ins:1},spay:{ins:1,upd:1}}};
 const round3=n=>Math.round(n*1000)/1000,ROLES=['admin','encargado','cajero'];
-const LICENSE_PUBLIC_KEY=\`-----BEGIN PUBLIC KEY-----
+const LICENSE_PUBLIC_KEY=`-----BEGIN PUBLIC KEY-----
 MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoaGt4FXqgVp3aehlIJGh
 Job3e1PkuucaLpICYHHIlId4TfO1RbYO2pjo7OYBvNE1sGAgiTyWYgIo78ojGqh/
 BobbJuYRo7uqMK0Twf7qEUlHeZSUVLowkRt3a2ga+9blMuuBGrhCWmJ8XVPV7cDv
@@ -20,7 +20,7 @@ BEX85l4c+0ev8bbyYo/nxBhsa8g0OdeX36Qog749mh04+jN7PhkoUWSH4RGP2y/i
 G27FPmXlmXdyiQdOm+hj4kT11gNIyHCkZ/RklF+EGTPR5jTCnnoR5WegMM6Wh56M
 Vj1lHKEcgIdrkMFwGfI1RbmLYIH2X9JBD59IZicO5x13ywqKC8LTUKMC/JpyjNwM
 hwIDAQAB
------END PUBLIC KEY-----\`;
+-----END PUBLIC KEY-----`;
 const sessions=new Map(),fails=new Map(),SES_MS=12*3600*1000;
 const hashPin=(pin,salt)=>crypto.scryptSync(String(pin),salt,32).toString('hex');
 function mkPin(pin){const salt=crypto.randomBytes(16).toString('hex');return {salt,hash:hashPin(pin,salt)}}
@@ -36,14 +36,14 @@ async function allUsers(){return (await q('SELECT * FROM sainei_pos_users ORDER 
 async function hasAdmin(){return (await q("SELECT 1 FROM sainei_pos_users WHERE role='admin' AND active=true LIMIT 1")).rowCount>0}
 async function audit(who,what,client=pool){await client.query('INSERT INTO sainei_pos_audit(t,u,a) VALUES($1,$2,$3)',[nowIso(),String(who||'-').slice(0,60),String(what||'').slice(0,300)])}
 async function init(){
- await q(\`CREATE TABLE IF NOT EXISTS sainei_pos_meta(k TEXT PRIMARY KEY,v TEXT NOT NULL);
+ await q(`CREATE TABLE IF NOT EXISTS sainei_pos_meta(k TEXT PRIMARY KEY,v TEXT NOT NULL);
  CREATE TABLE IF NOT EXISTS sainei_pos_records(coll TEXT NOT NULL,id BIGINT NOT NULL,j JSONB NOT NULL,rev BIGINT NOT NULL,del BOOLEAN NOT NULL DEFAULT FALSE,PRIMARY KEY(coll,id));
  CREATE INDEX IF NOT EXISTS sainei_pos_records_rev ON sainei_pos_records(rev);
  CREATE TABLE IF NOT EXISTS sainei_pos_settings(k TEXT PRIMARY KEY,j JSONB NOT NULL,rev BIGINT NOT NULL);
  CREATE TABLE IF NOT EXISTS sainei_pos_counters(kind TEXT PRIMARY KEY,n BIGINT NOT NULL);
  CREATE TABLE IF NOT EXISTS sainei_pos_users(id BIGINT PRIMARY KEY,name TEXT NOT NULL,role TEXT NOT NULL,active BOOLEAN NOT NULL,salt TEXT,hash TEXT);
  CREATE TABLE IF NOT EXISTS sainei_pos_audit(id BIGSERIAL PRIMARY KEY,t TEXT,u TEXT,a TEXT);
- CREATE TABLE IF NOT EXISTS sainei_pos_backups(name TEXT PRIMARY KEY,at TEXT NOT NULL,state JSONB NOT NULL);\`);
+ CREATE TABLE IF NOT EXISTS sainei_pos_backups(name TEXT PRIMARY KEY,at TEXT NOT NULL,state JSONB NOT NULL);`);
  if(!await meta('installId'))await setMeta('installId',crypto.randomBytes(12).toString('hex').toUpperCase());
  if(!await meta('epoch'))await setMeta('epoch',crypto.randomBytes(6).toString('hex'));
  if(!await meta('rev'))await setMeta('rev','0');
@@ -104,9 +104,9 @@ async function info(){const sh=await q("SELECT j FROM sainei_pos_settings WHERE 
 const CT={'.html':'text/html; charset=utf-8','.js':'text/javascript','.css':'text/css','.png':'image/png','.ico':'image/x-icon','.svg':'image/svg+xml'};
 async function handle(req,res){
  const url=new URL(req.url,'http://x'),p=url.pathname,m=req.method,ip=(req.socket.remoteAddress||'').replace('::ffff:','');
- if(!p.startsWith('/api/')){if(m!=='GET'&&m!=='HEAD')return fail(res,405,'Metodo no permitido');if(p==='/'||p==='/index.html'){if(!fs.existsSync(APP))return fail(res,500,'Falta index.html');res.writeHead(200,{'Content-Type':CT['.html'],'Cache-Control':'no-store'});return res.end(fs.readFileSync(APP))}if(/^\\/sainei-mod-[a-z0-9_-]+\\.js$/i.test(p)){const f=path.join(ROOT,p.slice(1));if(!fs.existsSync(f))return fail(res,404,'Modulo no encontrado');res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});return res.end(fs.readFileSync(f))}const ST={'/manifest.webmanifest':'application/manifest+json','/sw.js':'text/javascript; charset=utf-8','/icon-192.png':'image/png','/icon-512.png':'image/png','/icon-maskable-512.png':'image/png','/apple-touch-icon.png':'image/png'};if(ST[p]){const f=path.join(path.dirname(APP),p.slice(1));if(!fs.existsSync(f))return fail(res,404,'No encontrado');res.writeHead(200,{'Content-Type':ST[p],'Cache-Control':'no-cache','Service-Worker-Allowed':'/'});return res.end(fs.readFileSync(f))}if(p==='/favicon.ico'){res.writeHead(204);return res.end()}return fail(res,404,'No encontrado')}
+ if(!p.startsWith('/api/')){if(m!=='GET'&&m!=='HEAD')return fail(res,405,'Metodo no permitido');if(p==='/'||p==='/index.html'){if(!fs.existsSync(APP))return fail(res,500,'Falta index.html');res.writeHead(200,{'Content-Type':CT['.html'],'Cache-Control':'no-store'});return res.end(fs.readFileSync(APP))}if(/^\/sainei-mod-[a-z0-9_-]+\.js$/i.test(p)){const f=path.join(ROOT,p.slice(1));if(!fs.existsSync(f))return fail(res,404,'Modulo no encontrado');res.writeHead(200,{'Content-Type':'text/javascript; charset=utf-8','Cache-Control':'no-cache'});return res.end(fs.readFileSync(f))}const ST={'/manifest.webmanifest':'application/manifest+json','/sw.js':'text/javascript; charset=utf-8','/icon-192.png':'image/png','/icon-512.png':'image/png','/icon-maskable-512.png':'image/png','/apple-touch-icon.png':'image/png'};if(ST[p]){const f=path.join(path.dirname(APP),p.slice(1));if(!fs.existsSync(f))return fail(res,404,'No encontrado');res.writeHead(200,{'Content-Type':ST[p],'Cache-Control':'no-cache','Service-Worker-Allowed':'/'});return res.end(fs.readFileSync(f))}if(p==='/favicon.ico'){res.writeHead(204);return res.end()}return fail(res,404,'No encontrado')}
  if(p==='/api/ping')return send(res,200,{ok:true,server:true,database:'postgresql'});
- if(p==='/api/modules'&&m==='GET'){const modules=fs.readdirSync(ROOT).filter(f=>/^sainei-mod-[a-z0-9_-]+\\.js$/i.test(f)).sort();return send(res,200,{modules})}
+ if(p==='/api/modules'&&m==='GET'){const modules=fs.readdirSync(ROOT).filter(f=>/^sainei-mod-[a-z0-9_-]+\.js$/i.test(f)).sort();return send(res,200,{modules})}
  if(p==='/api/license/status'&&m==='GET')return send(res,200,await licenseState());
  if(p==='/api/license/activate'&&m==='POST'){const b=await readBody(req),token=String(b.code||'').trim(),parts=token.split('.');if(parts.length!==2)return fail(res,400,'Código de activación inválido.');try{const payload=Buffer.from(parts[0],'base64url').toString('utf8'),sig=Buffer.from(parts[1],'base64url');if(!crypto.verify('RSA-SHA256',Buffer.from(parts[0]),LICENSE_PUBLIC_KEY,sig))return fail(res,400,'Código no válido.');const d=JSON.parse(payload);if(d.installId!==INSTALL_ID)return fail(res,400,'Este código pertenece a otra instalación.');if(!['permanent','monthly'].includes(d.type))return fail(res,400,'Tipo de licencia inválido.');if(d.type==='monthly'&&(!d.expiresAt||Date.now()>d.expiresAt))return fail(res,400,'La licencia mensual ya venció.');await setMeta('licenseToken',token);await audit('LICENCIA','Activación '+d.type+' para '+String(d.customer||'cliente'));return send(res,200,{ok:true,license:await licenseState()})}catch{return fail(res,400,'No se pudo verificar el código.')}}
  if(p==='/api/info'&&m==='GET')return send(res,200,await info());
