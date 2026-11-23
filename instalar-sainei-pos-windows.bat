@@ -47,6 +47,14 @@ echo Preparacion completada.
 echo Los datos y la base SQLite se crearan automaticamente al iniciar el servidor.
 echo Carpeta permanente de datos: %SAINEI_DATA%
 echo.
-echo Iniciando SAINEI POS...
-call "%~dp0iniciar-sainei-pos-windows.bat"
+echo Configurando inicio automatico de SAINEI POS...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0configurar-inicio-automatico-sainei.ps1"
+if errorlevel 1 (
+  echo No se pudo configurar el inicio automatico.
+  echo Puedes iniciar manualmente con iniciar-sainei-pos-windows.bat.
+  pause
+  exit /b 5
+)
+echo.
+echo SAINEI POS quedara configurado para iniciar al entrar a Windows.
 endlocal
