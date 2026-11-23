@@ -92,3 +92,11 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - Cada lote de altas/actualizaciones (`up`) y bajas (`del`) admite como máximo 1.000 registros por colección; tipos de lote inválidos o excesivos se rechazan antes de abrir la transacción.
 - Este límite lógico complementa el máximo de 25 MB del cuerpo HTTP.
 - No se ejecutaron pruebas.
+
+
+## Escape de texto en historial de movimientos
+
+- El tipo de movimiento mostrado en el historial se escapa antes de insertarse en `innerHTML`.
+- Esto evita que un valor de tipo recibido desde registros termine interpretándose como marcado HTML.
+- La revisión estática encontró otros usos de `innerHTML`; no se modificaron en bloque porque varios ya escapan los datos o usan contenido controlado por la aplicación. Requieren revisión individual.
+- No se ejecutaron pruebas.
