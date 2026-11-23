@@ -80,3 +80,8 @@ SAINEI POS detecta cada 10 minutos las unidades extraíbles cuyo nombre de volum
 ## Instalador guiado de Windows
 
 Ejecutar `instalar-sainei-pos-windows.bat`. Si Node.js no está instalado, el instalador intenta instalar Node.js LTS desde Windows Package Manager (`winget`), valida la versión mínima y prepara la carpeta permanente de datos antes de iniciar el servidor. Si `winget` no está disponible, indica instalar Node.js desde el sitio oficial. La primera ejecución crea automáticamente `sainei.db` y sus tablas; la configuración inicial del comercio y el alta del administrador se completan desde la pantalla de inicio.
+
+
+## Inicio automático con Windows
+
+El instalador configura una tarea programada para iniciar el servidor SAINEI POS al iniciar sesión en la cuenta de Windows que realizó la instalación. El servidor se ejecuta en segundo plano y el instalador espera hasta 30 segundos a que responda en el puerto 8080 para abrir `http://localhost:8080`. Los datos permanecen en `%LOCALAPPDATA%\SAINEI-POS\datos`. Si el servidor no responde, revisar `servidor.log` y `servidor-inicio.log` dentro de esa carpeta. Para que otras computadoras operen, la PC principal debe permanecer encendida y el usuario de Windows debe mantener su sesión iniciada.
