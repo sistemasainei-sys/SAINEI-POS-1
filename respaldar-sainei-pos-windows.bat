@@ -15,7 +15,19 @@ if not exist "%SAINEI_SOURCE%" (
   pause
   exit /b 3
 )
+dir /b "%SAINEI_SOURCE%\*.db" >nul 2>nul
+if errorlevel 1 (
+  echo ERROR: No hay archivos .db para copiar en: %SAINEI_SOURCE%
+  echo Crea primero una copia desde SAINEI POS y vuelve a intentarlo.
+  pause
+  exit /b 4
+)
 if not exist "%SAINEI_DEST%" mkdir "%SAINEI_DEST%"
+if not exist "%SAINEI_DEST%\" (
+  echo ERROR: No se pudo crear o acceder al destino: %SAINEI_DEST%
+  pause
+  exit /b 5
+)
 robocopy "%SAINEI_SOURCE%" "%SAINEI_DEST%" *.db /E /XO /R:2 /W:2
 set "RC=%ERRORLEVEL%"
 if %RC% GEQ 8 (
@@ -23,7 +35,14 @@ if %RC% GEQ 8 (
   pause
   exit /b %RC%
 )
+dir /b "%SAINEI_DEST%\*.db" >nul 2>nul
+if errorlevel 1 (
+  echo ERROR: Robocopy termino, pero no se encontraron respaldos .db en el destino.
+  pause
+  exit /b 6
+)
 echo Copia externa finalizada en: %SAINEI_DEST%
+echo Comprueba la fecha y el tamano de los archivos antes de retirar la unidad.
 echo Conserva esta unidad separada de la computadora principal.
 pause
 exit /b 0
