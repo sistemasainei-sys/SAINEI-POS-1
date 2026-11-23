@@ -317,6 +317,33 @@ function processSync(user, body) {
             if (ticket && rejectedTickets.has(Number(ticket[1]))) { res.rejected.push({ coll, id }); continue; }
           }
           const ex = row ? JSON.parse(row.j) : null, op = ex ? 'upd' : 'ins';
+          if (coll === 'purchases') {
+            // Las compras son documentos contables: no permitir alterar su total,
+            // proveedor o detalle después de registrarlas y posiblemente pagarlas.
+            if (ex) {
+              if (JSON.stringify(ex) !== JSON.stringify(rec)) res.rejected.push({ coll, id });
+              continue;
+            }
+            const supplier = String(rec.supplier || '').trim();
+            const items = Array.isArray(rec.items) ? rec.items : [];
+            let computedTotal = 0, validPurchase = !!supplier && supplier.length <= 120 && items.length > 0 &&
+              ['contado', 'credito'].includes(String(rec.cond || '')) &&
+              Number.isSafeInteger(Number(rec.total)) && Number(rec.total) > 0 &&
+              Number.isFinite(Date.parse(rec.date));
+            for (const item of items) {
+              const pid = Number(item && item.pid), qty = Number(item && item.qty), cost = Number(item && item.cost);
+              const productRow = Number.isInteger(pid) && pid > 0 ? getRec('products', pid) : null;
+              if (!productRow || productRow.del || !Number.isFinite(qty) || qty <= 0 ||
+                  !Number.isSafeInteger(cost) || cost < 0) { validPurchase = false; break; }
+              computedTotal += Math.round(qty * cost);
+              if (!Number.isSafeInteger(computedTotal)) { validPurchase = false; break; }
+            }
+            if (!validPurchase || computedTotal !== Number(rec.total) ||
+                (rec.cond === 'credito' && rec.due != null && !Number.isFinite(Date.parse(rec.due)))) {
+              res.rejected.push({ coll, id });
+              continue;
+            }
+          }
           if (coll === 'shifts' && user.role !== 'admin') {
             const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value));
             if (!ex) {
