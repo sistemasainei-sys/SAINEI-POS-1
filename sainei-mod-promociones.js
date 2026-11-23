@@ -26,8 +26,8 @@ window.SAINEI_POS_MODULES.push({
    if(!admin()){err.textContent='Acción reservada al administrador.';return;}
    if(!n||!Number.isFinite(p)||p<=0||p>100|| (f&&t&&f>t)){err.textContent='Revisá el nombre, el porcentaje y las fechas.';return;}
    s.promotions=Array.isArray(s.promotions)?s.promotions:[];
-   s.promotions.push({id:api.newId('move'),name:n,percent:p,from:f,to:t,enabled:true,createdAt:new Date().toISOString()});
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){err.textContent='No se confirmó el guardado.';return;}api.closeModal();api.refresh();api.toast('Promoción guardada.');}).catch(function(){err.textContent='No se pudo guardar la promoción.';});
+   var record={id:api.newId('move'),name:n,percent:p,from:f,to:t,enabled:true,createdAt:new Date().toISOString()};s.promotions.push(record);
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){s.promotions=s.promotions.filter(function(x){return x!==record;});err.textContent='No se confirmó el guardado. La promoción no quedó registrada.';return;}api.closeModal();api.refresh();api.toast('Promoción guardada.');}).catch(function(){s.promotions=s.promotions.filter(function(x){return x!==record;});err.textContent='No se pudo guardar la promoción. La promoción no quedó registrada.';});
   }
   function apply(el){
    var s=api.state(),id=Number(el&&el.dataset&&el.dataset.id),p=(s.promotions||[]).filter(function(x){return Number(x.id)===id;})[0];
@@ -38,8 +38,8 @@ window.SAINEI_POS_MODULES.push({
   function remove(el){
    if(!admin())return;
    var s=api.state(),id=Number(el&&el.dataset&&el.dataset.id);if(!window.confirm('¿Eliminar esta promoción?'))return;
-   s.promotions=(s.promotions||[]).filter(function(x){return Number(x.id)!==id;});
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){api.toast('No se confirmó el cambio.');return;}api.refresh();api.toast('Promoción eliminada.');}).catch(function(){api.toast('No se pudo guardar.');});
+   var before=s.promotions||[],removed=before.filter(function(x){return Number(x.id)===id;});s.promotions=before.filter(function(x){return Number(x.id)!==id;});
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){s.promotions=before;api.toast('No se confirmó el cambio. La promoción se conservó.');return;}api.refresh();api.toast('Promoción eliminada.');}).catch(function(){s.promotions=before;api.toast('No se pudo guardar. La promoción se conservó.');});
   }
  }
 });
