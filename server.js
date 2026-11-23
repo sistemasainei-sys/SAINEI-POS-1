@@ -447,7 +447,10 @@ async function handle(req, res) {
     const b = await readBody(req), u = prep('SELECT * FROM users WHERE id=?').get(me.uid);
     if (!checkPin(u, String(b.old || ''))) return fail(res, 400, 'La clave actual no es correcta.');
     if (weakPin(String(b.pin || ''))) return fail(res, 400, 'La clave nueva es muy facil.');
-    const k = mkPin(String(b.pin)); prep('UPDATE users SET salt=?,hash=? WHERE id=?').run(k.salt, k.hash, me.uid); audit(me.name, 'Cambio su clave');
+    const k = mkPin(String(b.pin)); prep('UPDATE users SET salt=?,hash=? WHERE id=?').run(k.salt, k.hash, me.uid);
+    // Mantener la sesión actual y revocar las demás sesiones abiertas con la clave anterior.
+    for (const [token, session] of [...sessions]) if (session.uid === me.uid && token !== me.token) sessions.delete(token);
+    audit(me.name, 'Cambio su clave');
     return send(res, 200, { ok: true });
   }
 
