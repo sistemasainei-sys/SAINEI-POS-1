@@ -6,10 +6,10 @@ Permitir que el comercio use SAINEI POS en una computadora Windows sin Render ni
 
 ## Inicio
 
-1. Instalar Node.js 22.13 o superior en la computadora principal.
-2. Copiar la carpeta completa del proyecto SAINEI POS a esa computadora.
-3. Ejecutar `iniciar-sainei-pos-windows.bat`.
-4. Mantener abierta la ventana del servidor mientras se trabaja.
+1. Copiar la carpeta completa del proyecto SAINEI POS a la computadora principal y no moverla después.
+2. Ejecutar `1-INSTALAR.bat`. El instalador intenta instalar Node.js LTS si hace falta, registra el inicio automático del servidor y crea el acceso directo `SAINEI POS` en el Escritorio.
+3. Abrir el acceso directo `SAINEI POS` o entrar a `http://localhost:8080`.
+4. Para iniciar manualmente el servidor, ejecutar `iniciar-sainei-pos-windows.bat`.
 
 El iniciador configura `SAINEI_DATA` en `%LOCALAPPDATA%\\SAINEI-POS\\datos`. La base SQLite y las copias automáticas quedan fuera de la carpeta del programa, por lo que una actualización de los archivos de la aplicación no las reemplaza.
 
@@ -51,4 +51,4 @@ El iniciador no instala Node.js, no configura VPN, no configura impresoras y no 
 
 ## Inicio automático al entrar a Windows
 
-Ejecutar una vez `instalar-sainei-pos-windows.bat`. El instalador registra una tarea programada para iniciar SAINEI POS en segundo plano al iniciar sesión con el mismo usuario de Windows y abre el navegador cuando el puerto 8080 responde. La PC servidor debe permanecer encendida y con esa sesión abierta durante la operación. Para iniciar manualmente, ejecutar `iniciar-sainei-pos-windows.bat`. Para revisar fallos, consultar `servidor.log` y `servidor-inicio.log` en `%LOCALAPPDATA%\SAINEI-POS\datos`.
+Ejecutar una vez `1-INSTALAR.bat` (que llama a `instalar-sainei-pos-windows.bat`). El instalador registra una tarea programada para iniciar SAINEI POS en segundo plano al iniciar sesión con el mismo usuario de Windows y abre el navegador cuando el puerto 8080 responde. La PC servidor debe permanecer encendida y con esa sesión abierta durante la operación. Para iniciar manualmente, ejecutar `iniciar-sainei-pos-windows.bat`. Para revisar fallos, consultar `servidor.log` y `servidor-inicio.log` en `%LOCALAPPDATA%\SAINEI-POS\datos`.
