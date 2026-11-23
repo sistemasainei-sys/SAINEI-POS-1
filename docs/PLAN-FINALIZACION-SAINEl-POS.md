@@ -108,4 +108,6 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 
 - [x] El servidor valida los cobros nuevos antes de guardarlos: cliente existente y activo, importe entero positivo, medio permitido (efectivo, transferencia o tarjeta), fecha válida y caja vinculada existente cuando se informa.
 - [x] Los cobros inválidos se rechazan en el servidor aunque se intente enviar la solicitud sin utilizar la interfaz.
+
+- [x] Un cobro en efectivo solo puede asociarse a una caja existente; si lo registra un cajero, el servidor exige que esa caja pertenezca a su propio usuario. Los medios transferencia y tarjeta no pueden alterar el arqueo de efectivo mediante un `shiftId` enviado manualmente.
 - [ ] Falta verificar en ejecución el flujo de cobros, arqueo de caja y sincronización multiusuario. No se ejecutaron pruebas.
