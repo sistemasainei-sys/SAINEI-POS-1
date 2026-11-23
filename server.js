@@ -462,13 +462,17 @@ async function handle(req, res) {
     if (!name) return fail(res, 400, 'Escribi el nombre.');
     if (weakPin(pin)) return fail(res, 400, 'La clave es muy facil. Usa al menos 4 caracteres y evita 1234 o repetidos.');
     const code = newRecCode(), rc = mkPin(normCode(code));
-    const id = tx(() => {
+    const setup = tx(() => {
+      // Volver a comprobar dentro de la misma transacción evita dos administradores
+      // si llegan solicitudes de configuración inicial al mismo tiempo.
+      if (hasAdmin()) return { conflict: true };
       const c = prep('SELECT n FROM counters WHERE kind=?').get('user'), nid = (c ? c.n : 0) + 1;
       prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run('user', nid);
       const k = mkPin(pin); prep('INSERT INTO users(id,name,role,active,salt,hash) VALUES(?,?,?,?,?,?)').run(nid, name, 'admin', 1, k.salt, k.hash);
-      setMeta('recSalt', rc.salt); setMeta('recHash', rc.hash); audit(name, 'Creo el usuario principal'); return nid;
+      setMeta('recSalt', rc.salt); setMeta('recHash', rc.hash); audit(name, 'Creo el usuario principal'); return { id: nid };
     });
-    return send(res, 200, { ok: true, code, userId: id });
+    if (setup.conflict) return fail(res, 409, 'Ya existe un usuario principal.');
+    return send(res, 200, { ok: true, code, userId: setup.id });
   }
   if (p === '/api/login' && m === 'POST') {
     if (!licenseState().active) return fail(res, 403, 'La licencia no está activa.');
