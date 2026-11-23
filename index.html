@@ -899,6 +899,7 @@ function normalize(s){
   });
   var map={prod:'products',sale:'sales',client:'clients',purch:'purchases',pay:'payments',exp:'expenses',shift:'shifts',move:'moves',spay:'spay',budget:'budgets',user:'users'};
   Object.keys(map).forEach(function(k){s.n[k]=Math.max(s.n[k]||0,s[map[k]].reduce(function(m,o){return Math.max(m,o.id||0);},0));});
+  s.n.move=Math.max(s.n.move||0,['suspendedSales','loyaltyRedemptions','promotions'].reduce(function(mx,k){return Math.max(mx,(s[k]||[]).reduce(function(m,o){return Math.max(m,Number(o.id)||0);},0));},0));
   return s;
 }
 /* ---------- Almacenamiento seguro (IndexedDB) ---------- */
