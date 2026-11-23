@@ -34,7 +34,7 @@ async function start() {
   }
   const dataDir = path.join(app.getPath('userData'), 'datos');
   fs.mkdirSync(dataDir, { recursive: true });
-  serverProcess = spawn(process.execPath, [serverFile, '--port=' + PORT, '--host=127.0.0.1', '--data=' + dataDir, '--app=' + path.join(root, 'index.html')], {
+  serverProcess = spawn(process.execPath, ['--experimental-sqlite', serverFile, '--port=' + PORT, '--host=127.0.0.1', '--data=' + dataDir, '--app=' + path.join(root, 'index.html')], {
     env: { ...process.env, ELECTRON_RUN_AS_NODE: '1', SAINEI_DATA: dataDir, SAINEI_HOST: '127.0.0.1' },
     stdio: ['ignore', 'pipe', 'pipe'],
     windowsHide: true
