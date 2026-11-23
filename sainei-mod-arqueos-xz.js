@@ -8,7 +8,7 @@ window.SAINEI_POS_MODULES.push({
   function money(v){return api.money(Math.round(Number(v)||0));}
   function summary(s,sh){
    var by={efectivo:0,tarjeta:0,transferencia:0,credito:0},cobros=0,gastos=0,pagos=0;
-   (s.sales||[]).forEach(function(x){if(x.shiftId===sh.id&&!x.void)by[x.method]=(by[x.method]||0)+Number(x.total||0);});
+   (s.sales||[]).forEach(function(x){if(x.shiftId===sh.id&&!x.void){var ps=Array.isArray(x.payParts)&&x.payParts.length?x.payParts:[{method:x.method,amount:x.total}];ps.forEach(function(p){by[p.method]=(by[p.method]||0)+Number(p.amount||0);});}});
    (s.payments||[]).forEach(function(x){if(x.shiftId===sh.id&&x.method==='efectivo')cobros+=Number(x.amount||0);});
    (s.expenses||[]).forEach(function(x){if(x.shiftId===sh.id&&x.method==='caja')gastos+=Number(x.amount||0);});
    (s.spay||[]).forEach(function(x){if(x.shiftId===sh.id&&x.method==='caja')pagos+=Number(x.amount||0);});
