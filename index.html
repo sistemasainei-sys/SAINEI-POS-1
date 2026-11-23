@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SAINEI POS</title>
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#1769aa">
+<meta name="theme-color" content="#0755a4">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SAINEI POS">
@@ -405,6 +405,95 @@ main{padding-top:20px}
 :root[data-theme="light"]{color-scheme:light}
 :root[data-theme="dark"]{--bg:#101a2a;--surface:#17263b;--surface-2:#22344d;--fg:#edf4fc;--muted:#a9b9cc;--line:#334963;--accent:#ff9b35;--accent-fg:#17243a;--accent-soft:#49331e;--warn:#ffc66d;--warn-soft:#49371c;--bad:#ff9388;--bad-soft:#482622;--ok:#75baff;--ok-soft:#1e3b59;color-scheme:dark}
 @media(prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){--bg:#101a2a;--surface:#17263b;--surface-2:#22344d;--fg:#edf4fc;--muted:#a9b9cc;--line:#334963;--accent:#ff9b35;--accent-fg:#17243a;--accent-soft:#49331e;--warn:#ffc66d;--warn-soft:#49371c;--bad:#ff9388;--bad-soft:#482622;--ok:#75baff;--ok-soft:#1e3b59;color-scheme:dark}}
+
+/* SAINEI POS — sistema visual oficial: encabezado azul, contenido blanco y navegación inferior naranja. */
+:root{
+ --bg:#ffffff;--surface:#ffffff;--surface-2:#f4f7fb;--fg:#172536;--muted:#64748b;--line:#e2e8f0;
+ --accent:#1769aa;--accent-fg:#ffffff;--accent-soft:#e7f1fb;
+ --brand-orange:#f28c28;--brand-orange-soft:#fff1e2;
+ --warn:#b96512;--warn-soft:#fff1e2;--bad:#b42318;--bad-soft:#fde8e6;--ok:#1769aa;--ok-soft:#e7f1fb;
+ color-scheme:light;
+}
+:root[data-theme="dark"]{
+ --bg:#101a27;--surface:#172638;--surface-2:#22364b;--fg:#edf4fb;--muted:#a7b8ca;--line:#344b63;
+ --accent:#4b9be0;--accent-fg:#071c30;--accent-soft:#203d59;--brand-orange:#ffad5c;--brand-orange-soft:#49301c;
+ color-scheme:dark;
+}
+@media(prefers-color-scheme:dark){
+ :root:not([data-theme="light"]):not([data-theme="dark"]){
+  --bg:#ffffff;--surface:#ffffff;--surface-2:#f4f7fb;--fg:#172536;--muted:#64748b;--line:#e2e8f0;
+  --accent:#1769aa;--accent-fg:#ffffff;--accent-soft:#e7f1fb;--brand-orange:#f28c28;--brand-orange-soft:#fff1e2;
+  color-scheme:light;
+ }
+}
+html,body{background:#fff}
+body{padding:0 0 calc(94px + env(safe-area-inset-bottom,0px));background:#fff;color:var(--fg)}
+.top{
+ position:sticky;top:env(safe-area-inset-top,0px);z-index:30;
+ margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+ padding:14px max(20px,env(safe-area-inset-right,0px)) 10px max(20px,env(safe-area-inset-left,0px));
+ display:flex;align-items:center;gap:8px 18px;flex-wrap:wrap;
+ background:#0755a4;color:#fff;border:0;border-radius:0;box-shadow:0 4px 18px rgba(7,55,110,.16);
+}
+.brand{align-items:center;gap:12px;padding:0;margin:0;min-width:0}
+.brand h1{font-size:clamp(20px,2.2vw,28px);font-weight:850;letter-spacing:-.035em;color:#fff}
+.brand span{font-size:13px;color:rgba(255,255,255,.78)}
+.brandlogo{border:0;margin:0;max-height:36px}
+.shift{margin:0 0 0 auto;background:rgba(255,255,255,.13);border:1px solid rgba(255,255,255,.25);color:#fff}
+.shift.open,.shift.closed{background:rgba(255,255,255,.16);border-color:rgba(255,255,255,.22);color:#fff}
+.userbox{padding:0;margin:0;align-items:center;color:#fff}
+.userbox .btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff}
+.tabs{
+ position:fixed;left:0;right:0;bottom:0;z-index:50;
+ width:100%;max-width:none;margin:0;padding:9px max(12px,env(safe-area-inset-right,0px)) calc(9px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
+ display:flex;justify-content:space-around;align-items:stretch;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;
+ background:#f28c28;box-shadow:0 -5px 22px rgba(110,62,12,.16);scrollbar-width:none;
+}
+.tabs::-webkit-scrollbar{display:none}
+.tab{
+ flex:1 0 auto;min-width:68px;justify-content:center;flex-direction:column;gap:3px;
+ padding:8px 10px;border:0;border-radius:12px;background:transparent;color:#fff;
+ font-size:12px;font-weight:750;line-height:1.15;white-space:nowrap;
+}
+.tab[aria-selected="true"]{background:#fff;color:#e87912;border:0;box-shadow:0 2px 8px rgba(91,49,7,.12)}
+.tab .badge{background:#fff;color:#a94e00}
+main{max-width:1500px;margin:0 auto;padding:24px 22px 28px;background:#fff;min-height:calc(100vh - 160px)}
+.panel,.tile,.card,.sheet,.lockbox{border-radius:16px;border-color:#e2e8f0;box-shadow:0 5px 18px rgba(23,53,86,.055);background:var(--surface)}
+.sec-head{margin-bottom:16px}
+.sec-head h2{font-size:clamp(21px,2vw,26px);font-weight:800;color:var(--fg)}
+.tiles{gap:14px}
+.tile{padding:18px}
+.input,.search,.recv,.disc{border-radius:11px;border-color:#d5dfeb;background:#fff}
+.btn{border-radius:10px;font-weight:700}
+.btn.primary{background:#1769aa;border-color:#1769aa;color:#fff}
+.btn.primary:hover{background:#10558d}
+.btn.brand-orange,.cobrar{background:#f28c28;border-color:#f28c28;color:#fff;font-weight:800}
+.cobrar:hover,.btn.brand-orange:hover{background:#e87912}
+.chip[aria-pressed="true"],.tools2 .btn[aria-pressed="true"]{background:#1769aa;border-color:#1769aa;color:#fff}
+.bigtotal{background:#0755a4;color:#fff;border-radius:14px 14px 0 0}
+.lastitem{border-color:#f28c28;background:#fff}
+.lastitem .am{color:#0755a4}
+.lockscr{background:#f4f7fb}
+.lockbox{background:#fff;border-color:#dce5f0}
+.lk-brand{background:#0755a4;color:#fff}
+.lk-brand strong span{color:#ff9b35}
+@media(max-width:900px){
+ main{padding:18px 14px 24px}
+ .top{padding-top:12px;padding-bottom:12px}
+ .brand{flex:1 1 100%}
+ .brand span{display:block}
+ .shift{margin-left:0}
+ .tabs{justify-content:flex-start}
+ .tab{min-width:72px;padding:8px 9px}
+ body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+}
+@media(max-width:480px){
+ .brand h1{font-size:21px}
+ .brand span{font-size:11px}
+ .userbox{width:100%;justify-content:flex-start}
+ .tab{min-width:66px;font-size:11px}
+}
+
 </style>
 
 </head>
