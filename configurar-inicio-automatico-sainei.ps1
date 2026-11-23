@@ -12,7 +12,7 @@ $arguments = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + 
 $action = New-ScheduledTaskAction -Execute $powerShell -Argument $arguments -WorkingDirectory $root
 $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
 $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
-$principal = New-ScheduledTaskPrincipal -UserId $env:USERDOMAIN\$env:USERNAME -LogonType Interactive -RunLevel Limited
+$principal = New-ScheduledTaskPrincipal -UserId ("{0}\{1}" -f $env:USERDOMAIN, $env:USERNAME) -LogonType Interactive -RunLevel Limited
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description 'Inicia el servidor SAINEI POS al iniciar sesion en esta PC.' -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
 Write-Host 'Inicio automatico de SAINEI POS configurado para este usuario.' -ForegroundColor Green
