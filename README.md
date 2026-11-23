@@ -15,12 +15,13 @@ SAINEI POS está preparado para guardar los datos comerciales en la computadora 
 
 ## Inicio en una computadora Windows
 
-1. Instalar Node.js 22.13 o superior desde el sitio oficial.
-2. Copiar la carpeta completa del proyecto a la computadora principal.
-3. Ejecutar `iniciar-sainei-pos-windows.bat`.
-4. Mantener abierta la ventana del servidor mientras se utilice el POS.
-5. En la misma computadora, abrir `http://localhost:8080`.
-6. Crear el usuario principal y guardar el código de recuperación en un lugar seguro.
+1. Copiar la carpeta completa del proyecto a la computadora principal y no moverla después.
+2. Ejecutar `1-INSTALAR.bat` (usa `instalar-sainei-pos-windows.bat`). Si falta Node.js 22.13 o superior, intenta instalar Node.js LTS con `winget`.
+3. El instalador configura el inicio automático al iniciar sesión en Windows y crea el acceso directo `SAINEI POS` en el Escritorio.
+4. Abrir `SAINEI POS` desde el Escritorio o entrar a `http://localhost:8080`.
+5. Crear el usuario principal y guardar el código de recuperación en un lugar seguro.
+
+Para iniciar manualmente el servidor, usar `iniciar-sainei-pos-windows.bat`. Los datos se guardan en `%LOCALAPPDATA%\\SAINEI-POS\\datos`, fuera de la carpeta del programa.
 
 El iniciador guarda la base SQLite en `%LOCALAPPDATA%\SAINEI-POS\datos`, separada de los archivos del programa. No mover, borrar ni reemplazar esa carpeta al actualizar la aplicación.
 
@@ -51,7 +52,8 @@ Una copia no se considera recuperable hasta que se haya comprobado una restaurac
 
 ## Archivos y documentación
 
-- `iniciar-sainei-pos-windows.bat`: inicia el servidor y separa los datos del programa.
+- `1-INSTALAR.bat`: instalador principal de Windows; configura Node.js si hace falta, el inicio automático y el acceso directo.
+- `iniciar-sainei-pos-windows.bat`: inicio manual del servidor con datos separados del programa.
 - `respaldar-sainei-pos-windows.bat`: copia respaldos SQLite a otra unidad.
 - `configurar-firewall-sainei.ps1`: limita el acceso al puerto local desde la subred privada.
 - `docs/INICIO-SIN-COSTO-WINDOWS.md`: guía de instalación local.
@@ -71,7 +73,7 @@ Una copia no se considera recuperable hasta que se haya comprobado una restaurac
 
 ## Estado de esta rama
 
-Esta rama reúne funciones y preparación operativa adicionales, pero no equivale a una publicación final. Antes de usarla con ventas reales se debe completar la instalación en el equipo del comercio, configurar almacenamiento y respaldos externos, comprobar restauración y realizar las verificaciones de seguridad y periféricos correspondientes. No se ejecutaron pruebas como parte de estos cambios.
+Esta rama contiene el código y la preparación de instalación local. La instalación, restauración, periféricos y funcionamiento en equipos reales quedan pendientes de la prueba del usuario. No se debe considerar validada para ventas reales hasta completar esa prueba.
 
 
 ## Respaldo USB automático en Windows
@@ -81,7 +83,7 @@ SAINEI POS detecta cada 10 minutos las unidades extraíbles cuyo nombre de volum
 
 ## Instalador guiado de Windows
 
-Ejecutar `instalar-sainei-pos-windows.bat`. Si Node.js no está instalado, el instalador intenta instalar Node.js LTS desde Windows Package Manager (`winget`), valida la versión mínima y prepara la carpeta permanente de datos antes de iniciar el servidor. Si `winget` no está disponible, indica instalar Node.js desde el sitio oficial. La primera ejecución crea automáticamente `sainei.db` y sus tablas; la configuración inicial del comercio y el alta del administrador se completan desde la pantalla de inicio.
+Ejecutar `1-INSTALAR.bat` (o directamente `instalar-sainei-pos-windows.bat`). Si Node.js no está instalado, el instalador intenta instalar Node.js LTS desde Windows Package Manager (`winget`), valida la versión mínima y prepara la carpeta permanente de datos antes de iniciar el servidor. Si `winget` no está disponible, indica instalar Node.js desde el sitio oficial. La primera ejecución crea automáticamente `sainei.db` y sus tablas; la configuración inicial del comercio y el alta del administrador se completan desde la pantalla de inicio.
 
 
 ## Inicio automático con Windows
