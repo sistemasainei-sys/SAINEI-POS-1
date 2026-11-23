@@ -7,6 +7,7 @@ Estas ampliaciones son aditivas y no reemplazan los archivos ni la versión prin
 ## Módulos añadidos
 
 - **Informes +** (`sainei-mod-informes-plus.js`): ventas por período, costo de mercadería, margen bruto estimado, gastos, resultado estimado, desglose de IVA registrado, medios de pago, productos más vendidos y exportación CSV.
+- **Fiscal (opcional)** (`sainei-mod-fiscal-preparacion.js`): sección administrativa deshabilitada con requisitos previos. No emite comprobantes ni se conecta a DNIT.
 - **Conteo stock** (`sainei-mod-conteo-stock.js`): búsqueda de productos, carga de cantidad física, cálculo de diferencia y aplicación confirmada como movimiento de ajuste. Registra el usuario en auditoría.
 
 ## Acceso
