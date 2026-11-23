@@ -32,7 +32,7 @@ CREATE TABLE IF NOT EXISTS sing(k TEXT PRIMARY KEY, j TEXT NOT NULL, rev INTEGER
 CREATE TABLE IF NOT EXISTS counters(kind TEXT PRIMARY KEY, n INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL, salt TEXT, hash TEXT);
 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT, u TEXT, a TEXT);
-CREATE TABLE IF NOT EXISTS login_attempts(k TEXT PRIMARY KEY, n INTEGER NOT NULL, until INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS login_attempts(k TEXT PRIMARY KEY, n INTEGER NOT NULL, blocked_until INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL);
 `);
 const P = {}; const prep = s => P[s] || (P[s] = db.prepare(s));
 const getMeta = k => { const r = prep('SELECT v FROM meta WHERE k=?').get(k); return r ? r.v : null; };
@@ -107,15 +107,15 @@ const SES_MS = 12 * 3600 * 1000;
 // El bloqueo de intentos queda en SQLite para sobrevivir reinicios del proceso.
 function failKey(key) { return crypto.createHash('sha256').update(String(key)).digest('hex'); }
 function failWait(key) {
-  const row = prep('SELECT until FROM login_attempts WHERE k=?').get(failKey(key));
-  return row && row.until > Date.now() ? Math.ceil((row.until - Date.now()) / 1000) : 0;
+  const row = prep('SELECT blocked_until FROM login_attempts WHERE k=?').get(failKey(key));
+  return row && row.blocked_until > Date.now() ? Math.ceil((row.blocked_until - Date.now()) / 1000) : 0;
 }
 function failAdd(key) {
   const k = failKey(key), now = Date.now();
   const row = prep('SELECT n FROM login_attempts WHERE k=?').get(k);
   const n = (row ? Number(row.n) : 0) + 1;
   const until = n >= 5 ? now + Math.min(300, 30 * Math.pow(2, n - 5)) * 1000 : 0;
-  prep('INSERT OR REPLACE INTO login_attempts(k,n,until,updated) VALUES(?,?,?,?)').run(k, n, until, now);
+  prep('INSERT OR REPLACE INTO login_attempts(k,n,blocked_until,updated) VALUES(?,?,?,?)').run(k, n, until, now);
   // Limitar el crecimiento de la tabla sin borrar bloqueos recientes.
   prep('DELETE FROM login_attempts WHERE updated < ?').run(now - 30 * 24 * 60 * 60 * 1000);
   return n;
