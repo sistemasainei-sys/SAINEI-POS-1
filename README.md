@@ -8,9 +8,9 @@ SAINEI POS está preparado para guardar los datos comerciales en la computadora 
 
 - La computadora principal ejecuta el servidor y guarda la base de datos.
 - Las demás cajas se conectan a esa computadora por la red local (Wi-Fi o cable).
-- Para operar dentro del local, basta con que la computadora principal y la red local estén funcionando; no se necesita internet para las operaciones locales después de activar el sistema.
+- Para operar dentro del local, basta con que la computadora principal y la red local estén funcionando; no se necesita internet para las operaciones locales.
 - Si la computadora principal se apaga, las otras cajas no pueden operar hasta que vuelva a encenderse.
-- Node.js 22.13 o superior y una licencia SAINEI POS válida son requisitos de instalación.
+- Node.js 22.13 o superior es requisito. La instalación local no exige código de activación ni conexión a Render.
 - Se recomienda una unidad externa para copias de seguridad.
 
 ## Inicio en una computadora Windows
@@ -20,8 +20,7 @@ SAINEI POS está preparado para guardar los datos comerciales en la computadora 
 3. Ejecutar `iniciar-sainei-pos-windows.bat`.
 4. Mantener abierta la ventana del servidor mientras se utilice el POS.
 5. En la misma computadora, abrir `http://localhost:8080`.
-6. Activar la instalación con el código de licencia válido.
-7. Crear el usuario principal y guardar el código de recuperación en un lugar seguro.
+6. Crear el usuario principal y guardar el código de recuperación en un lugar seguro.
 
 El iniciador guarda la base SQLite en `%LOCALAPPDATA%\SAINEI-POS\datos`, separada de los archivos del programa. No mover, borrar ni reemplazar esa carpeta al actualizar la aplicación.
 
