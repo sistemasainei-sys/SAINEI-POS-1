@@ -78,3 +78,8 @@ La recuperación de una PC nueva debe realizarse con asistencia técnica si no s
 - [ ] Guardé la unidad externa desconectada.
 - [ ] La restauración fue ensayada en un entorno aislado.
 - [ ] Revisé los datos recuperados antes de reanudar ventas.
+
+
+## 6. Copia USB automática en Windows
+
+El servidor busca cada 10 minutos unidades extraíbles con la etiqueta de volumen exacta `SAINEI_BACKUP`; también busca al iniciar. Cuando encuentra una, copia los respaldos `.db` a `SAINEI-RESPALDOS` y verifica el tamaño de cada archivo copiado. Asignar esa etiqueta una sola vez desde Windows, sin formatear la memoria. Consultar `servidor.log` y verificar manualmente la fecha y tamaño antes de retirar la unidad. Si no se detecta, usar el procedimiento manual indicado arriba. La detección automática no sustituye la verificación periódica de restauración.
