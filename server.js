@@ -75,7 +75,7 @@ function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COM
 
 const COLLS = { products: 'prod', sales: 'sale', clients: 'client', purchases: 'purch', payments: 'pay', expenses: 'exp', shifts: 'shift', moves: 'move', spay: 'spay', budgets: 'budget' };
 const ORDER = ['products', 'clients', 'budgets', 'purchases', 'expenses', 'spay', 'shifts', 'sales', 'payments', 'moves'];
-const SING = ['shop', 'scale', 'print', 'scan', 'sec', 'check', 'loyaltyRedemptions'];
+const SING = ['shop', 'scale', 'print', 'scan', 'sec', 'check', 'loyaltyRedemptions', 'suspendedSales'];
 const DELETABLE = { products: 1, clients: 1 };
 const PERM = {
   cajero: { sales: { ins: 1 }, moves: { ins: 1 }, clients: { ins: 1, upd: 1 }, budgets: { ins: 1, upd: 1 }, payments: { ins: 1 }, shifts: { ins: 1, upd: 1 } },
