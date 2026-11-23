@@ -136,3 +136,11 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] Al cerrar, el servidor impide cambiar el propietario, la fecha/fondo de apertura o volver a modificar una caja ya cerrada.
 - [x] El cierre exige fecha válida, efectivo contado entero no negativo, valores de arqueo numéricos coherentes y el usuario autenticado como responsable del cierre.
 - [ ] Falta verificar en ejecución apertura/cierre concurrente y arqueos con varios medios de pago. No se ejecutaron pruebas.
+
+
+### Integridad del arqueo — movimientos posteriores al cierre
+
+- [x] El servidor rechaza pagos a proveedores asociados a una caja cerrada.
+- [x] El servidor rechaza gastos asociados a una caja cerrada.
+- [x] Para pagos/gastos en efectivo, usuarios no administradores solo pueden usar una caja propia; se valida en servidor aunque la solicitud se envíe manualmente.
+- [ ] Falta verificar en ejecución la secuencia de cierre y sincronización diferida. No se ejecutaron pruebas.
