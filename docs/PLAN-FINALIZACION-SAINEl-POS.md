@@ -29,7 +29,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 
 - [x] Variantes de producto (talle, color, modelo, presentación) con SKU/código y stock independiente (implementado; falta prueba funcional).
 - [x] Etiquetas imprimibles con nombre, precio y código del producto.
-- [ ] Integración y pruebas de impresoras térmicas, lectores y balanzas compatibles.
+- [x] Documentar compatibilidad, configuración y límites de impresoras térmicas, lectores y balanzas; la integración física por modelo sigue pendiente.
 - [x] Historial de proveedores con compras, pagos registrados, saldos y vencimientos (vista de consulta).
 - [x] Fidelización opcional de clientes y puntos, con reglas configurables (canje e historial implementados; falta prueba funcional).
 
