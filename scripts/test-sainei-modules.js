@@ -2,7 +2,7 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const vm = require('node:vm');
-const files = fs.readdirSync(process.cwd()).filter((f) => /^sainei-mod-[a-z0-9_-]+\\.js$/i.test(f)).sort();
+const files = fs.readdirSync(process.cwd()).filter((f) => /^sainei-mod-[a-z0-9_-]+\.js$/i.test(f)).sort();
 if (!files.length) throw new Error('No se encontraron módulos SAINEI.');
 const registered = [];
 const window = { SAINEI_POS_MODULES: [] };
