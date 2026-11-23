@@ -159,7 +159,7 @@ function processSync(user, body) {
   const rejectedTickets = new Set();
   const ticketMoves = new Map();
   for (const move of incomingMoves) {
-    const match = /^Ticket (\\d+)$/.exec(String(move && move.note || ''));
+    const match = /^Ticket (\d+)$/.exec(String(move && move.note || ''));
     if (!match) continue;
     const ticket = Number(match[1]);
     if (!ticketMoves.has(ticket)) ticketMoves.set(ticket, []);
@@ -198,7 +198,7 @@ function processSync(user, body) {
           if (row && row.del) { res.rejected.push({ coll, id }); continue; }
           if (coll === 'sales' && !row && rejectedTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
           if (coll === 'moves' && !row) {
-            const ticket = /^Ticket (\\d+)$/.exec(String(rec.note || ''));
+            const ticket = /^Ticket (\d+)$/.exec(String(rec.note || ''));
             if (ticket && rejectedTickets.has(Number(ticket[1]))) { res.rejected.push({ coll, id }); continue; }
           }
           const ex = row ? JSON.parse(row.j) : null, op = ex ? 'upd' : 'ins';
