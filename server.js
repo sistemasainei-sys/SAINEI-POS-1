@@ -309,6 +309,32 @@ function processSync(user, body) {
               continue;
             }
           }
+          if (coll === 'spay') {
+            const purchId = Number(rec.purchId), amount = Number(rec.amount), shiftId = Number(rec.shiftId || 0);
+            const purchaseRow = Number.isInteger(purchId) && purchId > 0 ? getRec('purchases', purchId) : null;
+            const methods = ['caja', 'banco'];
+            const dateValue = Date.parse(rec.date);
+            const shiftRow = shiftId > 0 ? getRec('shifts', shiftId) : null;
+            let paidBefore = 0;
+            if (purchaseRow && !purchaseRow.del) {
+              for (const item of prep('SELECT id,j FROM rec WHERE coll=? AND del=0').all('spay')) {
+                if (Number(item.id) === id) continue;
+                const payment = JSON.parse(item.j);
+                if (Number(payment.purchId) === purchId) paidBefore += Number(payment.amount) || 0;
+              }
+            }
+            const purchase = purchaseRow && !purchaseRow.del ? JSON.parse(purchaseRow.j) : null;
+            if (!purchase || !Number.isSafeInteger(Number(purchase.total)) || Number(purchase.total) <= 0 ||
+                !Number.isSafeInteger(amount) || amount <= 0 || !methods.includes(String(rec.method || '')) ||
+                !Number.isFinite(dateValue) || !Number.isInteger(shiftId) || shiftId < 0 ||
+                paidBefore + amount > Number(purchase.total) ||
+                (shiftId > 0 && (!shiftRow || shiftRow.del)) ||
+                (shiftId > 0 && rec.method !== 'caja') ||
+                (shiftId === 0 && rec.method === 'caja')) {
+              res.rejected.push({ coll, id });
+              continue;
+            }
+          }
           if (coll === 'suspendedSales' && user.role === 'cajero' && ((ex && Number(ex.uid) !== user.id) || Number(rec.uid) !== user.id)) { res.rejected.push({ coll, id }); continue; }
           if (!allowed(user, coll, op, rec, ex)) { res.rejected.push({ coll, id }); continue; }
           // Validar cada movimiento contra el stock vigente dentro de la transacción.
