@@ -2,15 +2,13 @@
 
 Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a main ni cambios en datos de comercios.
 
-## Prioridad 1 — Continuidad de ventas y datos
+## Prioridad 1 — Operación en línea y respaldo de datos
 
-- [ ] Diseñar modo desconectado real para instalaciones con varias cajas: persistencia local cifrada, cola durable de operaciones, identificadores idempotentes y reconciliación de stock.
-- [ ] Resolver conflictos de sincronización sin sobrescribir ventas, pagos, devoluciones ni movimientos.
-- [ ] Mostrar estado claro: servidor conectado, desconectado, cambios pendientes, último envío y errores.
-- [ ] Pruebas de caída de red/servidor durante una venta, reinicio del navegador, reconexión y dos cajas vendiendo el mismo producto.
+- [x] Definir que SAINEI POS requiere conexión a internet/servidor para confirmar ventas; no ofrecer operación sin conexión.
 - [ ] Verificar restauración y copias antes/después de cada actualización.
+- [ ] Confirmar almacenamiento persistente de la base de datos en el servicio publicado antes de usarlo con datos reales.
 
-**Criterio de aceptación:** ventas no se duplican ni se pierden; la interfaz no confirma sincronización antes de que el servidor la confirme. Hasta superar pruebas, el modo servidor sigue requiriendo conexión con la PC principal para vender.
+**Decisión de alcance:** el usuario decidió dejar fuera el modo sin conexión. El cliente debe tener internet para operar y confirmar ventas. No se implementará cola offline ni sincronización posterior en esta entrega.
 
 ## Prioridad 2 — Seguridad de conexión y acceso
 
