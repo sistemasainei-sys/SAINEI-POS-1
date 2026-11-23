@@ -24,3 +24,5 @@ jobs:
           done
       - name: Check server syntax
         run: node --check server.js
+      - name: Smoke-test module registration
+        run: node scripts/test-sainei-modules.js
