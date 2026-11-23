@@ -49,6 +49,18 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - Sucursales y transferencias entre sucursales.
 - Acceso remoto directo sin VPN/túnel seguro.
 
+## Implementaciones agregadas en la rama de finalización
+
+Estas funciones ya tienen código incorporado en esta rama, pero no se consideran publicadas ni listas para operar hasta completar las verificaciones y la integración:
+
+- [x] Canje de puntos de clientes con control de saldo e historial; el libro de canjes se sincroniza en modo servidor.
+- [x] Ventas pausadas: guardar y restaurar el carrito, conservar descuento/cliente y volver a validar stock antes de reanudar.
+- [x] Variantes agrupadas: vincular productos ya existentes por grupo y nombre, manteniendo SKU, precio y stock independientes.
+- [x] Promociones porcentuales con fechas de vigencia y respeto del límite de descuento por usuario.
+- [x] API interna para guardar/restaurar carritos y persistir las nuevas configuraciones en modo servidor.
+
+**Pendiente para estas funciones:** pruebas funcionales de punta a punta con datos de prueba, revisión de permisos en cajero/encargado/administrador y verificación de sincronización en dos equipos. No usar datos reales para estas pruebas.
+
 ## Seguridad del trabajo
 
 - Trabajar únicamente en `sainei-pos-finalizacion-independiente`.
