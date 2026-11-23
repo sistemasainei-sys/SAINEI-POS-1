@@ -155,9 +155,9 @@ function allowed(user, coll, op, rec, existing) {
   const p = (PERM[user.role] || {})[coll];
   if (!p || !p[op]) return false;
   if (coll === 'moves' && user.role === 'cajero') { if (!(rec.type === 'venta' && Number(rec.qty) < 0)) return false; }
-  if (coll === 'shifts' && user.role === 'cajero') {
-    if (op === 'ins' && rec.uid !== user.uid) return false;
-    if (op === 'upd' && existing && existing.uid && existing.uid !== user.uid) return false;
+  if (coll === 'shifts' && user.role !== 'admin') {
+    if (op === 'ins' && Number(rec.uid) !== Number(user.uid)) return false;
+    if (op === 'upd' && existing && Number(existing.uid) !== Number(user.uid)) return false;
   }
   return true;
 }
@@ -293,6 +293,29 @@ function processSync(user, body) {
             if (ticket && rejectedTickets.has(Number(ticket[1]))) { res.rejected.push({ coll, id }); continue; }
           }
           const ex = row ? JSON.parse(row.j) : null, op = ex ? 'upd' : 'ins';
+          if (coll === 'shifts' && user.role !== 'admin') {
+            const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value));
+            if (!ex) {
+              if (Number(rec.uid) !== Number(user.uid) || !validDate(rec.openAt) ||
+                  !Number.isSafeInteger(Number(rec.openAmt)) || Number(rec.openAmt) < 0 ||
+                  (rec.closedAt != null && rec.closedAt !== '')) {
+                res.rejected.push({ coll, id }); continue;
+              }
+            } else {
+              if (Number(ex.uid) !== Number(user.uid) || Number(rec.uid) !== Number(ex.uid) ||
+                  rec.openAt !== ex.openAt || Number(rec.openAmt) !== Number(ex.openAmt) ||
+                  rec.by !== ex.by || ex.closedAt) {
+                res.rejected.push({ coll, id }); continue;
+              }
+              const counted = Number(rec.counted), expected = Number(rec.expected), diff = Number(rec.diff);
+              if (!validDate(rec.closedAt) || !Number.isSafeInteger(counted) || counted < 0 ||
+                  !Number.isFinite(expected) || !Number.isFinite(diff) ||
+                  Math.abs((counted - expected) - diff) > 0.001 ||
+                  String(rec.closedBy || '') !== user.name || String(rec.closedByRole || '') !== user.role) {
+                res.rejected.push({ coll, id }); continue;
+              }
+            }
+          }
           if (coll === 'payments' && !ex) {
             const clientId = Number(rec.clientId), amount = Number(rec.amount), shiftId = Number(rec.shiftId || 0);
             const clientRow = Number.isInteger(clientId) && clientId > 0 ? getRec('clients', clientId) : null;
