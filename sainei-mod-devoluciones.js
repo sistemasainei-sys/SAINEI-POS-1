@@ -33,11 +33,14 @@ window.SAINEI_POS_MODULES.push({
    var method=document.getElementById('ret-method').value,shift=(api.state().shifts||[]).slice().reverse().filter(function(x){return !x.closedAt;})[0]||null;
    if(method==='caja'&&!shift){err.textContent='No hay una caja abierta. Abrí la caja o elegí otro medio de reembolso.';return;}
    var s0=api.state(),stamp=new Date().toISOString(),rid=api.newId('move');if(!Array.isArray(s0.moves))s0.moves=[];if(!Array.isArray(s0.expenses))s0.expenses=[];
-   s.returns=s.returns||[];s.returns.push({id:rid,date:stamp,amount:amount,method:method,items:items,user:(api.user()||{}).name||''});
+   s.returns=s.returns||[];
+   var oldReturns=s.returns.slice(),oldMoves=s0.moves.length,oldExpenses=s0.expenses.length,oldStocks={};
+   items.forEach(function(it){var p=(s0.products||[]).filter(function(x){return Number(x.id)===Number(it.id);})[0];if(p&&!Object.prototype.hasOwnProperty.call(oldStocks,p.id))oldStocks[p.id]=p.stock;});
+   s.returns.push({id:rid,date:stamp,amount:amount,method:method,items:items,user:(api.user()||{}).name||''});
    items.forEach(function(it){var p=(s0.products||[]).filter(function(x){return Number(x.id)===Number(it.id);})[0];if(p){p.stock=api.round3(Number(p.stock||0)+it.qty);s0.moves.push({id:api.newId('move'),date:stamp,pid:p.id,type:'devolucion',qty:it.qty,note:'Devolución ticket '+s.id});}});
    if(method==='caja')s0.expenses.push({id:api.newId('exp'),date:stamp,concept:'Reembolso devolución ticket '+s.id,cat:'Devolución',amount:amount,method:'caja',shiftId:shift.id});
-   api.log('Devolución ticket #'+s.id+' · '+money(amount)+' · '+items.map(function(x){return x.name+' x '+x.qty;}).join(', '));
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){err.textContent='El servidor no confirmó el guardado. No cierres esta pantalla; revisá la conexión.';return;}api.closeModal();api.refresh();api.toast('Devolución registrada y stock actualizado.');}).catch(function(){err.textContent='No se pudo guardar. Revisá la conexión y volvé a intentar.';});
+   function rollback(){s.returns=oldReturns;Object.keys(oldStocks).forEach(function(id){var p=(s0.products||[]).filter(function(x){return Number(x.id)===Number(id);})[0];if(p)p.stock=oldStocks[id];});s0.moves.length=oldMoves;s0.expenses.length=oldExpenses;}
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){rollback();err.textContent='El servidor no confirmó el guardado. No se registró la devolución ni se modificó el stock.';return;}api.log('Devolución ticket #'+s.id+' · '+money(amount)+' · '+items.map(function(x){return x.name+' x '+x.qty;}).join(', '));api.closeModal();api.refresh();api.toast('Devolución registrada y stock actualizado.');}).catch(function(){rollback();err.textContent='No se pudo guardar. No se registró la devolución ni se modificó el stock.';});
   }
  }
 });
