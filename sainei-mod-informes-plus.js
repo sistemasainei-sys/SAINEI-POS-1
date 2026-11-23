@@ -20,7 +20,8 @@ window.SAINEI_POS_MODULES.push({
    var rows=sales.filter(function(x){var d=dateKey(x.date);return d>=from&&d<=to;});
    var gross=sum(rows,function(x){return x.total;});
    var refunds=(s.sales||[]).filter(function(x){return !x.void&&dateKey(x.date)>=from&&dateKey(x.date)<=to;}).reduce(function(a,x){return a+(x.returns||[]).reduce(function(b,r){return b+Number(r.amount||0);},0);},0);
-   var cmv=sum(rows,function(x){return x.cmv;});
+   var returnedCmv=rows.reduce(function(a,x){return a+(x.returns||[]).reduce(function(b,r){return b+(r.items||[]).reduce(function(c,it){var src=(x.items||[])[Number(it.lineIndex)];return c+(src?Number(src.cost||0)*Number(it.qty||0):0);},0);},0);},0);
+   var cmv=sum(rows,function(x){return x.cmv;})-returnedCmv;
    var margin=gross-refunds-cmv;
    var expenses=(s.expenses||[]).filter(function(x){var d=dateKey(x.date);return d>=from&&d<=to;});
    var expenseTotal=sum(expenses,function(x){return x.amount;});
@@ -33,7 +34,7 @@ window.SAINEI_POS_MODULES.push({
    var products={};
    rows.forEach(function(x){(x.items||[]).forEach(function(i){
     var k=String(i.id||i.name),p=products[k]||(products[k]={name:i.name||'Producto',qty:0,sales:0,cost:0});
-    p.qty+=Number(i.qty||0);p.sales+=Number(i.amount!=null?i.amount:(i.price||0)*(i.qty||0));p.cost+=Number(i.cost||0)*Number(i.qty||0);
+    var rq=(x.returns||[]).reduce(function(a,r){return a+(r.items||[]).filter(function(z){return z.lineIndex!=null?Number(z.lineIndex)===(x.items||[]).indexOf(i):Number(z.id)===Number(i.id);}).reduce(function(b,z){return b+Number(z.qty||0);},0);},0);var grossLine=Number(i.amount!=null?i.amount:(i.price||0)*(i.qty||0));var returnedLine=(x.returns||[]).reduce(function(a,r){return a+(r.items||[]).filter(function(z){return z.lineIndex!=null?Number(z.lineIndex)===(x.items||[]).indexOf(i):Number(z.id)===Number(i.id);}).reduce(function(b,z){return b+Number(z.amount||0);},0);},0);p.qty+=Math.max(0,Number(i.qty||0)-rq);p.sales+=Math.max(0,grossLine-returnedLine);p.cost+=Number(i.cost||0)*Math.max(0,Number(i.qty||0)-rq);
    });});
    var top=Object.keys(products).map(function(k){return products[k];}).sort(function(a,b){return b.sales-a.sales;}).slice(0,15);
    var low=(s.products||[]).filter(function(p){return Number(p.stock||0)<=Number(p.min||0);});
