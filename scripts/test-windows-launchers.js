@@ -4,6 +4,7 @@ const launchers = ['Iniciar-Servidor.bat', 'Iniciar-Servidor-PRUEBA.bat'];
 for (const file of launchers) {
   const text = fs.readFileSync(file, 'utf8');
   if (!text.includes('%~dp0server.js')) throw new Error(file + ': debe iniciar server.js desde la carpeta raíz.');
+  if (file === 'Iniciar-Servidor.bat' && !text.includes('where node')) throw new Error('El lanzador principal debe detectar Node.js antes de reiniciar el servidor.');
   if (text.includes('servidor\\server.js')) throw new Error(file + ': conserva una ruta antigua inexistente.');
 }
 const install = fs.readFileSync('1-INSTALAR.bat', 'utf8');
