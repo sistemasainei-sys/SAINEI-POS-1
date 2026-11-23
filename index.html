@@ -1904,7 +1904,7 @@ function renderStock(){
     var mv=state.moves.filter(function(m){return !cur||String(m.pid)===cur;}).slice(-200).reverse();
     $('#moveBody').innerHTML=mv.length?mv.map(function(m){
       var p=getP(m.pid);
-      return '<tr><td>'+fdt(m.date)+'</td><td>'+esc(p?p.name:'(producto eliminado)')+'</td><td>'+(MOVE_LABEL[m.type]||m.type)+'</td><td class="r num">'+(m.qty>0?'+':'')+(p&&p.type==='peso'?nf3.format(m.qty):nf.format(m.qty))+'</td><td>'+esc(m.note)+'</td></tr>';
+      return '<tr><td>'+fdt(m.date)+'</td><td>'+esc(p?p.name:'(producto eliminado)')+'</td><td>'+esc(MOVE_LABEL[m.type]||m.type)+'</td><td class="r num">'+(m.qty>0?'+':'')+(p&&p.type==='peso'?nf3.format(m.qty):nf.format(m.qty))+'</td><td>'+esc(m.note)+'</td></tr>';
     }).join(''):emptyRow(5,'No hay movimientos.');
   }
 }
