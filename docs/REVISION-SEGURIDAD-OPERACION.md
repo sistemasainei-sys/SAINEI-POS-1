@@ -60,3 +60,11 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - El servidor recalcula el total desde las líneas y rechaza la compra si no coincide con el total recibido.
 - Las compras existentes son inmutables desde sincronización: una modificación no idéntica se rechaza para evitar cambiar documentos que ya pueden tener pagos asociados.
 - No se ejecutaron pruebas; queda pendiente la validación operativa de compras, pagos y reposición de stock.
+
+
+## Inmutabilidad de cobros y pagos
+
+- Los pagos a proveedores (`spay`) aceptados no pueden editarse ni reasignarse en sincronizaciones posteriores.
+- Los cobros de clientes (`payments`) aceptados tampoco pueden alterarse retroactivamente.
+- Si se necesita corregir un movimiento, debe resolverse mediante un procedimiento de ajuste o reversión auditable; la interfaz actual no debe simular una edición del comprobante original.
+- No se ejecutaron pruebas.
