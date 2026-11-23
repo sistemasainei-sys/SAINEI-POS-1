@@ -1707,6 +1707,13 @@ function saveProduct(){
   var vg=$('#pf-variant-group').value.trim(),vn=$('#pf-variant-name').value.trim();
   if(vn&&!vg){err.textContent='Indicá el grupo o producto base para esta variante.';return;}
   if(vg&&!vn){err.textContent='Indicá el talle, color, modelo o presentación de la variante.';return;}
+  if(vg&&vn){
+    var vgKey=vg.toLocaleLowerCase('es').replace(/\s+/g,' ').trim(),vnKey=vn.toLocaleLowerCase('es').replace(/\s+/g,' ').trim();
+    var dupVariant=state.products.filter(function(x){
+      return x.id!==ui.editId&&String(x.variantGroup||'').toLocaleLowerCase('es').replace(/\s+/g,' ').trim()===vgKey&&String(x.variantName||'').toLocaleLowerCase('es').replace(/\s+/g,' ').trim()===vnKey;
+    })[0];
+    if(dupVariant){err.textContent='Esa variante ya existe en "'+dupVariant.name+'". Cada variante debe tener su propio producto, código y stock.';return;}
+  }
   var prior=ui.editId?getP(ui.editId):null,imageInput=$('#pf-image-data');
   var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim(),variantGroup:vg,variantName:vn,image:imageInput?imageInput.value:(prior&&prior.image||'')};
   if(ui.editId){
