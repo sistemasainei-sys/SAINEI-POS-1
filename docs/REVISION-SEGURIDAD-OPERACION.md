@@ -116,3 +116,12 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - Los arreglos no se aceptan como objetos de configuración o cambios; se evita tratar silenciosamente estructuras malformadas como sincronizaciones vacías.
 - Se mantiene la validación previa de colecciones y límites de lote.
 - No se ejecutaron pruebas.
+
+
+## Validación de copias antes de restaurar
+
+- Antes de modificar la base de datos, el servidor valida que el archivo tenga las listas esenciales de productos y ventas.
+- Las colecciones presentes deben ser listas de hasta 100.000 registros; cada registro debe ser un objeto con ID entero seguro, positivo y no duplicado dentro de su colección.
+- Los bloques de configuración deben ser objetos y no arreglos.
+- Las copias inválidas se rechazan antes de crear la copia previa o iniciar la restauración; se evita descartar silenciosamente filas con IDs incorrectos.
+- No se ejecutaron pruebas de restauración.
