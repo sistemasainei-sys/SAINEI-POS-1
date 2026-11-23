@@ -43,4 +43,8 @@ assert.match(server, /nextStock < 0/);
 assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\)/);
 assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\);\s*else \{ s\.role = role; s\.name = name; \}/);
 
+// El cambio de PIN propio conserva la sesión actual y revoca las sesiones hermanas.
+const mypin = server.slice(server.indexOf("if (p === '/api/mypin'"), server.indexOf("if (!admin)"));
+assert.match(mypin, /session\.uid === me\.uid && token !== me\.token\) sessions\.delete\(token\)/);
+
 console.log('OK: activación, restauración, sincronización y cierre controlado de turnos verificados.');
