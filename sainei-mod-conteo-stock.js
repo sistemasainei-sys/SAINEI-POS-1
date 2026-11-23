@@ -18,10 +18,16 @@ window.SAINEI_POS_MODULES.push({
     var actual=Number(input.value);if(!Number.isFinite(actual)||actual<0){api.toast('La cantidad debe ser cero o mayor.');return;}
     var before=Number(p.stock)||0,delta=api.round3(actual-before);if(Math.abs(delta)<0.0005){api.toast('El stock ya coincide con el conteo.');return;}
     if(!window.confirm('¿Confirmás el ajuste de '+p.name+'? Existencia: '+before+' · Conteo: '+actual+' · Diferencia: '+delta.toFixed(3)+'.'))return;
+    var oldMoves=s.moves.slice(),oldStock=p.stock;
     p.stock=api.round3(actual);s.moves.push({id:api.newId('move'),date:new Date().toISOString(),pid:p.id,type:'ajuste',qty:delta,note:'Conteo físico de inventario. Sistema anterior: '+before+'; conteo real: '+actual});
     if(s.moves.length>5000)s.moves.splice(0,s.moves.length-5000);
-    api.log('Conteo de inventario: '+p.name+' '+before+' → '+actual);
-    Promise.resolve(api.save()).then(function(ok){api.refresh();api.toast(ok===false?'No se pudo confirmar el guardado. Revisá la conexión.':'Conteo aplicado y guardado.');});
+    Promise.resolve().then(function(){return api.save();}).then(function(ok){
+     if(ok===false){p.stock=oldStock;s.moves=oldMoves;api.refresh();api.toast('No se confirmó el guardado. Se restauró el stock anterior.');return;}
+     api.log('Conteo de inventario: '+p.name+' '+before+' → '+actual);
+     api.refresh();api.toast('Conteo aplicado y guardado.');
+    }).catch(function(){
+     p.stock=oldStock;s.moves=oldMoves;api.refresh();api.toast('No se pudo guardar. Se restauró el stock anterior.');
+    });
    });});
   }
  }
