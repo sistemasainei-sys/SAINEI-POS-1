@@ -1249,8 +1249,10 @@ function doOpenShift(){
   save();closeModal();renderCurrent();toast('Caja abierta');
   if(ui.afterShift==='checkout'){ui.afterShift=null;openCheckout();}
 }
-function closeShiftModal(){
-  var sh=curShift();if(!sh)return;
+var closingShiftTarget=0;
+function closeShiftModal(id){
+  closingShiftTarget=Number(id)||0;
+  var sh=closingShiftTarget?state.shifts.filter(function(x){return x.id===closingShiftTarget&&!x.closedAt;})[0]:curShift();if(!sh)return;
   var s=shiftSummary(sh);
   openModal('<h2>Cerrar caja</h2><div class="card panel" style="margin:0">'+
     '<div class="kv"><span>Fondo inicial</span><span class="num">'+gs(sh.openAmt)+'</span></div>'+
@@ -1266,7 +1268,7 @@ function closeShiftModal(){
   var c=$('#countAmt');if(c)c.focus();
 }
 function updateCount(){
-  var sh=curShift();if(!sh)return;
+  var sh=closingShiftTarget?state.shifts.filter(function(x){return x.id===closingShiftTarget&&!x.closedAt;})[0]:curShift();if(!sh)return;
   var s=shiftSummary(sh),raw=digits($('#countAmt').value),info=$('#countInfo'),ok=$('#closeOk');
   if(raw===''){info.textContent='';info.className='cashinfo';ok.disabled=true;return;}
   var diff=parseInt(raw,10)-s.expected;
@@ -1275,11 +1277,11 @@ function updateCount(){
   ok.disabled=false;
 }
 function doCloseShift(){
-  var sh=curShift();if(!sh)return;
+  var sh=closingShiftTarget?state.shifts.filter(function(x){return x.id===closingShiftTarget&&!x.closedAt;})[0]:curShift();if(!sh)return;
   var raw=digits($('#countAmt').value);if(raw==='')return;
   var s=shiftSummary(sh);
-  sh.expected=s.expected;sh.counted=parseInt(raw,10);sh.diff=sh.counted-s.expected;sh.note=$('#closeNote').value.trim();sh.closedAt=nowIso();sh.closedBy=cur?cur.name:'';log('Cerró la caja · contado '+gs(sh.counted)+(sh.diff?' · diferencia '+gs(sh.diff):' · cuadrada'));
-  save();closeModal();renderCurrent();toast('Caja cerrada');
+  sh.expected=s.expected;sh.counted=parseInt(raw,10);sh.diff=sh.counted-s.expected;sh.note=$('#closeNote').value.trim();sh.closedAt=nowIso();sh.closedBy=cur?cur.name:'';sh.closedByRole=cur?cur.role:'';log('Cerró la caja de '+(sh.by||'cajero')+' · contado '+gs(sh.counted)+(sh.diff?' · diferencia '+gs(sh.diff):' · cuadrada'));
+  closingShiftTarget=0;save();closeModal();renderCurrent();toast('Caja cerrada');
   if(SERVER){}else if(dirHandle&&dirOk)writeFolderBackup();else exportBackup();
 }
 
@@ -1897,6 +1899,8 @@ function renderFinance(){
     }else{
       card='<div class="panel card"><h3>La caja está cerrada</h3><p class="muted" style="margin:0">Abrila con el fondo inicial para poder vender.</p><div><button class="btn primary" data-a="openshiftmodal">Abrir caja</button></div></div>';
     }
+    var openOthers=state.shifts.filter(function(x){return !x.closedAt&&(!sh||x.id!==sh.id);});
+    if((cur.role==='admin'||cur.role==='encargado')&&openOthers.length){card+='<div class="panel card"><h3>Cajas de otros cajeros abiertas</h3><p class="hint">El principal o encargado puede cerrar un turno olvidado. Debe contar el efectivo y dejar una observación.</p>'+openOthers.map(function(x){return '<div class="kv"><span>'+esc(x.by||'Cajero')+' · '+fdt(x.openAt)+'</span><button class="btn" data-a="closeothershift" data-id="'+x.id+'">Revisar y cerrar</button></div>';}).join('')+'</div>';}
     $('#shiftCard').innerHTML=card;
     var cl=state.shifts.filter(function(x){return x.closedAt;}).slice().reverse().slice(0,30);
     $('#shiftBody').innerHTML=cl.length?cl.map(function(x){
@@ -2103,6 +2107,7 @@ var A={
   openshiftmodal:function(){ui.afterShift=null;openShiftModal();},
   openshift:function(){doOpenShift();},
   closeshiftmodal:function(){closeShiftModal();},
+  closeothershift:function(el,id){closeShiftModal(id);},
   closeshift:function(){doCloseShift();},
   newbudget:function(){openBudgetForm();},
   addbudgetline:function(){addBudgetLine();},
@@ -2234,7 +2239,7 @@ function isManager(){return !!cur&&(cur.role==='admin'||cur.role==='encargado');
 function roleName(r){return r==='admin'?'Principal':(r==='encargado'?'Encargado':'Cajero');}
 function maxDisc(){return isManager()?100:(state&&state.sec?state.sec.maxDisc:10);}
 function canTab(t){if(!cur)return false;if(MODULE_TABS[t]){var cv=MODULE_TABS[t].canView;return typeof cv==='function'?!!cv(cur):cv===true?true:cur.role==='admin';}if(cur.role==='admin')return true;if(cur.role==='encargado')return t!=='ajustes';return t==='caja'||t==='clientes';}
-var ENCACT={'void':1,newprod:1,edit:1,saveprod:1,delprod:1,importprod:1,exportprod:1,tplprod:1,newadjust:1,adjust:1,saveadjust:1,newpurchase:1,puadd:1,purm:1,puok:1,viewpurch:1,newexpense:1,saveexpense:1,paypurch:1,savepay:1,exportsales:1,newfromcode:1,delclient:1};
+var ENCACT={'closeothershift':1,'void':1,newprod:1,edit:1,saveprod:1,delprod:1,importprod:1,exportprod:1,tplprod:1,newadjust:1,adjust:1,saveadjust:1,newpurchase:1,puadd:1,purm:1,puok:1,viewpurch:1,newexpense:1,saveexpense:1,paypurch:1,savepay:1,exportsales:1,newfromcode:1,delclient:1};
 function getU(id){return state.users.filter(function(u){return u.id===id;})[0];}
 function hasAdmin(){if(SERVER&&INFO)return !!INFO.hasAdmin;return state.users.some(function(u){return u.active&&u.role==='admin';});}
 function lockUsers(){return SERVER&&INFO?INFO.users.slice():state.users.filter(function(u){return u.active;});}
