@@ -2,13 +2,16 @@
 
 Sistema de punto de venta web para operar con un servidor central y varias cajas dentro de la misma red.
 
-## Requisitos
+## Modalidad local: sin Render ni pago de alojamiento
 
-- Windows 10/11 en la computadora que actuará como servidor.
-- Node.js 22.13 o superior.
-- Una conexión de red estable entre el servidor y las cajas.
-- Una licencia SAINEI POS válida para activar la instalación.
-- Espacio disponible y una unidad externa para copias de seguridad.
+SAINEI POS está preparado para guardar los datos comerciales en la computadora principal de cada comercio, usando una base SQLite local (`sainei.db`). **No necesita Render ni una base de datos en la nube para registrar ventas.** Cada comercio instala su propia copia y mantiene sus propios datos.
+
+- La computadora principal ejecuta el servidor y guarda la base de datos.
+- Las demás cajas se conectan a esa computadora por la red local (Wi-Fi o cable).
+- Para operar dentro del local, basta con que la computadora principal y la red local estén funcionando; no se necesita internet para las operaciones locales después de activar el sistema.
+- Si la computadora principal se apaga, las otras cajas no pueden operar hasta que vuelva a encenderse.
+- Node.js 22.13 o superior y una licencia SAINEI POS válida son requisitos de instalación.
+- Se recomienda una unidad externa para copias de seguridad.
 
 ## Inicio en una computadora Windows
 
@@ -60,7 +63,7 @@ Una copia no se considera recuperable hasta que se haya comprobado una restaurac
 
 ## Alcance y límites actuales
 
-- El POS requiere conexión con el servidor para confirmar operaciones. No incluye ventas offline ni sincronización posterior.
+- El POS requiere conexión con la computadora servidor para confirmar operaciones. Esto es conexión de red local, no conexión a Render. No incluye ventas offline cuando se pierde la conexión con la computadora principal.
 - La operación multi-PC descrita es dentro de la red local; el acceso remoto seguro requiere configurar VPN o túnel autenticado.
 - La conexión HTTP local no cifra el tráfico dentro de la LAN. Usar únicamente una red privada y confiable.
 - La configuración de impresoras, lectores y balanzas depende de sus modelos y requiere ajuste en los equipos reales.
