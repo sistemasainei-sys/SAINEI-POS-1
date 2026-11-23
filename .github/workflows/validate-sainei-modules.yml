@@ -30,3 +30,5 @@ jobs:
         run: node scripts/test-sainei-modules.js
       - name: Verify Windows launchers and data safety
         run: node scripts/test-windows-launchers.js
+      - name: Verify license and user data safety
+        run: node scripts/test-license-data-safety.js
