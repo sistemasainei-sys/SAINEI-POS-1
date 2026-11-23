@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>SAINEI POS</title>
 <link rel="manifest" href="/manifest.webmanifest">
-<meta name="theme-color" content="#1769aa">
+<meta name="theme-color" content="#f28a1e">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="SAINEI POS">
@@ -396,9 +396,11 @@ main{padding-top:20px}
 }
 
 
-/* El sistema conserva la identidad clara también si el dispositivo usa modo oscuro */
-:root[data-theme="dark"]{--bg:#f2f5fa;--surface:#fff;--surface-2:#edf1f7;--fg:#17243a;--muted:#64748b;--line:#dce5f0;--accent:#f28a1e;--accent-fg:#142b4b;--accent-soft:#fff0dc;color-scheme:light}
-@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#f2f5fa;--surface:#fff;--surface-2:#edf1f7;--fg:#17243a;--muted:#64748b;--line:#dce5f0;--accent:#f28a1e;--accent-fg:#142b4b;--accent-soft:#fff0dc;color-scheme:light}}
+/* Identidad SAINEI unificada: azul institucional + naranja. */
+:root{--bg:#f2f5fa;--surface:#fff;--surface-2:#eaf0f7;--fg:#17243a;--muted:#64748b;--line:#dce5f0;--accent:#f28a1e;--accent-fg:#142b4b;--accent-soft:#fff0dc;--warn:#9a5200;--warn-soft:#fff0d6;--bad:#b42318;--bad-soft:#fde3df;--ok:#1769aa;--ok-soft:#dcecff;color-scheme:light}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{--bg:#101a2a;--surface:#17263b;--surface-2:#22344d;--fg:#edf4fc;--muted:#a9b9cc;--line:#334963;--accent:#ff9b35;--accent-fg:#17243a;--accent-soft:#49331e;--warn:#ffc66d;--warn-soft:#49371c;--bad:#ff9388;--bad-soft:#482622;--ok:#75baff;--ok-soft:#1e3b59;color-scheme:dark}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){--bg:#101a2a;--surface:#17263b;--surface-2:#22344d;--fg:#edf4fc;--muted:#a9b9cc;--line:#334963;--accent:#ff9b35;--accent-fg:#17243a;--accent-soft:#49331e;--warn:#ffc66d;--warn-soft:#49371c;--bad:#ff9388;--bad-soft:#482622;--ok:#75baff;--ok-soft:#1e3b59;color-scheme:dark}}
 </style>
 
 </head>
