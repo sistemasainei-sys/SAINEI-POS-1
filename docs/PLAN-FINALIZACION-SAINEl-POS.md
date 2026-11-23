@@ -72,7 +72,7 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 
 - [ ] Definir y aplicar una regla contable para devoluciones de ventas mixtas (efectivo/tarjeta/transferencia/crédito). Actualmente el importe total devuelto se descuenta del saldo de crédito de la venta, aunque el reembolso pueda salir por caja o por banco. Esto puede reducir indebidamente la deuda del cliente cuando el reembolso se entrega en efectivo/transferencia.
 - [ ] Separar explícitamente el importe aplicado a saldo de crédito del importe reembolsado por caja/banco; conservar trazabilidad por devolución y validar esa distribución en el servidor.
-- [x] Revisión estática confirma que el servidor valida que las cantidades devueltas no superen las cantidades vendidas y exige movimientos de reposición de stock correspondientes; no se ejecutaron pruebas.
+- [x] Revisión estática: el servidor valida las cantidades devueltas acumuladas por línea contra lo vendido, impide modificar devoluciones anteriores y solo acepta movimientos de reposición cuando llegan junto con una nueva devolución válida del ticket. No se ejecutaron pruebas.
 
 **No se modificó esta regla contable:** falta definir si una devolución debe acreditarse a la deuda, reembolsarse al cliente o permitir una distribución entre ambas opciones. Evitar corregirla por suposición para no alterar saldos reales.
 
