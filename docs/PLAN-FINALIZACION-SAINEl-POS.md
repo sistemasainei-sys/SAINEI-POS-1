@@ -15,6 +15,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [ ] HTTPS para conexiones LAN y acceso remoto seguro, sin exponer la base de datos ni el puerto interno directamente a internet. Revisión estática de riesgos documentada en `docs/REVISION-SEGURIDAD-OPERACION.md`.
 - [ ] Definir acceso remoto mediante VPN o túnel autenticado y documentar instalación/rotación de certificados.
 - [x] Documentar controles existentes y brechas de sesiones, permisos, intentos fallidos y Origin/CSRF en `docs/REVISION-SEGURIDAD-OPERACION.md`.
+- [x] Reforzar autorización del lado del servidor: exportar/restaurar datos, vaciar datos y consultar/crear/restaurar respaldos requiere rol administrador; no depende solo de ocultar botones en la interfaz.
 - [ ] Pruebas de sesiones vencidas, revocación de usuarios, permisos por rol y protección CSRF/origen.
 - [x] Persistir en SQLite el contador de intentos fallidos de acceso para que sobreviva reinicios; falta verificarlo en ejecución.
 - [ ] Revisar almacenamiento de fotos y logos para evitar bases de datos excesivamente grandes.
