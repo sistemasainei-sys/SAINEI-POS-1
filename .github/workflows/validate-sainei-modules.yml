@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - sainei-pos-finalizacion-independiente
+      - sainei-pos-finalizacion-segura
   pull_request:
     branches:
       - main
