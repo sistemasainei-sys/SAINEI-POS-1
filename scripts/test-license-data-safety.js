@@ -26,4 +26,12 @@ const sync = index.slice(index.indexOf('function syncOnce('), index.indexOf('var
 assert.match(sync, /catch\(function\(e\)\s*\{\s*SYNC\.dirty=true/);
 assert.match(sync, /if\(e&&e\.status===401\)\{sessionLost\(\)/);
 
-console.log('OK: activación, usuario principal, restauración JSON y manejo de desconexión protegidos.');
+
+// El principal y encargado pueden cerrar turnos ajenos; el cajero sigue limitado a su propio turno.
+assert.match(server, /encargado:\s*\{[^}]*shifts:\s*\{[^}]*upd:\s*1/s);
+assert.match(server, /if \(coll === 'shifts' && user\.role === 'cajero'\)/);
+assert.match(index, /function closeShiftModal\(id\)/);
+assert.match(index, /function doCloseShift\(\)\s*\{\s*var sh=closingShiftTarget\?/);
+assert.match(index, /closeothershift:function\(el,id\)\{closeShiftModal\(id\);\}/);
+
+console.log('OK: activación, restauración, sincronización y cierre controlado de turnos verificados.');
