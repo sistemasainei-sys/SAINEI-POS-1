@@ -120,7 +120,7 @@ LO QUE ESTA VERSIÓN NO INCLUYE (honestidad)
 - Facturación legal / SIFEN / e-Kuatia: NO incluida. Los tickets son comprobantes internos. La arquitectura queda
   lista para sumar un módulo fiscal después, pero hoy no existe.
 - Sucursales y transferencias entre sucursales: no incluidas (se desarrollan si el cliente lo pide).
-- Fotos de productos: no incluidas todavía.
+- Fotos de productos: incluidas en el catálogo y en el formulario de productos. Se reducen automáticamente al cargarlas.
 - Acceso remoto desde fuera del local: no incluido (futuro, con VPN o similar; los datos seguirían en el local).
 - La red del local usa HTTP sin cifrar: usá un Wi-Fi con clave y no dejes que extraños se conecten.
 - La caja de un cajero que se olvidó de cerrarla no la puede cerrar otro usuario: la cierra él al volver.
