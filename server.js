@@ -157,6 +157,7 @@ function processSync(user, body) {
   const incomingSales = Array.isArray(changes.sales && changes.sales.up) ? changes.sales.up : [];
   const incomingMoves = Array.isArray(changes.moves && changes.moves.up) ? changes.moves.up : [];
   const rejectedTickets = new Set();
+  const virtualStock = new Map();
   const ticketMoves = new Map();
   for (const move of incomingMoves) {
     const match = /^Ticket (\d+)$/.exec(String(move && move.note || ''));
@@ -183,6 +184,18 @@ function processSync(user, body) {
       }
       for (const [pid, qty] of required) if (Math.abs((delivered.get(pid) || 0) - qty) > 0.001) rejectedTickets.add(saleId);
       for (const pid of delivered.keys()) if (!required.has(pid)) rejectedTickets.add(saleId);
+      // Reservar virtualmente el stock para validar también varias ventas del mismo lote.
+      if (!rejectedTickets.has(saleId)) {
+        for (const [pid, qty] of required) {
+          const productRow = getRec('products', pid);
+          const current = virtualStock.has(pid) ? virtualStock.get(pid) : (productRow && !productRow.del ? Number(JSON.parse(productRow.j).stock || 0) : NaN);
+          if (!Number.isFinite(current) || round3(current - qty) < 0) { rejectedTickets.add(saleId); break; }
+        }
+        if (!rejectedTickets.has(saleId)) for (const [pid, qty] of required) {
+          const productRow = getRec('products', pid), current = virtualStock.has(pid) ? virtualStock.get(pid) : Number(JSON.parse(productRow.j).stock || 0);
+          virtualStock.set(pid, round3(current - qty));
+        }
+      }
     }
     if (!moves.length) rejectedTickets.add(saleId);
   }
