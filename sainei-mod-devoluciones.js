@@ -37,7 +37,7 @@ window.SAINEI_POS_MODULES.push({
    items.forEach(function(it){var p=(s0.products||[]).filter(function(x){return Number(x.id)===Number(it.id);})[0];if(p){p.stock=api.round3(Number(p.stock||0)+it.qty);s0.moves.push({id:api.newId('move'),date:stamp,pid:p.id,type:'devolucion',qty:it.qty,note:'Devolución ticket '+s.id});}});
    if(method==='caja')s0.expenses.push({id:api.newId('exp'),date:stamp,concept:'Reembolso devolución ticket '+s.id,cat:'Devolución',amount:amount,method:'caja',shiftId:shift.id});
    api.log('Devolución ticket #'+s.id+' · '+money(amount)+' · '+items.map(function(x){return x.name+' x '+x.qty;}).join(', '));
-   Promise.resolve(api.save()).then(function(ok){api.closeModal();api.refresh();api.toast('Devolución registrada y stock actualizado.');}).catch(function(){err.textContent='No se pudo guardar. Revisá la conexión y volvé a intentar.';});
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){err.textContent='El servidor no confirmó el guardado. No cierres esta pantalla; revisá la conexión.';return;}api.closeModal();api.refresh();api.toast('Devolución registrada y stock actualizado.');}).catch(function(){err.textContent='No se pudo guardar. Revisá la conexión y volvé a intentar.';});
   }
  }
 });
