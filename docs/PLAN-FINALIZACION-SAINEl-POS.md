@@ -30,9 +30,9 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 ## Prioridad 4 — Catálogo y herramientas comerciales
 
 - [ ] Variantes de producto (talle, color, modelo, presentación) con SKU/código y stock independiente.
-- [ ] Etiquetas imprimibles con código de barras y precio.
+- [x] Etiquetas imprimibles con nombre, precio y código del producto.
 - [ ] Integración y pruebas de impresoras térmicas, lectores y balanzas compatibles.
-- [ ] Historial y ficha de proveedores; estados de cuenta y vencimientos de cuentas por pagar.
+- [x] Historial de proveedores con compras, pagos registrados, saldos y vencimientos (vista de consulta).
 - [ ] Fidelización opcional de clientes y puntos, con reglas configurables.
 
 ## Prioridad 5 — Compatibilidad y publicación
