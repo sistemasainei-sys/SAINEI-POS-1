@@ -11,20 +11,30 @@ Permitir que el comercio use el servidor SAINEI POS en una computadora Windows s
 3. Ejecutar `iniciar-sainei-pos-windows.bat`.
 4. Mantener abierta la ventana del servidor mientras se trabaja.
 
-El iniciador configura `SAINEI_DATA` en `%LOCALAPPDATA%\SAINEI-POS\datos`. La base SQLite y las copias automáticas quedan fuera de la carpeta del programa, por lo que una actualización de los archivos de la aplicación no las reemplaza.
+El iniciador configura `SAINEI_DATA` en `%LOCALAPPDATA%\\SAINEI-POS\\datos`. La base SQLite y las copias automáticas quedan fuera de la carpeta del programa, por lo que una actualización de los archivos de la aplicación no las reemplaza.
 
 ## Acceso desde otras computadoras de la misma red
 
 El servidor muestra las direcciones disponibles al iniciar. En las otras computadoras, abrir la dirección LAN indicada por el servidor, usando el mismo puerto. No publicar esa dirección ni abrir el puerto del router hacia internet.
 
+## Copias externas
+
+El servidor crea copias automáticas locales en `%LOCALAPPDATA%\\SAINEI-POS\\datos\\copias`. Para llevarlas a una memoria USB o disco externo:
+
+1. Conectar la unidad externa.
+2. Ejecutar `respaldar-sainei-pos-windows.bat` pasando la carpeta de destino, por ejemplo `respaldar-sainei-pos-windows.bat E:\\SAINEI-RESPALDOS`.
+3. Esperar el mensaje de finalización y retirar la unidad de forma segura.
+
+También se puede definir la variable `SAINEI_BACKUP_DEST` con la ruta de destino. El script copia únicamente archivos de respaldo `.db`; no borra archivos del destino. La restauración desde una copia debe hacerse desde la función de respaldos del sistema, no reemplazando archivos mientras el servidor está activo.
+
 ## Límites importantes
 
 - Este modo evita depender del servicio gratuito de Render para guardar la base de datos del comercio.
 - La computadora principal debe estar encendida; si se apaga, las demás computadoras no podrán operar.
-- El acceso desde fuera del local requiere una VPN o túnel autenticado configurado por separado. No está habilitado por este archivo.
-- Las copias automáticas guardadas en la misma computadora no sustituyen una copia externa. El administrador debe descargar/exportar copias y guardarlas también en otro dispositivo o ubicación segura.
+- El acceso desde fuera del local requiere una VPN o túnel autenticado configurado por separado. No está habilitado por estos archivos.
+- Las copias externas deben guardarse en una unidad separada y mantenerse bajo control del administrador. Este script no verifica una restauración.
 - No usar el enlace gratuito de Render para ventas reales: ese servicio puede suspenderse por inactividad y su disco no es persistente.
 
 ## Alcance
 
-Este iniciador no instala Node.js, no configura VPN, no configura impresoras y no publica el sistema en internet. Tampoco habilita modo sin conexión: las computadoras cliente necesitan conexión con la computadora servidor para confirmar operaciones.
+El iniciador no instala Node.js, no configura VPN, no configura impresoras y no publica el sistema en internet. Tampoco habilita modo sin conexión: las computadoras cliente necesitan conexión con la computadora servidor para confirmar operaciones.
