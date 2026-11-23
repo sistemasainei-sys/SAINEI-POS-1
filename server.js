@@ -467,7 +467,10 @@ async function handle(req, res) {
       prep('UPDATE users SET name=?,role=?,active=?,salt=?,hash=? WHERE id=?').run(name, role, active, k.salt, k.hash, ex.id);
       for (const [t, s] of [...sessions]) {
         if (s.uid !== ex.id) continue;
-        if (!active) sessions.delete(t); else { s.role = role; s.name = name; }
+        // Un cambio de clave invalida todas las sesiones anteriores.
+        // Un usuario desactivado también pierde acceso inmediatamente.
+        if (!active || pin) sessions.delete(t);
+        else { s.role = role; s.name = name; }
       }
       audit(me.name, 'Edito al usuario ' + name);
     } else {
