@@ -1013,7 +1013,7 @@ function renderProducts(){
   $('#grid').innerHTML=list.length?list.map(function(p){
     var cls=p.stock<=0?'out':(p.stock<=p.min?'low':'');
     var txt=p.stock<=0?'Agotado':(p.stock<=p.min?'Quedan '+fq(p.stock,p):fq(p.stock,p)+' en stock');
-    return '<button class="pcard" data-a="'+(p.type==='peso'?'weigh':'add')+'" data-id="'+p.id+'"'+(p.stock<=0?' disabled':'')+'><span class="pname">'+esc(p.name)+'</span><span class="pprice">'+gs(p.price)+(p.type==='peso'?' <small>/ kg</small>':(p.type==='medida'?' <small>/ '+esc(p.unit||'m')+'</small>':''))+'</span><span class="pstock '+cls+'">'+txt+'</span></button>';
+    return '<button class="pcard" data-a="'+(p.type==='peso'?'weigh':'add')+'" data-id="'+p.id+'"'+(p.stock<=0?' disabled':'')+'>'+(p.image?'<img src="'+esc(p.image)+'" alt="" loading="lazy" style="width:48px;height:48px;object-fit:contain;border-radius:6px;float:left;margin-right:8px">':'')+'<span class="pname">'+esc(p.name)+'</span><span class="pprice">'+gs(p.price)+(p.type==='peso'?' <small>/ kg</small>':(p.type==='medida'?' <small>/ '+esc(p.unit||'m')+'</small>':''))+'</span><span class="pstock '+cls+'">'+txt+'</span></button>';
   }).join(''):'<p class="empty">Ningún producto coincide con la búsqueda.</p>';
 }
 function lineAmount(l,p){return Math.round((l.price!=null?l.price:p.price)*l.qty);}
@@ -1577,7 +1577,7 @@ function decCode(){
   out.textContent='PLU '+r.plu+(p?' · '+p.name:' · no hay un producto con ese PLU')+' · '+desc+(p&&p.price>0?(state.scale.mode==='peso'?' · importe '+gs(Math.round(p.price*r.value/1000)):' · '+nf3.format(r.value/p.price)+' kg'):'');
 }
 function productForm(p,pref){
-  var v=p||{code:(pref&&pref.code)||'',name:'',cat:'',cost:'',price:'',iva:10,type:'u',plu:'',stock:'',min:5,supplier:''};
+  var v=p||{code:(pref&&pref.code)||'',name:'',cat:'',cost:'',price:'',iva:10,type:'u',plu:'',stock:'',min:5,supplier:'',image:''};
   var cats=Array.from(new Set(state.products.map(function(x){return x.cat;}))).sort();
   return '<h2>'+(p?'Editar producto':'Agregar producto')+'</h2><div class="form">'+
     fld('pf-name','Nombre',v.name,'type="text" maxlength="80"',true)+
@@ -1592,9 +1592,45 @@ function productForm(p,pref){
     fld('pf-stock','Stock actual (kg si es por peso)',v.stock===''?'':String(v.stock).replace('.',','),'type="text" inputmode="decimal"')+
     fld('pf-min','Avisar cuando queden',String(v.min).replace('.',','),'type="text" inputmode="decimal"')+
     fld('pf-sup','Proveedor (opcional)',v.supplier,'type="text" maxlength="60"')+
+    '<label>Foto del producto (opcional)<input id="pf-image" class="input" type="file" accept="image/jpeg,image/png,image/webp"> <small>Se optimiza automáticamente para no cargar demasiado la base de datos.</small></label>'+
+    '<input id="pf-image-data" type="hidden" value="'+esc(v.image||'')+'"><div id="pf-image-preview" style="margin:8px 0">'+(v.image?'<img src="'+esc(v.image)+'" alt="Foto del producto" style="max-width:120px;max-height:120px;object-fit:contain;border-radius:8px">':'')+'</div>'+
     '</div><p class="err" id="pfErr" role="alert"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button>'+
     (p?'<button class="btn danger" id="delBtn" data-a="delprod">Eliminar</button>':'')+'<button class="btn primary" data-a="saveprod">Guardar</button></div>';
 }
+function prepareProductImage(file){
+  return new Promise(function(resolve,reject){
+    if(!file||!/^image\\/(jpeg|png|webp)$/.test(file.type)){reject(new Error('Elegí una imagen JPG, PNG o WebP.'));return;}
+    if(file.size>12*1024*1024){reject(new Error('La imagen supera 12 MB.'));return;}
+    var reader=new FileReader();
+    reader.onerror=function(){reject(new Error('No se pudo leer la imagen.'));};
+    reader.onload=function(){
+      var img=new Image();
+      img.onerror=function(){reject(new Error('El archivo no es una imagen válida.'));};
+      img.onload=function(){
+        var max=640,w=img.width,h=img.height,scale=Math.min(1,max/Math.max(w,h));
+        var c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*scale));c.height=Math.max(1,Math.round(h*scale));
+        var ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);
+        var data=c.toDataURL('image/jpeg',0.72);
+        if(data.length>420000)data=c.toDataURL('image/jpeg',0.55);
+        if(data.length>520000){reject(new Error('No se pudo reducir la foto lo suficiente.'));return;}
+        resolve(data);
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+document.addEventListener('change',function(e){
+  if(!e.target||e.target.id!=='pf-image')return;
+  var input=e.target,file=input.files&&input.files[0],hidden=$('#pf-image-data'),preview=$('#pf-image-preview'),err=$('#pfErr');
+  if(!file)return;
+  if(err)err.textContent='Procesando foto…';
+  prepareProductImage(file).then(function(data){
+    if(hidden)hidden.value=data;
+    if(preview)preview.innerHTML='<img src="'+data+'" alt="Vista previa" style="max-width:120px;max-height:120px;object-fit:contain;border-radius:8px">';
+    if(err)err.textContent='';
+  }).catch(function(x){input.value='';if(err)err.textContent=x.message;});
+});
 function saveProduct(){
   var err=$('#pfErr');
   var name=$('#pf-name').value.trim(),cat=$('#pf-cat').value.trim()||'Sin categoría',code=digits($('#pf-code').value),type=$('#pf-type').value==='peso'?'peso':($('#pf-type').value==='medida'?'medida':'u'),unit=$('#pf-type').value==='medida'?$('#pf-unit').value:($('#pf-type').value==='peso'?'kg':'u'),plu=digits($('#pf-plu').value);
@@ -1610,7 +1646,8 @@ function saveProduct(){
   }else plu='';
   var dup=state.products.filter(function(x){return code&&x.code===code&&x.id!==ui.editId;})[0];
   if(dup){err.textContent='Ese código ya pertenece a "'+dup.name+'".';return;}
-  var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim()};
+  var prior=ui.editId?getP(ui.editId):null,imageInput=$('#pf-image-data');
+  var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim(),image:imageInput?imageInput.value:(prior&&prior.image||'')};
   if(ui.editId){
     var p=getP(ui.editId);
     if(round3(p.stock)!==data.stock)addMove(p.id,'ajuste',data.stock-p.stock,'Edición del producto');
