@@ -5,7 +5,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 ## Prioridad 1 — Operación en línea y respaldo de datos
 
 - [x] Definir que SAINEI POS requiere conexión a internet/servidor para confirmar ventas; no ofrecer operación sin conexión.
-- [ ] Verificar restauración y copias antes/después de cada actualización. La guía de riesgos de backup externo está en `docs/REVISION-SEGURIDAD-OPERACION.md`.
+- [ ] Verificar restauración y copias antes/después de cada actualización. La guía de riesgos está en `docs/REVISION-SEGURIDAD-OPERACION.md` y el procedimiento para el administrador en `docs/PROCEDIMIENTO-RESPALDO-RESTAURACION.md`.
 - [ ] Confirmar almacenamiento persistente de la base de datos en el servicio publicado antes de usarlo con datos reales.
 
 **Decisión de alcance:** el usuario decidió dejar fuera el modo sin conexión. El cliente debe tener internet para operar y confirmar ventas. No se implementará cola offline ni sincronización posterior en esta entrega.
