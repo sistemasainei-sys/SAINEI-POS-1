@@ -34,6 +34,8 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [x] Documentar compatibilidad, configuración y límites de impresoras térmicas, lectores y balanzas; la integración física por modelo sigue pendiente.
 - [x] Mejorar el script de respaldo USB: comprobar que existan copias `.db` en origen, que el destino sea accesible y que haya archivos `.db` al finalizar. La restauración íntegra sigue pendiente de verificación aislada.
 - [x] Historial de proveedores con compras, pagos registrados, saldos y vencimientos (vista de consulta).
+- [x] Auditoría visible desde la barra principal para el administrador, con fecha, usuario y acción; consulta protegida también en el servidor.
+- [x] Compras y movimientos disponibles en Stock; gastos y caja en Finanzas; usuarios/permisos y copias de seguridad en Ajustes. No se duplican como pestañas independientes.
 - [x] Cuentas por cobrar: descontar devoluciones registradas del crédito pendiente y recalcular vencimientos con pagos aplicados por antigüedad.
 - [x] Fidelización opcional de clientes y puntos, con reglas configurables (canje e historial implementados; falta prueba funcional).
 
