@@ -17,6 +17,9 @@ const state = {
 const api = {
   state: () => state,
   user: () => ({ id: 1, role: 'admin' }),
+  addAction(name, fn) {
+    if (!/^[a-z][a-z0-9_-]{1,40}$/i.test(name) || typeof fn !== 'function') throw new Error('Acción inválida: ' + name);
+  },
   addTab(spec) {
     if (!spec || !/^[a-z][a-z0-9_-]{1,30}$/i.test(spec.id)) throw new Error('ID de pestaña inválido');
     if (!spec.label || typeof spec.render !== 'function') throw new Error('Definición de pestaña incompleta: ' + spec.id);
