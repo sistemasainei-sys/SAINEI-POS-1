@@ -61,6 +61,23 @@ for (const tab of registered) {
   tab.render(sec);
   if (!sec.innerHTML) throw new Error('El módulo no generó contenido: ' + tab.id);
 }
+const pausedTab = registered.find((x) => x.id === 'ventas-pausadas');
+if (!pausedTab || typeof actions['vs-pausar'] !== 'function' || typeof actions['vs-restaurar'] !== 'function' || typeof actions['vs-eliminar'] !== 'function') {
+  throw new Error('Falta el módulo de ventas pausadas o sus acciones.');
+}
+const variantTab = registered.find((x) => x.id === 'variantes');
+if (!variantTab || typeof actions['var-nueva'] !== 'function' || typeof actions['var-guardar'] !== 'function') {
+  throw new Error('Falta el módulo de variantes o sus acciones.');
+}
+const promoTab = registered.find((x) => x.id === 'promociones');
+if (!promoTab || typeof actions['promo-nueva'] !== 'function' || typeof actions['promo-aplicar'] !== 'function') {
+  throw new Error('Falta el módulo de promociones o sus acciones.');
+}
+const indexSource = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
+const serverSource = fs.readFileSync(path.join(process.cwd(), 'server.js'), 'utf8');
+if (!indexSource.includes("'suspendedSales'") || !serverSource.includes("suspendedSales: 'move'") || !serverSource.includes("coll === 'suspendedSales' && user.role === 'cajero'")) {
+  throw new Error('Las ventas pausadas no están incluidas en la sincronización por usuario y sus permisos.');
+}
 const supplierTab = registered.find((x) => x.id === 'proveedores-hist');
 if (!supplierTab) throw new Error('No se registró la pestaña Proveedores.');
 const supplierSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
