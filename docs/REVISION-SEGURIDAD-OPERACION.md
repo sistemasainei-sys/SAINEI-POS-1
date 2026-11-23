@@ -108,3 +108,11 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - La revisión `since` debe ser un entero seguro no negativo; se rechazan cadenas, decimales, negativos y valores fuera del rango seguro en lugar de convertirlos silenciosamente.
 - El identificador de época, cuando se envía, debe ser texto de hasta 128 caracteres.
 - No se ejecutaron pruebas.
+
+
+## Estructura completa del paquete de sincronización
+
+- El servidor rechaza `changes` y `sing` cuando no son objetos JSON simples, y `audit` cuando no es una lista.
+- Los arreglos no se aceptan como objetos de configuración o cambios; se evita tratar silenciosamente estructuras malformadas como sincronizaciones vacías.
+- Se mantiene la validación previa de colecciones y límites de lote.
+- No se ejecutaron pruebas.
