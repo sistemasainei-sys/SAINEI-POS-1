@@ -1,0 +1,34 @@
+name: Validate SAINEI POS modules
+
+on:
+  push:
+    branches:
+      - sainei-pos-finalizacion-independiente
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check additional modules syntax
+        run: |
+          for file in sainei-mod-*.js; do
+            [ -f "$file" ] || continue
+            node --check "$file"
+          done
+      - name: Check main application inline JavaScript syntax
+        run: node scripts/check-index-scripts.js
+      - name: Check server syntax
+        run: node --check server.js
+      - name: Smoke-test module registration
+        run: node scripts/test-sainei-modules.js
+      - name: Verify Windows launchers and data safety
+        run: node scripts/test-windows-launchers.js
+      - name: Verify license and user data safety
+        run: node scripts/test-license-data-safety.js
