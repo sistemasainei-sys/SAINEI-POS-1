@@ -100,3 +100,11 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - Esto evita que un valor de tipo recibido desde registros termine interpretándose como marcado HTML.
 - La revisión estática encontró otros usos de `innerHTML`; no se modificaron en bloque porque varios ya escapan los datos o usan contenido controlado por la aplicación. Requieren revisión individual.
 - No se ejecutaron pruebas.
+
+
+## Validación de versión de sincronización
+
+- `/api/sync` exige un cuerpo JSON de tipo objeto, no acepta arreglos como solicitud.
+- La revisión `since` debe ser un entero seguro no negativo; se rechazan cadenas, decimales, negativos y valores fuera del rango seguro en lugar de convertirlos silenciosamente.
+- El identificador de época, cuando se envía, debe ser texto de hasta 128 caracteres.
+- No se ejecutaron pruebas.
