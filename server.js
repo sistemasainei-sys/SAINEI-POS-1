@@ -335,6 +335,23 @@ function processSync(user, body) {
               continue;
             }
           }
+          if (coll === 'expenses') {
+            const amount = Number(rec.amount), shiftId = Number(rec.shiftId || 0);
+            const methods = ['caja', 'banco'];
+            const dateValue = Date.parse(rec.date);
+            const concept = String(rec.concept || '').trim();
+            const shiftRow = shiftId > 0 ? getRec('shifts', shiftId) : null;
+            const shift = shiftRow && !shiftRow.del ? JSON.parse(shiftRow.j) : null;
+            if (!concept || concept.length > 80 || !Number.isSafeInteger(amount) || amount <= 0 ||
+                !methods.includes(String(rec.method || '')) || !Number.isFinite(dateValue) ||
+                !Number.isInteger(shiftId) || shiftId < 0 ||
+                (shiftId > 0 && (!shift || rec.method !== 'caja')) ||
+                (shiftId === 0 && rec.method === 'caja') ||
+                (shiftId > 0 && user.role !== 'admin' && Number(shift.uid) !== Number(user.uid))) {
+              res.rejected.push({ coll, id });
+              continue;
+            }
+          }
           if (coll === 'suspendedSales' && user.role === 'cajero' && ((ex && Number(ex.uid) !== user.id) || Number(rec.uid) !== user.id)) { res.rejected.push({ coll, id }); continue; }
           if (!allowed(user, coll, op, rec, ex)) { res.rejected.push({ coll, id }); continue; }
           // Validar cada movimiento contra el stock vigente dentro de la transacción.
