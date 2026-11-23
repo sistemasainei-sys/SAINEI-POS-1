@@ -102,3 +102,10 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 - [ ] Revisar la regla contable para reembolsos de ventas mixtas y ejecutar pruebas funcionales aisladas cuando el usuario las autorice.
 
 No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalización.
+
+
+### Validación estática — cobros de clientes
+
+- [x] El servidor valida los cobros nuevos antes de guardarlos: cliente existente y activo, importe entero positivo, medio permitido (efectivo, transferencia o tarjeta), fecha válida y caja vinculada existente cuando se informa.
+- [x] Los cobros inválidos se rechazan en el servidor aunque se intente enviar la solicitud sin utilizar la interfaz.
+- [ ] Falta verificar en ejecución el flujo de cobros, arqueo de caja y sincronización multiusuario. No se ejecutaron pruebas.
