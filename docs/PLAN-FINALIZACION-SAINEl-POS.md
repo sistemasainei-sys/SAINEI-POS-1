@@ -29,11 +29,11 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 
 ## Prioridad 4 — Catálogo y herramientas comerciales
 
-- [ ] Variantes de producto (talle, color, modelo, presentación) con SKU/código y stock independiente.
+- [x] Variantes de producto (talle, color, modelo, presentación) con SKU/código y stock independiente (implementado; falta prueba funcional).
 - [x] Etiquetas imprimibles con nombre, precio y código del producto.
 - [ ] Integración y pruebas de impresoras térmicas, lectores y balanzas compatibles.
 - [x] Historial de proveedores con compras, pagos registrados, saldos y vencimientos (vista de consulta).
-- [ ] Fidelización opcional de clientes y puntos, con reglas configurables.
+- [x] Fidelización opcional de clientes y puntos, con reglas configurables (canje e historial implementados; falta prueba funcional).
 
 ## Prioridad 5 — Compatibilidad y publicación
 
@@ -63,7 +63,8 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 
 ## Seguridad del trabajo
 
-- Trabajar únicamente en `sainei-pos-finalizacion-independiente`.
+- Trabajar únicamente en `sainei-pos-finalizacion-segura`.
 - No modificar `main`, Render ni bases de datos reales.
 - No ejecutar borrados, restauraciones ni migraciones destructivas sobre datos existentes.
 - Toda nueva migración debe ser aditiva, reversible y probada con una copia aislada.
+- Diseño técnico agregado en `docs/ARQUITECTURA-SIN-CONEXION-Y-ACCESO-SEGURO.md`; no habilita todavía el modo offline ni el acceso remoto.
