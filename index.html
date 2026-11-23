@@ -268,8 +268,8 @@ td.r,th.r{text-align:right}
 .loading{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 .lbox{display:grid;gap:14px;max-width:480px;text-align:center}
 .lbox strong{font-family:var(--font-head);font-size:20px}
-/* Pantalla del cliente: alto contraste con identidad SAINEI */
-.cust{--cv-bg:#071a2e;--cv-fg:#ffffff;--cv-mut:#b4c9dd;--cv-acc:#4b9be0;--cv-warn:#f28c28;--cv-card:#102d4b;--cv-line:#254a70;
+/* Pantalla del cliente: aspecto propio de alto contraste */
+.cust{--cv-bg:#07140f;--cv-fg:#ffffff;--cv-mut:#9fc4b4;--cv-acc:#4b9be0;--cv-warn:#f28c28;--cv-card:#10281e;--cv-line:#1e4333;
   position:fixed;inset:0;z-index:35;background:var(--cv-bg);color:var(--cv-fg);display:flex;flex-direction:column;padding:2vh 2.5vw;gap:2vh;font-family:var(--font-body);overflow:hidden}
 .cust .cv-brand{display:flex;align-items:center;gap:2vw;font-family:var(--font-head);font-size:clamp(20px,2.6vw,40px);font-weight:700;color:var(--cv-mut);min-height:6vh}
 .cust .cv-brand img{height:clamp(36px,6vh,80px);background:#fff;border-radius:8px;padding:4px 8px}
@@ -349,6 +349,62 @@ td.r,th.r{text-align:right}
   .caja2 .lines{max-height:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Identidad visual SAINEI: azul marino + naranja, inspirada en el panel de licencias */
+:root{
+ --bg:#f2f5fa;--surface:#ffffff;--surface-2:#edf1f7;--fg:#17243a;--muted:#64748b;--line:#dce5f0;
+ --accent:#f28a1e;--accent-fg:#142b4b;--accent-soft:#fff0dc;
+ --warn:#a85a08;--warn-soft:#fff0dc;--bad:#b42318;--bad-soft:#fde8e6;--ok:#17365d;--ok-soft:#e5edf8;
+ color-scheme:light;
+}
+:root[data-theme="dark"],@media (prefers-color-scheme: dark){ }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body)}
+.top{background:#122f55;color:#fff;border:0;border-radius:0 0 22px 22px;padding-top:14px;padding-bottom:5px;box-shadow:0 8px 24px rgba(18,47,85,.12)}
+.brand h1,.brand span{color:#fff}
+.brand h1{font-weight:800;letter-spacing:.01em}
+.brand span{opacity:.78}
+.shift{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)}
+.shift.open,.shift.closed{background:rgba(255,255,255,.16);color:#fff}
+.tab{color:#d6e1f0;border-radius:10px 10px 0 0}
+.tab[aria-selected="true"]{color:#fff;border-bottom-color:#f28a1e}
+main{padding-top:20px}
+.panel,.tile,.card,.lockbox,.sheet{border-radius:20px;border-color:var(--line);box-shadow:0 8px 24px rgba(18,47,85,.045)}
+.pcard{border-radius:14px}
+.search,.input,.recv,.disc{border-radius:12px;border-color:#cbd7e6}
+.btn,.method,.qty button,.wbtn{border-radius:12px}
+.btn.primary,.cobrar{background:#f28a1e;border-color:#f28a1e;color:#142b4b;font-weight:800}
+.btn.primary:hover,.cobrar:hover{background:#e97e12}
+.chip[aria-pressed="true"],.tools2 .btn[aria-pressed="true"]{background:#122f55;border-color:#122f55;color:#fff}
+.tab[aria-selected="true"]{color:#fff}
+.bigtotal{background:#122f55;color:#fff;border-radius:16px 16px 0 0}
+.lastitem{border-radius:16px;border-color:#f28a1e}
+.lastitem .am{color:#122f55}
+.lockscr{background:var(--bg)}
+.lockbox{width:min(760px,100%);padding:clamp(22px,4vw,40px);gap:18px}
+.lockbox h2{font-size:clamp(24px,3vw,34px);font-weight:800}
+.lk-brand{justify-content:flex-start;background:#122f55;color:#fff;border-radius:22px;padding:26px}
+.lk-brand strong{font-size:clamp(24px,4vw,38px);font-weight:800}
+.lk-brand strong span{color:#f28a1e}
+.lockbox label{font-size:15px;font-weight:700;color:var(--fg)}
+.lockbox .input{padding:16px;font-size:18px}
+.lockbox .btn.primary{padding:16px;font-size:18px}
+@media(max-width:700px){
+ body{font-size:15px}
+ .top{margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));border-radius:0 0 18px 18px}
+ .tabs{width:100%;margin-left:0}
+ .tab{padding:10px 11px}
+ .caja,.caja2{grid-template-columns:minmax(0,1fr)}
+ .cart{position:static;max-height:none}
+ .lockbox{padding:22px;border-radius:24px}
+ .lk-brand{padding:24px}
+}
+
+
+/* Identidad SAINEI unificada: azul institucional + naranja. */
+:root{--bg:#f2f5fa;--surface:#fff;--surface-2:#eaf0f7;--fg:#17243a;--muted:#64748b;--line:#dce5f0;--accent:#f28a1e;--accent-fg:#142b4b;--accent-soft:#fff0dc;--warn:#9a5200;--warn-soft:#fff0d6;--bad:#b42318;--bad-soft:#fde3df;--ok:#1769aa;--ok-soft:#dcecff;color-scheme:light}
+:root[data-theme="light"]{color-scheme:light}
+:root[data-theme="dark"]{--bg:#101a2a;--surface:#17263b;--surface-2:#22344d;--fg:#edf4fc;--muted:#a9b9cc;--line:#334963;--accent:#ff9b35;--accent-fg:#17243a;--accent-soft:#49331e;--warn:#ffc66d;--warn-soft:#49371c;--bad:#ff9388;--bad-soft:#482622;--ok:#75baff;--ok-soft:#1e3b59;color-scheme:dark}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]):not([data-theme="dark"]){--bg:#101a2a;--surface:#17263b;--surface-2:#22344d;--fg:#edf4fc;--muted:#a9b9cc;--line:#334963;--accent:#ff9b35;--accent-fg:#17243a;--accent-soft:#49331e;--warn:#ffc66d;--warn-soft:#49371c;--bad:#ff9388;--bad-soft:#482622;--ok:#75baff;--ok-soft:#1e3b59;color-scheme:dark}}
 </style>
 
 </head>
@@ -644,12 +700,12 @@ td.r,th.r{text-align:right}
 var KEY='minisuper-pos-v2',OLD='minisuper-pos-v1',storageOK=true;
 var nf=new Intl.NumberFormat('es-PY');
 var nf3=new Intl.NumberFormat('es-PY',{minimumFractionDigits:3,maximumFractionDigits:3});
-var METHODS={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia / QR',credito:'Crédito'};
+var METHODS={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia / QR',credito:'Crédito',mixto:'Pago combinado'};
 var TABS=[['caja','Caja'],['panel','Panel'],['productos','Productos'],['stock','Stock'],['clientes','Clientes'],['finanzas','Finanzas'],['ventas','Ventas'],['presupuestos','Presupuestos'],['ajustes','Ajustes']];
 var MODULE_TABS={};
 var SUBS={productos:[['lista','Lista'],['balanza','Balanza']],stock:[['exist','Existencias'],['compras','Compras'],['mov','Movimientos']],finanzas:[['caja','Caja'],['gastos','Gastos'],['pagar','Por pagar'],['res','Resumen']]};
 var EXP_CATS=['Alquiler','Sueldos','Luz, agua e internet','Impuestos','Mantenimiento','Transporte','Otros'];
-var MOVE_LABEL={venta:'Venta',anulacion:'Anulación de venta',compra:'Compra',ajuste:'Ajuste',inicial:'Stock inicial'};
+var MOVE_LABEL={venta:'Venta',anulacion:'Anulación de venta',compra:'Compra',ajuste:'Ajuste',inicial:'Stock inicial',devolucion:'Devolución'};
 var CHECK=[
   ['datos','Cargá el nombre y el RUC del comercio (Ajustes).'],
   ['iva','Confirmá con tu contador la tasa de IVA de cada producto: 10%, 5% o exento.'],
@@ -744,7 +800,7 @@ function normalize(s){
   s.users.forEach(function(u){u.active=u.active!==false;u.role=(u.role==='admin'||u.role==='encargado')?u.role:'cajero';});
   s.backup=s.backup||{};s.backup.fileAt=s.backup.fileAt||null;
   s.products.forEach(function(p){
-    p.unit=p.unit||((p.type==='peso')?'kg':(p.type==='medida'?'m':'u'));p.cost=p.cost||0;p.iva=(p.iva===0||p.iva===5||p.iva===10)?p.iva:10;p.type=p.type==='peso'?'peso':(p.type==='medida'?'medida':'u');
+    p.variantGroup=p.variantGroup||'';p.variantName=p.variantName||'';p.unit=p.unit||((p.type==='peso')?'kg':(p.type==='medida'?'m':'u'));p.cost=p.cost||0;p.iva=(p.iva===0||p.iva===5||p.iva===10)?p.iva:10;p.type=p.type==='peso'?'peso':(p.type==='medida'?'medida':'u');
     p.plu=p.plu||'';p.min=p.min||0;p.code=p.code||'';p.cat=p.cat||'Sin categoría';p.supplier=p.supplier||'';p.stock=p.stock||0;
   });
   s.sales.forEach(function(x){
@@ -965,9 +1021,11 @@ function lowCount(){return state.products.filter(function(p){return p.stock<=p.m
 
 /* ---------- Caja (turnos) ---------- */
 function curShift(){var uid=cur?cur.id:0;for(var i=state.shifts.length-1;i>=0;i--){var sh=state.shifts[i];if(!sh.closedAt&&(!sh.uid||sh.uid===uid))return sh;}return null;}
+function saleParts(s){return Array.isArray(s.payParts)&&s.payParts.length?s.payParts:[{method:s.method||'efectivo',amount:Number(s.total)||0}];}
+function saleCredit(s){return s.creditAmount!=null?Number(s.creditAmount)||0:(s.method==='credito'&&!s.void?Number(s.total)||0:0);}
 function shiftSummary(sh){
   var by={efectivo:0,tarjeta:0,transferencia:0,credito:0};
-  state.sales.forEach(function(s){if(s.shiftId===sh.id&&!s.void)by[s.method]+=s.total;});
+  state.sales.forEach(function(s){if(s.shiftId===sh.id&&!s.void)saleParts(s).forEach(function(p){if(by[p.method]!=null)by[p.method]+=Number(p.amount)||0;});});
   var cobros=0,gastos=0,pagos=0;
   state.payments.forEach(function(p){if(p.shiftId===sh.id&&p.method==='efectivo')cobros+=p.amount;});
   state.expenses.forEach(function(e){if(e.shiftId===sh.id&&e.method==='caja')gastos+=e.amount;});
@@ -977,12 +1035,12 @@ function shiftSummary(sh){
 
 /* ---------- Crédito ---------- */
 function clientAccount(cid){
-  var cs=state.sales.filter(function(s){return s.clientId===cid&&s.method==='credito'&&!s.void;}).sort(function(a,b){return a.id-b.id;});
+  var cs=state.sales.filter(function(s){return s.clientId===cid&&saleCredit(s)>0&&!s.void;}).sort(function(a,b){return a.id-b.id;});
   var pays=state.payments.filter(function(p){return p.clientId===cid;});
-  var total=sum(cs,'total'),paid=sum(pays,'amount'),rem=paid,overdue=0,rows=[],now=Date.now();
+  var total=cs.reduce(function(a,s){return a+saleCredit(s);},0),paid=sum(pays,'amount'),rem=paid,overdue=0,rows=[],now=Date.now();
   cs.forEach(function(s){
     var out;
-    if(rem>=s.total){out=0;rem-=s.total;}else{out=s.total-rem;rem=0;}
+    var credit=saleCredit(s);if(rem>=credit){out=0;rem-=credit;}else{out=credit-rem;rem=0;}
     var late=out>0&&!!s.due&&new Date(s.due).getTime()<now;
     if(late)overdue+=out;
     rows.push({sale:s,out:out,late:late});
@@ -1015,7 +1073,7 @@ function renderProducts(){
   $('#grid').innerHTML=list.length?list.map(function(p){
     var cls=p.stock<=0?'out':(p.stock<=p.min?'low':'');
     var txt=p.stock<=0?'Agotado':(p.stock<=p.min?'Quedan '+fq(p.stock,p):fq(p.stock,p)+' en stock');
-    return '<button class="pcard" data-a="'+(p.type==='peso'?'weigh':'add')+'" data-id="'+p.id+'"'+(p.stock<=0?' disabled':'')+'><span class="pname">'+esc(p.name)+'</span><span class="pprice">'+gs(p.price)+(p.type==='peso'?' <small>/ kg</small>':(p.type==='medida'?' <small>/ '+esc(p.unit||'m')+'</small>':''))+'</span><span class="pstock '+cls+'">'+txt+'</span></button>';
+    return '<button class="pcard" data-a="'+(p.type==='peso'?'weigh':'add')+'" data-id="'+p.id+'"'+(p.stock<=0?' disabled':'')+'>'+(p.image?'<img src="'+esc(p.image)+'" alt="" loading="lazy" style="width:48px;height:48px;object-fit:contain;border-radius:6px;float:left;margin-right:8px">':'')+'<span class="pname">'+esc(p.name)+'</span><span class="pprice">'+gs(p.price)+(p.type==='peso'?' <small>/ kg</small>':(p.type==='medida'?' <small>/ '+esc(p.unit||'m')+'</small>':''))+'</span><span class="pstock '+cls+'">'+txt+'</span></button>';
   }).join(''):'<p class="empty">Ningún producto coincide con la búsqueda.</p>';
 }
 function lineAmount(l,p){return Math.round((l.price!=null?l.price:p.price)*l.qty);}
@@ -1251,8 +1309,10 @@ function doOpenShift(){
   save();closeModal();renderCurrent();toast('Caja abierta');
   if(ui.afterShift==='checkout'){ui.afterShift=null;openCheckout();}
 }
-function closeShiftModal(){
-  var sh=curShift();if(!sh)return;
+var closingShiftTarget=0;
+function closeShiftModal(id){
+  closingShiftTarget=Number(id)||0;
+  var sh=closingShiftTarget?state.shifts.filter(function(x){return x.id===closingShiftTarget&&!x.closedAt;})[0]:curShift();if(!sh)return;
   var s=shiftSummary(sh);
   openModal('<h2>Cerrar caja</h2><div class="card panel" style="margin:0">'+
     '<div class="kv"><span>Fondo inicial</span><span class="num">'+gs(sh.openAmt)+'</span></div>'+
@@ -1268,7 +1328,7 @@ function closeShiftModal(){
   var c=$('#countAmt');if(c)c.focus();
 }
 function updateCount(){
-  var sh=curShift();if(!sh)return;
+  var sh=closingShiftTarget?state.shifts.filter(function(x){return x.id===closingShiftTarget&&!x.closedAt;})[0]:curShift();if(!sh)return;
   var s=shiftSummary(sh),raw=digits($('#countAmt').value),info=$('#countInfo'),ok=$('#closeOk');
   if(raw===''){info.textContent='';info.className='cashinfo';ok.disabled=true;return;}
   var diff=parseInt(raw,10)-s.expected;
@@ -1277,11 +1337,11 @@ function updateCount(){
   ok.disabled=false;
 }
 function doCloseShift(){
-  var sh=curShift();if(!sh)return;
+  var sh=closingShiftTarget?state.shifts.filter(function(x){return x.id===closingShiftTarget&&!x.closedAt;})[0]:curShift();if(!sh)return;
   var raw=digits($('#countAmt').value);if(raw==='')return;
   var s=shiftSummary(sh);
-  sh.expected=s.expected;sh.counted=parseInt(raw,10);sh.diff=sh.counted-s.expected;sh.note=$('#closeNote').value.trim();sh.closedAt=nowIso();sh.closedBy=cur?cur.name:'';log('Cerró la caja · contado '+gs(sh.counted)+(sh.diff?' · diferencia '+gs(sh.diff):' · cuadrada'));
-  save();closeModal();renderCurrent();toast('Caja cerrada');
+  sh.expected=s.expected;sh.counted=parseInt(raw,10);sh.diff=sh.counted-s.expected;sh.note=$('#closeNote').value.trim();sh.closedAt=nowIso();sh.closedBy=cur?cur.name:'';sh.closedByRole=cur?cur.role:'';log('Cerró la caja de '+(sh.by||'cajero')+' · contado '+gs(sh.counted)+(sh.diff?' · diferencia '+gs(sh.diff):' · cuadrada'));
+  closingShiftTarget=0;save();closeModal();renderCurrent();toast('Caja cerrada');
   if(SERVER){}else if(dirHandle&&dirOk)writeFolderBackup();else exportBackup();
 }
 
@@ -1296,7 +1356,7 @@ function openCheckout(){
 }
 function checkoutHtml(){
   var t=totals(),m=ui.pay.method;
-  var methods=['efectivo','tarjeta','transferencia','credito'].map(function(k){return '<button class="method" data-a="method" data-v="'+k+'" aria-pressed="'+(k===m)+'">'+METHODS[k]+'</button>';}).join('');
+  var methods=['efectivo','tarjeta','transferencia','credito','mixto'].map(function(k){return '<button class="method" data-a="method" data-v="'+k+'" aria-pressed="'+(k===m)+'">'+METHODS[k]+'</button>';}).join('');
   var body;
   if(m==='efectivo'){
     body='<div class="payrow"><span>RECIBIDO</span><input id="recv" class="recv big2" inputmode="numeric" autocomplete="off" value="'+esc(ui.pay.recv)+'" placeholder="0" aria-label="Monto recibido"></div>'+
@@ -1305,6 +1365,9 @@ function checkoutHtml(){
   }else if(m==='credito'){
     var opts=[['0','Elegí un cliente']].concat(state.clients.map(function(c){return [String(c.id),c.name];}));
     body='<div class="form">'+sel('creditClient','Cliente',opts,ui.clientId,true)+sel('creditDays','Plazo para pagar',[['7','7 días'],['15','15 días'],['30','30 días'],['60','60 días']],'30',true)+'</div><div class="cashinfo" id="cashInfo" style="font-size:15px"></div>';
+  }else if(m==='mixto'){
+    var pp=ui.pay.parts||{},opts=[['0','Elegí un cliente']].concat(state.clients.map(function(c){return [String(c.id),c.name];}));
+    body='<div class="form">'+['efectivo','tarjeta','transferencia','credito'].map(function(k){return '<label>'+METHODS[k]+' (Gs.)<input class="input" id="part-'+k+'" inputmode="numeric" type="number" min="0" step="1" value="'+esc(pp[k]||'')+'"></label>';}).join('')+sel('creditClient','Cliente (si hay parte a crédito)',opts,ui.clientId,true)+sel('creditDays','Plazo del crédito',[['7','7 días'],['15','15 días'],['30','30 días'],['60','60 días']],'30',true)+'</div><div class="cashinfo" id="cashInfo"></div>';
   }else{
     body='<p class="muted" style="margin:0">Confirmá la venta cuando el pago esté acreditado.</p>';
   }
@@ -1333,6 +1396,13 @@ function updatePay(){
       info.innerHTML='Saldo actual: '+gs(ac.balance)+'<br>Saldo después de esta venta: '+gs(after)+'<br>Límite: '+(c.limit>0?gs(c.limit):'sin límite')+(over?'<br>Supera el límite de crédito.':'');
       info.className='cashinfo '+(over?'bad':'');btn.disabled=over;
     }
+  }else if(m==='mixto'){
+    var parts=ui.pay.parts||{},keys=['efectivo','tarjeta','transferencia','credito'],vals={},total=0;
+    keys.forEach(function(k){var el=$('#part-'+k);vals[k]=Math.max(0,Math.round(Number(el?el.value:parts[k])||0));total+=vals[k];if(el)parts[k]=el.value;});ui.pay.parts=parts;
+    var cid=parseInt($('#creditClient')&&$('#creditClient').value,10)||0,credit=vals.credit,cl=credit?getC(cid):null,valid=total===t.total&&(!credit||!!cl),over=false;if(credit&&cl){over=cl.limit>0&&clientAccount(cid).balance+credit>cl.limit;}
+    cp.client=cl?cl.name:'';cp.method='mixto';cp.parts=vals;cp.missing=Math.abs(t.total-total);
+    if(info){info.className='cashinfo '+(valid&&!over?'ok':'bad');info.innerHTML='Asignado: '+gs(total)+' / '+gs(t.total)+(total!==t.total?'<br>'+(total<t.total?'Falta ':'Sobra ')+gs(Math.abs(t.total-total)):'<br>Montos completos')+(credit&&!cl?'<br>Elegí un cliente para el crédito.':'')+(over?'<br>Supera el límite de crédito.':'');}
+    btn.disabled=!valid||over;
   }else btn.disabled=false;
   ui.cust.mode='cobro';ui.cust.pay=cp;custPush();
 }
@@ -1340,8 +1410,12 @@ function confirmSale(){
   if(!ui.cart.length)return;
   if(!isAdmin()&&(ui.disc||0)>maxDisc()){toast('El descuento supera tu máximo ('+maxDisc()+'%). Pedile al usuario principal.');return;}
   var sh=curShift();if(!sh){openShiftModal();return;}
-  var t=totals(),m=ui.pay.method,cid=ui.clientId,recv=t.total,due=null;
-  if(m==='credito'){
+  var t=totals(),m=ui.pay.method,cid=ui.clientId,recv=t.total,due=null,payParts=null,creditAmount=0;
+  if(m==='mixto'){
+    var vals={},sumParts=0;['efectivo','tarjeta','transferencia','credito'].forEach(function(k){vals[k]=Math.max(0,Math.round(Number($('#part-'+k)&&$('#part-'+k).value)||0));sumParts+=vals[k];});if(sumParts!==t.total)return;
+    payParts=Object.keys(vals).filter(function(k){return vals[k]>0;}).map(function(k){return {method:k,amount:vals[k]};});creditAmount=vals.credit;cid=creditAmount?(parseInt($('#creditClient').value,10)||0):0;
+    if(creditAmount){var clm=getC(cid);if(!clm)return;var acm=clientAccount(cid);if(clm.limit>0&&acm.balance+creditAmount>clm.limit)return;due=addDays(nowIso(),parseInt($('#creditDays').value,10)||30);}recv=vals.efectivo;
+  }else if(m==='credito'){
     cid=parseInt($('#creditClient').value,10)||0;if(!cid)return;
     var cl=getC(cid),ac=clientAccount(cid);
     if(cl.limit>0&&ac.balance+t.total>cl.limit)return;
@@ -1353,7 +1427,7 @@ function confirmSale(){
   var items=ui.cart.map(function(l){var p=getP(l.id);return {id:p.id,name:p.name,qty:l.qty,price:l.price!=null?l.price:p.price,amount:lineAmount(l,p),iva:p.iva,cost:p.cost,type:p.type,unit:p.unit||(p.type==='peso'?'kg':'u')};});
   items.forEach(function(it){var p=getP(it.id);p.stock=round3(Math.max(0,p.stock-it.qty));addMove(p.id,'venta',-it.qty,'Ticket '+pad(sid,6));});
   var sale={id:sid,date:nowIso(),shiftId:sh.id,clientId:cid,items:items,budgetId:ui.pendingBudget||0,sub:t.sub,disc:t.disc,discPct:ui.disc||0,total:t.total,g10:t.g10,g5:t.g5,ex:t.ex,iva10:t.iva10,iva5:t.iva5,cmv:t.cmv,
-    method:m,paid:recv,change:m==='efectivo'?Math.max(0,recv-t.total):0,due:due,void:false,uid:cur?cur.id:0,uname:cur?cur.name:''};
+    method:m,paid:recv,creditAmount:m==='mixto'?creditAmount:(m==='credito'?t.total:0),payParts:payParts,change:m==='efectivo'?Math.max(0,recv-t.total):0,due:due,void:false,uid:cur?cur.id:0,uname:cur?cur.name:''};
   log('Venta #'+pad(sid,6)+' · '+gs(t.total)+' · '+METHODS[m]+(t.disc?' · descuento '+(ui.disc||0)+'%':''));
   state.sales.push(sale);if(ui.pendingBudget){var pb=(state.budgets||[]).filter(function(x){return x.id===ui.pendingBudget;})[0];if(pb){pb.status='convertido';pb.saleId=sid;pb.convertedAt=nowIso();}ui.pendingBudget=0;}save();setThanks(sale);
   ui.cart=[];ui.disc=0;ui.clientId=0;$('#disc').value='';
@@ -1381,9 +1455,9 @@ function ticketInner(s,forPrint){
     (s.g5?'<div class="tl"><span>Gravadas 5%</span><span>'+fmt(s.g5)+'</span></div>':'')+
     (s.g10?'<div class="tl"><span>Gravadas 10%</span><span>'+fmt(s.g10)+'</span></div>':'')+
     '<div class="tl"><span>IVA 5% / IVA 10%</span><span>'+fmt(s.iva5)+' / '+fmt(s.iva10)+'</span></div><hr>'+
-    '<div class="tl"><span>Pago</span><span>'+METHODS[s.method]+'</span></div>'+
+    '<div class="tl"><span>Pago</span><span>'+METHODS[s.method]+'</span></div>'+(s.payParts?s.payParts.map(function(p){return '<div class="tl"><span>'+METHODS[p.method]+'</span><span>'+fmt(p.amount)+'</span></div>';}).join(''):'')+
     (s.method==='efectivo'?'<div class="tl"><span>Recibido</span><span>'+fmt(s.paid)+'</span></div><div class="tl"><span>Vuelto</span><span>'+fmt(s.change)+'</span></div>':'')+
-    (s.method==='credito'?'<div class="tl"><span>A crédito, vence</span><span>'+(s.due?fd(s.due):'-')+'</span></div>':'')+
+    (saleCredit(s)>0?'<div class="tl"><span>Saldo a crédito, vence</span><span>'+fmt(saleCredit(s))+' · '+(s.due?fd(s.due):'-')+'</span></div>':'')+
     '<hr>'+(pr.footer?'<div class="c">'+esc(pr.footer)+'</div>':'')+'<div class="c">Comprobante interno, no es factura</div>'+'<div class="c" style="font-size:.75em;opacity:.7;margin-top:6px"><strong>SAINEI POS</strong> · Tel. 0991 411 238</div>'+(s.void?'<div class="stamp">ANULADA</div>':'');
 }
 function receiptHtml(s,fresh){
@@ -1524,12 +1598,12 @@ function renderProdTab(){
 }
 function renderProdList(){
   var q=norm(ui.pq.trim());
-  var list=state.products.filter(function(p){return !q||norm(p.name).indexOf(q)>=0||String(p.code).indexOf(q)>=0||norm(p.cat).indexOf(q)>=0||(p.plu&&String(p.plu)===q);});
+  var list=state.products.filter(function(p){return !q||norm(p.name).indexOf(q)>=0||String(p.code).indexOf(q)>=0||norm(p.cat).indexOf(q)>=0||norm(p.variantGroup||'').indexOf(q)>=0||norm(p.variantName||'').indexOf(q)>=0||(p.plu&&String(p.plu)===q);});
   var val=state.products.reduce(function(a,p){return a+p.stock*p.cost;},0);
   $('#prodTiles').innerHTML=tile('Productos',state.products.length)+tile('Por balanza',state.products.filter(function(p){return p.type==='peso';}).length)+tile('Agotados',state.products.filter(function(p){return p.stock<=0;}).length)+tile('Valor del stock a costo',gs(val));
   $('#prodBody').innerHTML=list.length?list.map(function(p){
     var net=p.price/(1+p.iva/100),mg=p.cost>0&&net>0?Math.round((net-p.cost)/net*100)+'%':'—';
-    return '<tr><td class="num">'+esc(p.code||(p.plu?'PLU '+p.plu:'—'))+'</td><td>'+esc(p.name)+(p.type==='peso'?' <span class="pill tag">Balanza</span>':'')+'</td><td>'+esc(p.cat)+'</td><td class="r num">'+gs(p.cost)+'</td><td class="r num">'+gs(p.price)+(p.type==='peso'?' /kg':'')+'</td><td class="r num">'+mg+'</td><td>'+ivaTxt(p)+'</td><td class="r num">'+fq(p.stock,p)+'</td><td>'+stockPill(p)+'</td><td class="r"><button class="btn" data-a="edit" data-id="'+p.id+'">Editar</button></td></tr>';
+    return '<tr><td class="num">'+esc(p.code||(p.plu?'PLU '+p.plu:'—'))+'</td><td>'+esc(p.name)+(p.variantGroup?' <small class="muted">'+esc(p.variantGroup)+'</small>':'')+(p.variantName?' <span class="pill tag">'+esc(p.variantName)+'</span>':'')+(p.type==='peso'?' <span class="pill tag">Balanza</span>':'')+'</td><td>'+esc(p.cat)+'</td><td class="r num">'+gs(p.cost)+'</td><td class="r num">'+gs(p.price)+(p.type==='peso'?' /kg':'')+'</td><td class="r num">'+mg+'</td><td>'+ivaTxt(p)+'</td><td class="r num">'+fq(p.stock,p)+'</td><td>'+stockPill(p)+'</td><td class="r"><button class="btn" data-a="edit" data-id="'+p.id+'">Editar</button></td></tr>';
   }).join(''):emptyRow(10,'No hay productos que coincidan. Usá "Agregar producto" o importá una planilla.');
 }
 function renderScale(){
@@ -1565,11 +1639,13 @@ function decCode(){
   out.textContent='PLU '+r.plu+(p?' · '+p.name:' · no hay un producto con ese PLU')+' · '+desc+(p&&p.price>0?(state.scale.mode==='peso'?' · importe '+gs(Math.round(p.price*r.value/1000)):' · '+nf3.format(r.value/p.price)+' kg'):'');
 }
 function productForm(p,pref){
-  var v=p||{code:(pref&&pref.code)||'',name:'',cat:'',cost:'',price:'',iva:10,type:'u',plu:'',stock:'',min:5,supplier:''};
+  var v=p||{code:(pref&&pref.code)||'',name:'',cat:'',cost:'',price:'',iva:10,type:'u',plu:'',stock:'',min:5,supplier:'',image:''};
   var cats=Array.from(new Set(state.products.map(function(x){return x.cat;}))).sort();
   return '<h2>'+(p?'Editar producto':'Agregar producto')+'</h2><div class="form">'+
     fld('pf-name','Nombre',v.name,'type="text" maxlength="80"',true)+
     fld('pf-code','Código de barras (escaneá con el lector)',v.code,'type="text" inputmode="numeric" maxlength="20"')+
+    fld('pf-variant-group','Grupo / producto base (opcional)',v.variantGroup||'','type="text" maxlength="60"')+
+    fld('pf-variant-name','Variante (talle, color, modelo)',v.variantName||'','type="text" maxlength="60"')+
     '<label>Categoría<input id="pf-cat" class="input" type="text" list="pf-cats" maxlength="40" value="'+esc(v.cat)+'"><datalist id="pf-cats">'+cats.map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist></label>'+
     sel('pf-type','Se vende',[['u','Por unidad'],['peso','Por peso (balanza)'],['medida','Por medida / metraje']],v.type==='peso'?'peso':(v.type==='medida'?'medida':'u'))+
     sel('pf-unit','Unidad de medida',[['m','Metro (m)'],['cm','Centímetro (cm)'],['kg','Kilogramo (kg)'],['L','Litro (L)'],['m²','Metro cuadrado (m²)'],['m³','Metro cúbico (m³)']],v.unit||'m')+
@@ -1580,9 +1656,45 @@ function productForm(p,pref){
     fld('pf-stock','Stock actual (kg si es por peso)',v.stock===''?'':String(v.stock).replace('.',','),'type="text" inputmode="decimal"')+
     fld('pf-min','Avisar cuando queden',String(v.min).replace('.',','),'type="text" inputmode="decimal"')+
     fld('pf-sup','Proveedor (opcional)',v.supplier,'type="text" maxlength="60"')+
+    '<label>Foto del producto (opcional)<input id="pf-image" class="input" type="file" accept="image/jpeg,image/png,image/webp"> <small>Se optimiza automáticamente para no cargar demasiado la base de datos.</small></label>'+
+    '<input id="pf-image-data" type="hidden" value="'+esc(v.image||'')+'"><div id="pf-image-preview" style="margin:8px 0">'+(v.image?'<img src="'+esc(v.image)+'" alt="Foto del producto" style="max-width:120px;max-height:120px;object-fit:contain;border-radius:8px">':'')+'</div>'+
     '</div><p class="err" id="pfErr" role="alert"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button>'+
     (p?'<button class="btn danger" id="delBtn" data-a="delprod">Eliminar</button>':'')+'<button class="btn primary" data-a="saveprod">Guardar</button></div>';
 }
+function prepareProductImage(file){
+  return new Promise(function(resolve,reject){
+    if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)){reject(new Error('Elegí una imagen JPG, PNG o WebP.'));return;}
+    if(file.size>12*1024*1024){reject(new Error('La imagen supera 12 MB.'));return;}
+    var reader=new FileReader();
+    reader.onerror=function(){reject(new Error('No se pudo leer la imagen.'));};
+    reader.onload=function(){
+      var img=new Image();
+      img.onerror=function(){reject(new Error('El archivo no es una imagen válida.'));};
+      img.onload=function(){
+        var max=640,w=img.width,h=img.height,scale=Math.min(1,max/Math.max(w,h));
+        var c=document.createElement('canvas');c.width=Math.max(1,Math.round(w*scale));c.height=Math.max(1,Math.round(h*scale));
+        var ctx=c.getContext('2d');ctx.drawImage(img,0,0,c.width,c.height);
+        var data=c.toDataURL('image/jpeg',0.72);
+        if(data.length>420000)data=c.toDataURL('image/jpeg',0.55);
+        if(data.length>520000){reject(new Error('No se pudo reducir la foto lo suficiente.'));return;}
+        resolve(data);
+      };
+      img.src=reader.result;
+    };
+    reader.readAsDataURL(file);
+  });
+}
+document.addEventListener('change',function(e){
+  if(!e.target||e.target.id!=='pf-image')return;
+  var input=e.target,file=input.files&&input.files[0],hidden=$('#pf-image-data'),preview=$('#pf-image-preview'),err=$('#pfErr');
+  if(!file)return;
+  if(err)err.textContent='Procesando foto…';
+  prepareProductImage(file).then(function(data){
+    if(hidden)hidden.value=data;
+    if(preview)preview.innerHTML='<img src="'+data+'" alt="Vista previa" style="max-width:120px;max-height:120px;object-fit:contain;border-radius:8px">';
+    if(err)err.textContent='';
+  }).catch(function(x){input.value='';if(err)err.textContent=x.message;});
+});
 function saveProduct(){
   var err=$('#pfErr');
   var name=$('#pf-name').value.trim(),cat=$('#pf-cat').value.trim()||'Sin categoría',code=digits($('#pf-code').value),type=$('#pf-type').value==='peso'?'peso':($('#pf-type').value==='medida'?'medida':'u'),unit=$('#pf-type').value==='medida'?$('#pf-unit').value:($('#pf-type').value==='peso'?'kg':'u'),plu=digits($('#pf-plu').value);
@@ -1598,7 +1710,18 @@ function saveProduct(){
   }else plu='';
   var dup=state.products.filter(function(x){return code&&x.code===code&&x.id!==ui.editId;})[0];
   if(dup){err.textContent='Ese código ya pertenece a "'+dup.name+'".';return;}
-  var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim()};
+  var vg=$('#pf-variant-group').value.trim(),vn=$('#pf-variant-name').value.trim();
+  if(vn&&!vg){err.textContent='Indicá el grupo o producto base para esta variante.';return;}
+  if(vg&&!vn){err.textContent='Indicá el talle, color, modelo o presentación de la variante.';return;}
+  if(vg&&vn){
+    var vgKey=vg.toLocaleLowerCase('es').replace(/\s+/g,' ').trim(),vnKey=vn.toLocaleLowerCase('es').replace(/\s+/g,' ').trim();
+    var dupVariant=state.products.filter(function(x){
+      return x.id!==ui.editId&&String(x.variantGroup||'').toLocaleLowerCase('es').replace(/\s+/g,' ').trim()===vgKey&&String(x.variantName||'').toLocaleLowerCase('es').replace(/\s+/g,' ').trim()===vnKey;
+    })[0];
+    if(dupVariant){err.textContent='Esa variante ya existe en "'+dupVariant.name+'". Cada variante debe tener su propio producto, código y stock.';return;}
+  }
+  var prior=ui.editId?getP(ui.editId):null,imageInput=$('#pf-image-data');
+  var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim(),variantGroup:vg,variantName:vn,image:imageInput?imageInput.value:(prior&&prior.image||'')};
   if(ui.editId){
     var p=getP(ui.editId);
     if(round3(p.stock)!==data.stock)addMove(p.id,'ajuste',data.stock-p.stock,'Edición del producto');
@@ -1848,6 +1971,8 @@ function renderFinance(){
     }else{
       card='<div class="panel card"><h3>La caja está cerrada</h3><p class="muted" style="margin:0">Abrila con el fondo inicial para poder vender.</p><div><button class="btn primary" data-a="openshiftmodal">Abrir caja</button></div></div>';
     }
+    var openOthers=state.shifts.filter(function(x){return !x.closedAt&&(!sh||x.id!==sh.id);});
+    if((cur.role==='admin'||cur.role==='encargado')&&openOthers.length){card+='<div class="panel card"><h3>Cajas de otros cajeros abiertas</h3><p class="hint">El principal o encargado puede cerrar un turno olvidado. Debe contar el efectivo y dejar una observación.</p>'+openOthers.map(function(x){return '<div class="kv"><span>'+esc(x.by||'Cajero')+' · '+fdt(x.openAt)+'</span><button class="btn" data-a="closeothershift" data-id="'+x.id+'">Revisar y cerrar</button></div>';}).join('')+'</div>';}
     $('#shiftCard').innerHTML=card;
     var cl=state.shifts.filter(function(x){return x.closedAt;}).slice().reverse().slice(0,30);
     $('#shiftBody').innerHTML=cl.length?cl.map(function(x){
@@ -1917,7 +2042,7 @@ function renderSales(){
   var list=state.sales.slice().reverse().filter(function(s){return inRange(s.date,ui.range==='todas'?'todo':ui.range);});
   var ok=list.filter(function(s){return !s.void;});
   var tot=sum(ok,'total'),by={efectivo:0,tarjeta:0,transferencia:0,credito:0};
-  ok.forEach(function(s){by[s.method]+=s.total;});
+  ok.forEach(function(s){saleParts(s).forEach(function(p){if(by[p.method]!=null)by[p.method]+=Number(p.amount)||0;});});
   $('#range').value=ui.range;
   $('#salesTiles').innerHTML=tile('Total vendido',gs(tot))+tile('Cantidad de ventas',ok.length)+tile('Ticket promedio',gs(ok.length?tot/ok.length:0))+tile('Efectivo',gs(by.efectivo))+tile('Tarjeta',gs(by.tarjeta))+tile('Transferencia / QR',gs(by.transferencia))+tile('A crédito',gs(by.credito));
   var agg={};
@@ -2054,6 +2179,7 @@ var A={
   openshiftmodal:function(){ui.afterShift=null;openShiftModal();},
   openshift:function(){doOpenShift();},
   closeshiftmodal:function(){closeShiftModal();},
+  closeothershift:function(el,id){closeShiftModal(id);},
   closeshift:function(){doCloseShift();},
   newbudget:function(){openBudgetForm();},
   addbudgetline:function(){addBudgetLine();},
@@ -2185,7 +2311,7 @@ function isManager(){return !!cur&&(cur.role==='admin'||cur.role==='encargado');
 function roleName(r){return r==='admin'?'Principal':(r==='encargado'?'Encargado':'Cajero');}
 function maxDisc(){return isManager()?100:(state&&state.sec?state.sec.maxDisc:10);}
 function canTab(t){if(!cur)return false;if(MODULE_TABS[t]){var cv=MODULE_TABS[t].canView;return typeof cv==='function'?!!cv(cur):cv===true?true:cur.role==='admin';}if(cur.role==='admin')return true;if(cur.role==='encargado')return t!=='ajustes';return t==='caja'||t==='clientes';}
-var ENCACT={'void':1,newprod:1,edit:1,saveprod:1,delprod:1,importprod:1,exportprod:1,tplprod:1,newadjust:1,adjust:1,saveadjust:1,newpurchase:1,puadd:1,purm:1,puok:1,viewpurch:1,newexpense:1,saveexpense:1,paypurch:1,savepay:1,exportsales:1,newfromcode:1,delclient:1};
+var ENCACT={'closeothershift':1,'void':1,newprod:1,edit:1,saveprod:1,delprod:1,importprod:1,exportprod:1,tplprod:1,newadjust:1,adjust:1,saveadjust:1,newpurchase:1,puadd:1,purm:1,puok:1,viewpurch:1,newexpense:1,saveexpense:1,paypurch:1,savepay:1,exportsales:1,newfromcode:1,delclient:1};
 function getU(id){return state.users.filter(function(u){return u.id===id;})[0];}
 function hasAdmin(){if(SERVER&&INFO)return !!INFO.hasAdmin;return state.users.some(function(u){return u.active&&u.role==='admin';});}
 function lockUsers(){return SERVER&&INFO?INFO.users.slice():state.users.filter(function(u){return u.active;});}
@@ -2622,6 +2748,7 @@ document.addEventListener('input',function(e){
   if(id==='q'){ui.q=t.value;renderProducts();autoScan();}
   else if(id==='disc'){var n=parseFloat(t.value),mx=maxDisc();if(!isNaN(n)&&n>mx){toast('Tu descuento máximo es '+mx+'%');t.value=mx;}ui.disc=isNaN(n)?0:Math.min(mx,Math.max(0,n));renderCart();}
   else if(id==='recv'){ui.pay.recv=digits(t.value);t.value=ui.pay.recv;updatePay();}
+  else if(/^part-(efectivo|tarjeta|transferencia|credito)$/.test(id)){ui.pay.parts=ui.pay.parts||{};ui.pay.parts[id.slice(5)]=t.value;updatePay();}
   else if(id==='wKg'){updateWeigh();}
   else if(id==='countAmt'){updateCount();}
   else if(id==='pq'){ui.pq=t.value;renderProdList();}

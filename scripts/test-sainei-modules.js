@@ -1,0 +1,82 @@
+'use strict';
+const fs = require('node:fs');
+const path = require('node:path');
+const vm = require('node:vm');
+const files = fs.readdirSync(process.cwd()).filter((f) => /^sainei-mod-[a-z0-9_-]+\.js$/i.test(f)).sort();
+if (!files.length) throw new Error('No se encontraron módulos SAINEI.');
+const registered = [];
+const actions = {};
+let openedModal = '';
+const window = { SAINEI_POS_MODULES: [], confirm: () => false };
+for (const file of files) {
+  const source = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
+  vm.runInNewContext(source, { window, console, Date, Number, String, Math, URL, Blob }, { filename: file, timeout: 3000 });
+}
+const state = {
+  clients: [{id:3,name:'Cliente prueba',phone:'0981'}], sales: [{id:9,clientId:3,total:25000,items:[],returns:[{amount:5000}]}], payments: [], expenses: [], spay: [{ id: 1, purchId: 7, amount: 20, method: 'banco' }], shifts: [],
+  products: [], moves: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
+};
+const api = {
+  state: () => state,
+  user: () => ({ id: 1, role: 'admin' }),
+  addAction(name, fn) {
+    if (!/^[a-z][a-z0-9_-]{1,40}$/i.test(name) || typeof fn !== 'function') throw new Error('Acción inválida: ' + name);
+    actions[name] = fn;
+  },
+  openModal(html) { openedModal = html; },
+  addTab(spec) {
+    if (!spec || !/^[a-z][a-z0-9_-]{1,30}$/i.test(spec.id)) throw new Error('ID de pestaña inválido');
+    if (!spec.label || typeof spec.render !== 'function') throw new Error('Definición de pestaña incompleta: ' + spec.id);
+    if (registered.some((x) => x.id === spec.id)) throw new Error('ID duplicado: ' + spec.id);
+    registered.push(spec);
+  },
+  escape: (v) => String(v).replace(/[&<>"']/g, ''),
+  money: (v) => 'Gs. ' + v,
+  round3: (v) => Math.round(v * 1000) / 1000,
+  newId: () => 1,
+  log: () => {},
+  toast: () => {},
+  save: () => Promise.resolve(true),
+  refresh: () => {},
+};
+for (const mod of window.SAINEI_POS_MODULES) {
+  if (!mod || typeof mod.init !== 'function') throw new Error('Módulo sin init válido');
+  mod.init(api);
+}
+if (registered.length < files.length) throw new Error('No todos los módulos registraron al menos una pestaña.');
+for (const tab of registered) {
+  const sec = {
+    html: '',
+    set innerHTML(value) { this.html = value; },
+    get innerHTML() { return this.html; },
+    querySelector() { return { value: '', addEventListener() {} }; },
+    querySelectorAll() { return []; },
+  };
+  tab.render(sec);
+  if (!sec.innerHTML) throw new Error('El módulo no generó contenido: ' + tab.id);
+}
+const supplierTab = registered.find((x) => x.id === 'proveedores-hist');
+if (!supplierTab) throw new Error('No se registró la pestaña Proveedores.');
+const supplierSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
+supplierTab.render(supplierSec);
+if (!supplierSec.innerHTML.includes('Gs. 80') || !supplierSec.innerHTML.includes('>Pagar</button>')) {
+  throw new Error('El saldo del proveedor no refleja el pago parcial registrado.');
+}
+if (typeof actions['proveedor-pagar'] !== 'function' || typeof actions['proveedor-confirmar-pago'] !== 'function') {
+  throw new Error('No se registraron las acciones de pago a proveedores.');
+}
+actions['proveedor-pagar']({ dataset: { id: '7' } });
+if (!openedModal.includes('Gs. 80') || !openedModal.includes('Registrar pago')) {
+  throw new Error('El formulario de pago no muestra el saldo pendiente correcto.');
+}
+const loyaltyTab = registered.find((x) => x.id === 'fidelizacion');
+if (!loyaltyTab) throw new Error('No se registró Fidelización.');
+const loyaltySec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
+loyaltyTab.render(loyaltySec);
+if (!loyaltySec.innerHTML.includes('Cliente prueba') || !loyaltySec.innerHTML.includes('<strong>2</strong>')) {
+  throw new Error('Fidelización no calcula los puntos netos descontando devoluciones.');
+}
+if (typeof actions['fidelizacion-configurar'] !== 'function' || typeof actions['fidelizacion-guardar'] !== 'function' || typeof actions['fidelizacion-csv'] !== 'function') {
+  throw new Error('Faltan acciones del módulo Fidelización.');
+}
+console.log('OK: ' + files.length + ' módulos cargados, permisos registrados, renderizado inicial y flujo de saldo/pago parcial de proveedor verificados: ' + registered.map((x) => x.id).join(', '));
