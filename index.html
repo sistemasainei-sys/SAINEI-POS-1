@@ -345,6 +345,56 @@ td.r,th.r{text-align:right}
   .caja2 .lines{max-height:none}
 }
 @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+
+/* Identidad visual SAINEI: azul marino + naranja, inspirada en el panel de licencias */
+:root{
+ --bg:#f2f5fa;--surface:#ffffff;--surface-2:#edf1f7;--fg:#17243a;--muted:#64748b;--line:#dce5f0;
+ --accent:#f28a1e;--accent-fg:#142b4b;--accent-soft:#fff0dc;
+ --warn:#a85a08;--warn-soft:#fff0dc;--bad:#b42318;--bad-soft:#fde8e6;--ok:#17365d;--ok-soft:#e5edf8;
+ color-scheme:light;
+}
+:root[data-theme="dark"],@media (prefers-color-scheme: dark){ }
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body)}
+.top{background:#122f55;color:#fff;border:0;border-radius:0 0 22px 22px;padding-top:14px;padding-bottom:5px;box-shadow:0 8px 24px rgba(18,47,85,.12)}
+.brand h1,.brand span{color:#fff}
+.brand h1{font-weight:800;letter-spacing:.01em}
+.brand span{opacity:.78}
+.shift{background:rgba(255,255,255,.12);color:#fff;border-color:rgba(255,255,255,.2)}
+.shift.open,.shift.closed{background:rgba(255,255,255,.16);color:#fff}
+.tab{color:#d6e1f0;border-radius:10px 10px 0 0}
+.tab[aria-selected="true"]{color:#fff;border-bottom-color:#f28a1e}
+main{padding-top:20px}
+.panel,.tile,.card,.lockbox,.sheet{border-radius:20px;border-color:var(--line);box-shadow:0 8px 24px rgba(18,47,85,.045)}
+.pcard{border-radius:14px}
+.search,.input,.recv,.disc{border-radius:12px;border-color:#cbd7e6}
+.btn,.method,.qty button,.wbtn{border-radius:12px}
+.btn.primary,.cobrar{background:#f28a1e;border-color:#f28a1e;color:#142b4b;font-weight:800}
+.btn.primary:hover,.cobrar:hover{background:#e97e12}
+.chip[aria-pressed="true"],.tools2 .btn[aria-pressed="true"]{background:#122f55;border-color:#122f55;color:#fff}
+.tab[aria-selected="true"]{color:#fff}
+.bigtotal{background:#122f55;color:#fff;border-radius:16px 16px 0 0}
+.lastitem{border-radius:16px;border-color:#f28a1e}
+.lastitem .am{color:#122f55}
+.lockscr{background:var(--bg)}
+.lockbox{width:min(760px,100%);padding:clamp(22px,4vw,40px);gap:18px}
+.lockbox h2{font-size:clamp(24px,3vw,34px);font-weight:800}
+.lk-brand{justify-content:flex-start;background:#122f55;color:#fff;border-radius:22px;padding:26px}
+.lk-brand strong{font-size:clamp(24px,4vw,38px);font-weight:800}
+.lk-brand strong span{color:#f28a1e}
+.lockbox label{font-size:15px;font-weight:700;color:var(--fg)}
+.lockbox .input{padding:16px;font-size:18px}
+.lockbox .btn.primary{padding:16px;font-size:18px}
+@media(max-width:700px){
+ body{font-size:15px}
+ .top{margin-inline:calc(-1 * max(16px,env(safe-area-inset-left,0px)));border-radius:0 0 18px 18px}
+ .tabs{width:100%;margin-left:0}
+ .tab{padding:10px 11px}
+ .caja,.caja2{grid-template-columns:minmax(0,1fr)}
+ .cart{position:static;max-height:none}
+ .lockbox{padding:22px;border-radius:24px}
+ .lk-brand{padding:24px}
+}
+
 </style>
 
 </head>
