@@ -68,3 +68,11 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - Los cobros de clientes (`payments`) aceptados tampoco pueden alterarse retroactivamente.
 - Si se necesita corregir un movimiento, debe resolverse mediante un procedimiento de ajuste o reversión auditable; la interfaz actual no debe simular una edición del comprobante original.
 - No se ejecutaron pruebas.
+
+
+## Validación de catálogo y movimientos de inventario
+
+- El servidor rechaza productos sin nombre, con nombre excesivo, precio/costo negativo o no entero, mínimo negativo/no numérico o tipo de producto no reconocido.
+- Los movimientos nuevos deben apuntar a un producto activo, tener cantidad finita y distinta de cero, fecha válida, cantidad acotada y campos tipo/detalle de longitud limitada.
+- El stock persistido continúa derivándose de los movimientos aceptados; el valor de stock enviado directamente en una edición de producto no reemplaza el stock del servidor.
+- No se ejecutaron pruebas; la compatibilidad con productos pesables y de medida queda pendiente de comprobación operativa.
