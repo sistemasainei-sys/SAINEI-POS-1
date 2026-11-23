@@ -97,6 +97,8 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 - [x] Evitar que una cantidad inválida mezclada con otras líneas deje un importe de reembolso desfasado respecto de los artículos finalmente guardados.
 - [x] Rechazar cantidades no numéricas, negativas o fraccionarias para productos vendidos por unidad.
 - [x] Impedir registrar una devolución si el producto ya no existe en el inventario, para no confirmar una devolución sin reposición de stock.
+
+- [x] El servidor rechaza devoluciones que traen IDs de movimientos de reposición inválidos, repetidos o ya utilizados, evitando aceptar la devolución con solo una parte de sus movimientos de stock.
 - [ ] Revisar la regla contable para reembolsos de ventas mixtas y ejecutar pruebas funcionales aisladas cuando el usuario las autorice.
 
 No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalización.
