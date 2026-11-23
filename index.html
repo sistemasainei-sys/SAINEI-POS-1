@@ -2618,7 +2618,7 @@ var SERVER=false,INFO=null,TOKEN='';
 var SYNC={dirty:false,rev:0,epoch:'',base:{},sing:{},pend:[],busy:false,err:'',lastBackup:null,q:false,pool:{},role:''};
 var COLLS=['products','sales','clients','purchases','payments','expenses','shifts','moves','spay','budgets'];
 var DELCOLL={products:1,clients:1};
-var SINGK=['shop','scale','print','scan','sec','check','loyaltyRedemptions'];
+var SINGK=['shop','scale','print','scan','sec','check','loyaltyRedemptions','suspendedSales'];
 function stable(o){if(o===null||typeof o!=='object')return JSON.stringify(o);if(Array.isArray(o))return '['+o.map(stable).join(',')+']';return '{'+Object.keys(o).sort().map(function(k){return JSON.stringify(k)+':'+stable(o[k]);}).join(',')+'}';}
 function recKey(coll,r){if(coll==='products'){var c=Object.assign({},r);delete c.stock;return stable(c);}return stable(r);}
 function api(method,path,body,ms){
@@ -2935,7 +2935,22 @@ var moduleApi={
  state:function(){return state;},user:function(){return cur;},save:function(){return save();},toast:function(m){toast(String(m));},
  escape:function(v){return esc(v);},money:function(v){return gs(v);},number:function(v){return num(v);},round3:function(v){return round3(v);},
  newId:function(kind){return nid(kind);},log:function(v){log(String(v));},openModal:function(html,opts){openModal(html,opts||{});},closeModal:function(){closeModal();},
- refresh:function(){renderCurrent();},addAction:function(name,fn){if(!/^[a-z][a-z0-9_-]{1,40}$/i.test(name)||typeof fn!=='function')throw new Error('Acción de módulo inválida');A[name]=fn;},
+ refresh:function(){renderCurrent();},
+ cartSnapshot:function(){return {items:ui.cart.map(function(l){return {k:l.k,id:l.id,qty:l.qty,amount:l.amount,price:l.price};}),disc:ui.disc||0,clientId:ui.clientId||0,pendingBudget:ui.pendingBudget||0};},
+ clearCart:function(){ui.cart=[];ui.disc=0;ui.clientId=0;ui.pendingBudget=0;renderCart();},
+ restoreCart:function(snapshot){
+  if(!snapshot||!Array.isArray(snapshot.items)||ui.cart.length)return false;
+  var totalsBy={},items=[];
+  for(var i=0;i<snapshot.items.length;i++){
+   var l=snapshot.items[i],p=getP(Number(l.id)),qty=Number(l.qty);
+   if(!p||!Number.isFinite(qty)||qty<=0)return false;
+   totalsBy[p.id]=(totalsBy[p.id]||0)+qty;
+   items.push({k:ui.kseq++,id:p.id,qty:qty,amount:l.amount==null?null:Number(l.amount),price:l.price==null?null:Number(l.price)});
+  }
+  for(var id in totalsBy){if(totalsBy[id]>getP(Number(id)).stock+0.0005)return false;}
+  ui.cart=items;ui.disc=Math.max(0,Math.min(100,Number(snapshot.disc)||0));ui.clientId=Number(snapshot.clientId)||0;ui.pendingBudget=Number(snapshot.pendingBudget)||0;renderCart();return true;
+ },
+ addAction:function(name,fn){if(!/^[a-z][a-z0-9_-]{1,40}$/i.test(name)||typeof fn!=='function')throw new Error('Acción de módulo inválida');A[name]=fn;},
  addTab:function(spec){
    if(!spec||!/^[a-z][a-z0-9_-]{1,30}$/i.test(spec.id)||!spec.label||typeof spec.render!=='function')throw new Error('Pestaña de módulo inválida');
    if(MODULE_TABS[spec.id]||TABS.some(function(t){return t[0]===spec.id;}))throw new Error('Ya existe esa pestaña');
