@@ -34,20 +34,17 @@ if errorlevel 1 (
 node -e "const [a,b]=process.versions.node.split('.').map(Number);process.exit(a>22||(a===22&&b>=13)?0:1)"
 if errorlevel 1 (
   echo ERROR: SAINEI POS requiere Node.js 22.13 o superior.
-  echo Actualiza Node.js LTS y vuelve a ejecutar este archivo.
+  echo Actualiza Node.js LTS y vuelve a ejecutar el instalador.
   pause
   exit /b 4
 )
-if not defined LOCALAPPDATA set LOCALAPPDATA=%USERPROFILE%\AppData\Local
+if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
 set "SAINEI_DATA=%LOCALAPPDATA%\SAINEI-POS\datos"
 if not exist "%SAINEI_DATA%" mkdir "%SAINEI_DATA%"
 if not exist "%SAINEI_DATA%\copias" mkdir "%SAINEI_DATA%\copias"
 echo.
-echo Preparacion completada.
-echo Los datos y la base SQLite se crearan automaticamente al iniciar el servidor.
-echo Carpeta permanente de datos: %SAINEI_DATA%
-echo.
-echo Configurando inicio automatico de SAINEI POS...
+echo Datos permanentes: %SAINEI_DATA%
+echo Configurando inicio automatico del servidor...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0configurar-inicio-automatico-sainei.ps1"
 if errorlevel 1 (
   echo No se pudo configurar el inicio automatico.
@@ -55,6 +52,8 @@ if errorlevel 1 (
   pause
   exit /b 5
 )
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$p;$s.WorkingDirectory='%~dp0';$s.Save()"
 echo.
-echo SAINEI POS quedara configurado para iniciar al entrar a Windows.
+echo Instalacion preparada. Se creo el acceso directo SAINEI POS en el Escritorio.
+echo Los datos quedan fuera de la carpeta del programa y no se borran al actualizar.
 endlocal
