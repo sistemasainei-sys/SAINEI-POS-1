@@ -327,7 +327,8 @@ function processSync(user, body) {
                 !Number.isFinite(dateValue) || !Number.isInteger(shiftId) || shiftId < 0 ||
                 (shiftId > 0 && (!shiftRow || shiftRow.del)) ||
                 (shiftId > 0 && rec.method !== 'efectivo') ||
-                (shiftId > 0 && user.role === 'cajero' && Number(JSON.parse(shiftRow.j).uid) !== Number(user.uid))) {
+                (shiftId > 0 && !!JSON.parse(shiftRow.j).closedAt) ||
+                (shiftId > 0 && user.role !== 'admin' && Number(JSON.parse(shiftRow.j).uid) !== Number(user.uid))) {
               res.rejected.push({ coll, id });
               continue;
             }
