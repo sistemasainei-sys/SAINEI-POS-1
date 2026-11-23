@@ -48,6 +48,8 @@ Vj1lHKEcgIdrkMFwGfI1RbmLYIH2X9JBD59IZicO5x13ywqKC8LTUKMC/JpyjNwM
 hwIDAQAB
 -----END PUBLIC KEY-----`;
 const ENV_INSTALL_ID = String(process.env.SAINEI_INSTALL_ID || '').trim().toUpperCase();
+// ID anterior de SAINEI POS: se acepta su licencia firmada durante la migración.
+const LEGACY_INSTALL_IDS = ['7D217B560F4A5093C640751E'];
 let INSTALL_ID = /^[A-F0-9]{24}$/.test(ENV_INSTALL_ID) ? ENV_INSTALL_ID : getMeta('installId');
 if (!INSTALL_ID) INSTALL_ID = crypto.randomBytes(12).toString('hex').toUpperCase();
 // El identificador configurado en Render prevalece sobre SQLite para que no cambie al redeplegar.
@@ -61,7 +63,7 @@ function licenseState() {
     const sig = Buffer.from(parts[1], 'base64url');
     if (!crypto.verify('RSA-SHA256', Buffer.from(parts[0]), LICENSE_PUBLIC_KEY, sig)) throw new Error('firma');
     const data = JSON.parse(payload);
-    if (data.installId !== INSTALL_ID) throw new Error('instalacion');
+    if (data.installId !== INSTALL_ID && !LEGACY_INSTALL_IDS.includes(String(data.installId || '').toUpperCase())) throw new Error('instalacion');
     if (data.type === 'monthly' && (!data.expiresAt || Date.now() > data.expiresAt)) return { active: false, expired: true, installId: INSTALL_ID, type: data.type, expiresAt: data.expiresAt };
     if (!['permanent','monthly'].includes(data.type)) throw new Error('tipo');
     return { active: true, installId: INSTALL_ID, type: data.type, expiresAt: data.expiresAt || null, customer: data.customer || '' };
@@ -331,7 +333,7 @@ async function handle(req, res) {
       const sig = Buffer.from(parts[1], 'base64url');
       if (!crypto.verify('RSA-SHA256', Buffer.from(parts[0]), LICENSE_PUBLIC_KEY, sig)) return fail(res, 400, 'Código no válido.');
       const d = JSON.parse(payload);
-      if (d.installId !== INSTALL_ID) return fail(res, 400, 'Este código pertenece a otra instalación.');
+      if (d.installId !== INSTALL_ID && !LEGACY_INSTALL_IDS.includes(String(d.installId || '').toUpperCase())) return fail(res, 400, 'Este código pertenece a otra instalación.');
       if (!['permanent','monthly'].includes(d.type)) return fail(res, 400, 'Tipo de licencia inválido.');
       if (d.type === 'monthly' && (!d.expiresAt || Date.now() > d.expiresAt)) return fail(res, 400, 'La licencia mensual ya venció.');
       setMeta('licenseToken', token); audit('LICENCIA', 'Activación ' + d.type + ' para ' + String(d.customer || 'cliente'));
