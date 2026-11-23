@@ -12,7 +12,7 @@ window.SAINEI_POS_MODULES.push({
    var s=api.state();if(!s)return;
    var today=new Date(),rows=[];
    (s.clients||[]).forEach(function(c){
-    var sales=(s.sales||[]).filter(function(x){return x.clientId===c.id&&x.method==='credito'&&!x.void;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+    var sales=(s.sales||[]).filter(function(x){return x.clientId===c.id&&x.method==='credito'&&!x.void;}).sort(function(a,b){return Number(a.id)-Number(b.id);});
     var pays=(s.payments||[]).filter(function(p){return p.clientId===c.id;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
     var balance=sales.reduce(function(a,x){return a+Number(x.total||0);},0)-pays.reduce(function(a,x){return a+Number(x.amount||0);},0);
     var paid=pays.reduce(function(a,x){return a+Number(x.amount||0);},0),remaining=paid,overdue=0,oldest=null;
