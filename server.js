@@ -152,6 +152,53 @@ function processSync(user, body) {
   const res = { rejected: [] }, changes = body.changes || {}, savedRev = REV;
   let wrote = false;
   const R = () => { if (!wrote) { wrote = true; REV++; } return REV; };
+  // Una venta y sus movimientos de salida se aceptan como una sola unidad.
+  // Si falta un movimiento o el stock no alcanza, se rechaza el ticket completo.
+  const incomingSales = Array.isArray(changes.sales && changes.sales.up) ? changes.sales.up : [];
+  const incomingMoves = Array.isArray(changes.moves && changes.moves.up) ? changes.moves.up : [];
+  const rejectedTickets = new Set();
+  const virtualStock = new Map();
+  const ticketMoves = new Map();
+  for (const move of incomingMoves) {
+    const match = /^Ticket (\d+)$/.exec(String(move && move.note || ''));
+    if (!match) continue;
+    const ticket = Number(match[1]);
+    if (!ticketMoves.has(ticket)) ticketMoves.set(ticket, []);
+    ticketMoves.get(ticket).push(move);
+  }
+  for (const sale of incomingSales) {
+    const saleId = Number(sale && sale.id);
+    if (!Number.isInteger(saleId) || saleId <= 0 || getRec('sales', saleId)) continue;
+    const moves = ticketMoves.get(saleId) || [];
+    const required = new Map(), delivered = new Map();
+    for (const item of (Array.isArray(sale.items) ? sale.items : [])) {
+      const pid = Number(item && item.id), qty = Number(item && item.qty);
+      if (!Number.isInteger(pid) || pid <= 0 || !Number.isFinite(qty) || qty <= 0) { rejectedTickets.add(saleId); break; }
+      required.set(pid, round3((required.get(pid) || 0) + qty));
+    }
+    if (!rejectedTickets.has(saleId)) {
+      for (const move of moves) {
+        const pid = Number(move.pid), qty = Number(move.qty);
+        if (!Number.isInteger(pid) || !Number.isFinite(qty) || qty >= 0) continue;
+        delivered.set(pid, round3((delivered.get(pid) || 0) - qty));
+      }
+      for (const [pid, qty] of required) if (Math.abs((delivered.get(pid) || 0) - qty) > 0.001) rejectedTickets.add(saleId);
+      for (const pid of delivered.keys()) if (!required.has(pid)) rejectedTickets.add(saleId);
+      // Reservar virtualmente el stock para validar también varias ventas del mismo lote.
+      if (!rejectedTickets.has(saleId)) {
+        for (const [pid, qty] of required) {
+          const productRow = getRec('products', pid);
+          const current = virtualStock.has(pid) ? virtualStock.get(pid) : (productRow && !productRow.del ? Number(JSON.parse(productRow.j).stock || 0) : NaN);
+          if (!Number.isFinite(current) || round3(current - qty) < 0) { rejectedTickets.add(saleId); break; }
+        }
+        if (!rejectedTickets.has(saleId)) for (const [pid, qty] of required) {
+          const productRow = getRec('products', pid), current = virtualStock.has(pid) ? virtualStock.get(pid) : Number(JSON.parse(productRow.j).stock || 0);
+          virtualStock.set(pid, round3(current - qty));
+        }
+      }
+    }
+    if (!moves.length) rejectedTickets.add(saleId);
+  }
   try {
     tx(() => {
       for (const coll of ORDER) {
@@ -162,11 +209,53 @@ function processSync(user, body) {
           if (!rec || !Number.isInteger(id) || id <= 0) { res.rejected.push({ coll, id }); continue; }
           const row = getRec(coll, id);
           if (row && row.del) { res.rejected.push({ coll, id }); continue; }
+          if (coll === 'sales' && !row && rejectedTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
+          if (coll === 'moves' && !row) {
+            const ticket = /^Ticket (\d+)$/.exec(String(rec.note || ''));
+            if (ticket && rejectedTickets.has(Number(ticket[1]))) { res.rejected.push({ coll, id }); continue; }
+          }
           const ex = row ? JSON.parse(row.j) : null, op = ex ? 'upd' : 'ins';
           if (!allowed(user, coll, op, rec, ex)) { res.rejected.push({ coll, id }); continue; }
+          // Validar cada movimiento contra el stock vigente dentro de la transacción.
+          // Evita que dos cajas descuenten simultáneamente unidades inexistentes.
+          if (coll === 'moves' && !ex) {
+            const pid = Number(rec.pid), qty = Number(rec.qty), productRow = Number.isInteger(pid) && pid > 0 ? getRec('products', pid) : null;
+            if (!productRow || productRow.del || !Number.isFinite(qty) || qty === 0) { res.rejected.push({ coll, id }); continue; }
+            const product = JSON.parse(productRow.j), nextStock = round3(Number(product.stock || 0) + qty);
+            if (!Number.isFinite(nextStock) || nextStock < 0) { res.rejected.push({ coll, id }); continue; }
+          }
           let out = rec;
           if (coll === 'products') { out = Object.assign({}, rec, { stock: ex ? ex.stock : 0 }); }
-          else if (coll === 'sales' && ex) { if (ex.void || !rec.void) continue; out = Object.assign({}, ex, { void: true, voidBy: String(rec.voidBy || user.name) }); }
+          else if (coll === 'sales' && ex) {
+            if (ex.void || rec.void) {
+              if (!ex.void && rec.void) out = Object.assign({}, ex, { void: true, voidBy: String(rec.voidBy || user.name) });
+              else continue;
+            } else {
+              // Las ventas existentes son inmutables, salvo agregar devoluciones verificadas.
+              const before = Object.assign({}, ex), after = Object.assign({}, rec);
+              delete before.returns; delete after.returns;
+              if (JSON.stringify(before) !== JSON.stringify(after)) { res.rejected.push({ coll, id }); continue; }
+              const oldReturns = Array.isArray(ex.returns) ? ex.returns : [];
+              const newReturns = Array.isArray(rec.returns) ? rec.returns : [];
+              if (newReturns.length < oldReturns.length || oldReturns.some((r, i) => JSON.stringify(r) !== JSON.stringify(newReturns[i]))) { res.rejected.push({ coll, id }); continue; }
+              const known = new Set(oldReturns.map(r => String(r.id)));
+              const sold = Array.isArray(ex.items) ? ex.items : [];
+              const used = sold.map((_, i) => oldReturns.reduce((n, r) => n + (r.items || []).filter(x => Number(x.lineIndex) === i).reduce((a, x) => a + Number(x.qty || 0), 0), 0));
+              let valid = true;
+              for (const ret of newReturns.slice(oldReturns.length)) {
+                if (!ret || !ret.id || known.has(String(ret.id)) || !Array.isArray(ret.items) || !ret.items.length) { valid = false; break; }
+                known.add(String(ret.id));
+                for (const item of ret.items) {
+                  const ix = Number(item.lineIndex), qty = Number(item.qty);
+                  if (!Number.isInteger(ix) || ix < 0 || ix >= sold.length || !Number.isFinite(qty) || qty <= 0 || used[ix] + qty > Number(sold[ix].qty || 0) + 1e-9) { valid = false; break; }
+                  used[ix] += qty;
+                }
+                if (!valid) break;
+              }
+              if (!valid) { res.rejected.push({ coll, id }); continue; }
+              out = Object.assign({}, ex, { returns: newReturns });
+            }
+          }
           else if ((coll === 'payments' || coll === 'moves') && ex) continue;
           else if (coll === 'clients' && user.role === 'cajero') { out = Object.assign({}, rec, { limit: ex ? ex.limit : 0 }); }
           if (coll === 'sales' && !ex) out = Object.assign({}, rec, { uname: rec.uname || user.name });
@@ -276,7 +365,7 @@ function readBody(req) {
 }
 function send(res, code, obj, extra) {
   const body = typeof obj === 'string' ? obj : JSON.stringify(obj);
-  res.writeHead(code, Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }, extra || {}));
+  res.writeHead(code, Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()' }, extra || {}));
   res.end(body);
 }
 const fail = (res, code, msg, more) => send(res, code, Object.assign({ error: msg }, more || {}));
@@ -295,6 +384,14 @@ const CT = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.cs
 async function handle(req, res) {
   const url = new URL(req.url, 'http://x'), p = url.pathname, m = req.method;
   const ip = (req.socket.remoteAddress || '').replace('::ffff:', '');
+  // Rechazar peticiones mutables iniciadas desde otro sitio web.
+  if (p.startsWith('/api/') && !['GET','HEAD','OPTIONS'].includes(m)) {
+    const origin = req.headers.origin;
+    if (origin) {
+      try { if (new URL(origin).host !== req.headers.host) return fail(res, 403, 'Origen no permitido.'); }
+      catch (_) { return fail(res, 403, 'Origen no permitido.'); }
+    }
+  }
   if (!p.startsWith('/api/')) {
     if (m !== 'GET' && m !== 'HEAD') return fail(res, 405, 'Metodo no permitido');
     if (p === '/' || p === '/index.html') {
@@ -402,7 +499,10 @@ async function handle(req, res) {
     const b = await readBody(req), u = prep('SELECT * FROM users WHERE id=?').get(me.uid);
     if (!checkPin(u, String(b.old || ''))) return fail(res, 400, 'La clave actual no es correcta.');
     if (weakPin(String(b.pin || ''))) return fail(res, 400, 'La clave nueva es muy facil.');
-    const k = mkPin(String(b.pin)); prep('UPDATE users SET salt=?,hash=? WHERE id=?').run(k.salt, k.hash, me.uid); audit(me.name, 'Cambio su clave');
+    const k = mkPin(String(b.pin)); prep('UPDATE users SET salt=?,hash=? WHERE id=?').run(k.salt, k.hash, me.uid);
+    // Mantener la sesión actual y revocar las demás sesiones abiertas con la clave anterior.
+    for (const [token, session] of [...sessions]) if (session.uid === me.uid && token !== me.token) sessions.delete(token);
+    audit(me.name, 'Cambio su clave');
     return send(res, 200, { ok: true });
   }
 
@@ -422,7 +522,10 @@ async function handle(req, res) {
       prep('UPDATE users SET name=?,role=?,active=?,salt=?,hash=? WHERE id=?').run(name, role, active, k.salt, k.hash, ex.id);
       for (const [t, s] of [...sessions]) {
         if (s.uid !== ex.id) continue;
-        if (!active) sessions.delete(t); else { s.role = role; s.name = name; }
+        // Un cambio de clave invalida todas las sesiones anteriores.
+        // Un usuario desactivado también pierde acceso inmediatamente.
+        if (!active || pin) sessions.delete(t);
+        else { s.role = role; s.name = name; }
       }
       audit(me.name, 'Edito al usuario ' + name);
     } else {
