@@ -7,7 +7,8 @@
     "node": ">=22.13.0"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check:postgres": "node --check server-postgres.js"
   },
   "dependencies": {
     "pg": "^8.16.3"
