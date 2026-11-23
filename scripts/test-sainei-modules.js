@@ -5,21 +5,25 @@ const vm = require('node:vm');
 const files = fs.readdirSync(process.cwd()).filter((f) => /^sainei-mod-[a-z0-9_-]+\.js$/i.test(f)).sort();
 if (!files.length) throw new Error('No se encontraron módulos SAINEI.');
 const registered = [];
+const actions = {};
+let openedModal = '';
 const window = { SAINEI_POS_MODULES: [], confirm: () => false };
 for (const file of files) {
   const source = fs.readFileSync(path.join(process.cwd(), file), 'utf8');
   vm.runInNewContext(source, { window, console, Date, Number, String, Math, URL, Blob }, { filename: file, timeout: 3000 });
 }
 const state = {
-  clients: [], sales: [], payments: [], expenses: [], spay: [], shifts: [],
-  products: [], moves: [], purchases: [], budgets: [], users: [],
+  clients: [], sales: [], payments: [], expenses: [], spay: [{ id: 1, purchId: 7, amount: 20, method: 'banco' }], shifts: [],
+  products: [], moves: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
 };
 const api = {
   state: () => state,
   user: () => ({ id: 1, role: 'admin' }),
   addAction(name, fn) {
     if (!/^[a-z][a-z0-9_-]{1,40}$/i.test(name) || typeof fn !== 'function') throw new Error('Acción inválida: ' + name);
+    actions[name] = fn;
   },
+  openModal(html) { openedModal = html; },
   addTab(spec) {
     if (!spec || !/^[a-z][a-z0-9_-]{1,30}$/i.test(spec.id)) throw new Error('ID de pestaña inválido');
     if (!spec.label || typeof spec.render !== 'function') throw new Error('Definición de pestaña incompleta: ' + spec.id);
@@ -51,4 +55,18 @@ for (const tab of registered) {
   tab.render(sec);
   if (!sec.innerHTML) throw new Error('El módulo no generó contenido: ' + tab.id);
 }
-console.log('OK: ' + files.length + ' módulos cargados, permisos registrados y renderizado inicial verificado: ' + registered.map((x) => x.id).join(', '));
+const supplierTab = registered.find((x) => x.id === 'proveedores-hist');
+if (!supplierTab) throw new Error('No se registró la pestaña Proveedores.');
+const supplierSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
+supplierTab.render(supplierSec);
+if (!supplierSec.innerHTML.includes('Gs. 80') || !supplierSec.innerHTML.includes('>Pagar</button>')) {
+  throw new Error('El saldo del proveedor no refleja el pago parcial registrado.');
+}
+if (typeof actions['proveedor-pagar'] !== 'function' || typeof actions['proveedor-confirmar-pago'] !== 'function') {
+  throw new Error('No se registraron las acciones de pago a proveedores.');
+}
+actions['proveedor-pagar']({ dataset: { id: '7' } });
+if (!openedModal.includes('Gs. 80') || !openedModal.includes('Registrar pago')) {
+  throw new Error('El formulario de pago no muestra el saldo pendiente correcto.');
+}
+console.log('OK: ' + files.length + ' módulos cargados, permisos registrados, renderizado inicial y flujo de saldo/pago parcial de proveedor verificados: ' + registered.map((x) => x.id).join(', '));
