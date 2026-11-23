@@ -12,11 +12,11 @@ window.SAINEI_POS_MODULES.push({
    var s=api.state();if(!s)return;
    var today=new Date(),rows=[];
    (s.clients||[]).forEach(function(c){
-    var sales=(s.sales||[]).filter(function(x){return x.clientId===c.id&&x.method==='credito'&&!x.void;}).sort(function(a,b){return Number(a.id)-Number(b.id);});
+    var sales=(s.sales||[]).filter(function(x){return x.clientId===c.id&&(Number(x.creditAmount||0)>0||x.method==='credito')&&!x.void;}).sort(function(a,b){return Number(a.id)-Number(b.id);});
     var pays=(s.payments||[]).filter(function(p){return p.clientId===c.id;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
-    var balance=sales.reduce(function(a,x){return a+Number(x.total||0);},0)-pays.reduce(function(a,x){return a+Number(x.amount||0);},0);
+    var balance=sales.reduce(function(a,x){return a+(x.creditAmount!=null?Number(x.creditAmount):Number(x.total||0));},0)-pays.reduce(function(a,x){return a+Number(x.amount||0);},0);
     var paid=pays.reduce(function(a,x){return a+Number(x.amount||0);},0),remaining=paid,overdue=0,oldest=null;
-    sales.forEach(function(x){var out=Number(x.total||0);if(remaining>=out){remaining-=out;out=0;}else{out-=remaining;remaining=0;}
+    sales.forEach(function(x){var out=x.creditAmount!=null?Number(x.creditAmount):Number(x.total||0);if(remaining>=out){remaining-=out;out=0;}else{out-=remaining;remaining=0;}
      if(out>0){var due=date(x.due);if(due&&due<today)overdue+=out;if(!oldest||new Date(x.date)<oldest.date)oldest={date:new Date(x.date),due:x.due,amount:out};}
     });
     if(balance>0.5)rows.push({client:c,balance:balance,paid:paid,overdue:overdue,oldest:oldest});
