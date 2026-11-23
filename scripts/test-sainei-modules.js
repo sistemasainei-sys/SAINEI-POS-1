@@ -13,7 +13,7 @@ for (const file of files) {
   vm.runInNewContext(source, { window, console, Date, Number, String, Math, URL, Blob }, { filename: file, timeout: 3000 });
 }
 const state = {
-  clients: [], sales: [], payments: [], expenses: [], spay: [{ id: 1, purchId: 7, amount: 20, method: 'banco' }], shifts: [],
+  clients: [{id:3,name:'Cliente prueba',phone:'0981'}], sales: [{id:9,clientId:3,total:25000,items:[],returns:[{amount:5000}]}], payments: [], expenses: [], spay: [{ id: 1, purchId: 7, amount: 20, method: 'banco' }], shifts: [],
   products: [], moves: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
 };
 const api = {
@@ -68,5 +68,15 @@ if (typeof actions['proveedor-pagar'] !== 'function' || typeof actions['proveedo
 actions['proveedor-pagar']({ dataset: { id: '7' } });
 if (!openedModal.includes('Gs. 80') || !openedModal.includes('Registrar pago')) {
   throw new Error('El formulario de pago no muestra el saldo pendiente correcto.');
+}
+const loyaltyTab = registered.find((x) => x.id === 'fidelizacion');
+if (!loyaltyTab) throw new Error('No se registró Fidelización.');
+const loyaltySec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
+loyaltyTab.render(loyaltySec);
+if (!loyaltySec.innerHTML.includes('Cliente prueba') || !loyaltySec.innerHTML.includes('<strong>2</strong>')) {
+  throw new Error('Fidelización no calcula los puntos netos descontando devoluciones.');
+}
+if (typeof actions['fidelizacion-configurar'] !== 'function' || typeof actions['fidelizacion-guardar'] !== 'function' || typeof actions['fidelizacion-csv'] !== 'function') {
+  throw new Error('Faltan acciones del módulo Fidelización.');
 }
 console.log('OK: ' + files.length + ' módulos cargados, permisos registrados, renderizado inicial y flujo de saldo/pago parcial de proveedor verificados: ' + registered.map((x) => x.id).join(', '));
