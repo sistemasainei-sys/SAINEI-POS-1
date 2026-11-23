@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Permitir que el comercio use SAINEI POS en una computadora Windows sin Render ni plan de alojamiento. La computadora principal guarda la base SQLite del comercio y debe permanecer encendida y conectada a la red local mientras se usa el sistema. Después de activar la licencia, las operaciones dentro del local no necesitan internet; sí necesitan que funcione la red local.
+Permitir que el comercio use SAINEI POS en una computadora Windows sin Render ni plan de alojamiento. La computadora principal guarda la base SQLite del comercio y debe permanecer encendida y conectada a la red local mientras se usa el sistema. El iniciador Windows establece el modo local, por lo que no exige activación en línea ni conexión a Render. Las operaciones dentro del local solo necesitan que funcione la red local.
 
 ## Inicio
 
