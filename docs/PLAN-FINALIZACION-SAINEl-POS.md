@@ -2,13 +2,20 @@
 
 Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a main ni cambios en datos de comercios.
 
-## Prioridad 1 — Operación en línea y respaldo de datos
+## Modalidad principal acordada — instalación local por comercio
 
-- [x] Definir que SAINEI POS requiere conexión a internet/servidor para confirmar ventas; no ofrecer operación sin conexión.
+- [x] Base SQLite local en la computadora principal de cada comercio; no requiere Render ni base de datos en la nube para guardar ventas.
+- [x] Las cajas adicionales se conectan a la computadora principal por la red local y usan la misma base del comercio.
+- [x] La carpeta de datos se mantiene separada de los archivos del programa para protegerla durante actualizaciones.
+- [ ] Completar el paquete de instalación y el procedimiento de actualización sin tocar la base de datos.
+- [ ] Verificar copia externa y restauración cuando el usuario autorice sus pruebas.
+
+**Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet después de activar la licencia. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
+
+## Prioridad 1 — Operación local y respaldo de datos
+
 - [ ] Verificar restauración y copias antes/después de cada actualización. La guía de riesgos está en `docs/REVISION-SEGURIDAD-OPERACION.md` y el procedimiento para el administrador en `docs/PROCEDIMIENTO-RESPALDO-RESTAURACION.md`.
-- [ ] Confirmar almacenamiento persistente de la base de datos en el servicio publicado antes de usarlo con datos reales.
-
-**Decisión de alcance:** el usuario decidió dejar fuera el modo sin conexión. El cliente debe tener internet para operar y confirmar ventas. No se implementará cola offline ni sincronización posterior en esta entrega.
+- [ ] Mantener Render fuera del camino crítico de instalación, licencias y almacenamiento local.
 
 ## Prioridad 2 — Seguridad de conexión y acceso
 
