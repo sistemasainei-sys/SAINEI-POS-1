@@ -14,11 +14,17 @@ for (const file of files) {
 }
 const state = {
   clients: [{id:3,name:'Cliente prueba',phone:'0981'}], sales: [{id:9,clientId:3,total:25000,items:[],returns:[{amount:5000}]}], payments: [], expenses: [], spay: [{ id: 1, purchId: 7, amount: 20, method: 'banco' }], shifts: [],
-  products: [], moves: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
+  products: [], moves: [], suspendedSales: [], promotions: [], loyaltyRedemptions: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
 };
 const api = {
   state: () => state,
   user: () => ({ id: 1, role: 'admin' }),
+  isAdmin: () => true,
+  maxDiscount: () => 10,
+  applyDiscount: () => true,
+  cartSnapshot: () => ({ items: [], disc: 0, clientId: 0, pendingBudget: 0 }),
+  clearCart: () => {},
+  restoreCart: () => true,
   addAction(name, fn) {
     if (!/^[a-z][a-z0-9_-]{1,40}$/i.test(name) || typeof fn !== 'function') throw new Error('Acción inválida: ' + name);
     actions[name] = fn;
