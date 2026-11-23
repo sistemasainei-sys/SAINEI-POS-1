@@ -2933,6 +2933,7 @@ var moduleApi={
  escape:function(v){return esc(v);},money:function(v){return gs(v);},number:function(v){return num(v);},round3:function(v){return round3(v);},
  newId:function(kind){return nid(kind);},log:function(v){log(String(v));},openModal:function(html,opts){openModal(html,opts||{});},closeModal:function(){closeModal();},
  request:function(method,path,body){return api(method,path,body);},
+ isServer:function(){return SERVER;},
  refresh:function(){renderCurrent();},
  isAdmin:function(){return isAdmin();},maxDiscount:function(){return maxDisc();},
  applyDiscount:function(value){var n=Number(value);if(!Number.isFinite(n)||n<0||n>100||(!isAdmin()&&n>maxDisc()))return false;ui.disc=n;var el=$('#disc');if(el)el.value=String(n);if(ui.tab!=='caja')setTab('caja');else renderCart();return true;},
