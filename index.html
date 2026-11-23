@@ -15,26 +15,27 @@
 <script>window.SAINEI_PACKAGE=true;if("serviceWorker" in navigator&&/^https?:$/.test(location.protocol)){window.addEventListener("load",function(){navigator.serviceWorker.register("/sw.js").catch(function(){});});}</script>
 <meta name="claude:viewport-fit-sides" content="cover">
 <style>
-/* Diseño: barra superior con pestañas por área (Caja, Productos, Stock, Clientes, Finanzas, Ventas, Ajustes). Caja en dos columnas: productos | ticket. Verde cajero sobre grises con tinte verde. */
+/* Identidad SAINEI: azul principal, naranja de acento y superficies blancas. */
 :root{
-  --bg:#f1f4f2; --surface:#ffffff; --surface-2:#e7ece9; --fg:#14201b; --muted:#566660; --line:#d3dbd7;
-  --accent:#1769aa; --accent-fg:#ffffff; --accent-soft:#dcecff;
-  --warn:#9a5200; --warn-soft:#fbe9c6; --bad:#b42318; --bad-soft:#fde3df; --ok:#1769aa; --ok-soft:#dcecff;
+  --bg:#f4f7fb; --surface:#ffffff; --surface-2:#eaf0f7; --fg:#172536; --muted:#617184; --line:#d7e0eb;
+  --accent:#1769aa; --accent-fg:#ffffff; --accent-soft:#e1efff;
+  --brand-orange:#f28c28; --brand-orange-soft:#fff0df;
+  --warn:#b96512; --warn-soft:#fff0df; --bad:#b42318; --bad-soft:#fde3df; --ok:#1769aa; --ok-soft:#e1efff;
   --font-head:'Space Grotesk','Segoe UI',system-ui,sans-serif; --font-body:'Inter','Segoe UI',system-ui,sans-serif;
   --font-num:'Space Grotesk','Inter',system-ui,sans-serif;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
-    --bg:#0e1411; --surface:#17201c; --surface-2:#212c27; --fg:#e8efeb; --muted:#9aaba3; --line:#2c3a34;
-    --accent:#4b9be0; --accent-fg:#06281c; --accent-soft:#17324a;
-    --warn:#f3b552; --warn-soft:#3a2d10; --bad:#ff8c80; --bad-soft:#41211d; --ok:#4b9be0; --ok-soft:#17324a;
+    --bg:#101a27; --surface:#172638; --surface-2:#22364b; --fg:#edf4fb; --muted:#a7b8ca; --line:#344b63;
+    --accent:#4b9be0; --accent-fg:#071c30; --accent-soft:#203d59; --brand-orange:#ffad5c; --brand-orange-soft:#49301c;
+    --warn:#ffad5c; --warn-soft:#49301c; --bad:#ff8c80; --bad-soft:#41211d; --ok:#4b9be0; --ok-soft:#203d59;
     color-scheme:dark;
   }
 }
 :root[data-theme="dark"]{
-  --bg:#0e1411; --surface:#17201c; --surface-2:#212c27; --fg:#e8efeb; --muted:#9aaba3; --line:#2c3a34;
-  --accent:#4b9be0; --accent-fg:#06281c; --accent-soft:#17324a;
-  --warn:#f3b552; --warn-soft:#3a2d10; --bad:#ff8c80; --bad-soft:#41211d; --ok:#4b9be0; --ok-soft:#17324a;
+  --bg:#101a27; --surface:#172638; --surface-2:#22364b; --fg:#edf4fb; --muted:#a7b8ca; --line:#344b63;
+  --accent:#4b9be0; --accent-fg:#071c30; --accent-soft:#203d59; --brand-orange:#ffad5c; --brand-orange-soft:#49301c;
+  --warn:#ffad5c; --warn-soft:#49301c; --bad:#ff8c80; --bad-soft:#41211d; --ok:#4b9be0; --ok-soft:#203d59;
   color-scheme:dark;
 }
 *{box-sizing:border-box}
@@ -148,6 +149,9 @@ kbd{font-family:var(--font-num);font-size:11px;border:1px solid currentColor;bor
 .input{padding:9px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface);min-width:0}
 .btn{padding:9px 14px;border-radius:8px;border:1px solid var(--line);background:var(--surface);font-weight:600}
 .btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-fg)}
+.btn.brand-orange{background:var(--brand-orange);border-color:var(--brand-orange);color:#ffffff}
+.brand-accent{color:var(--brand-orange)}
+.brand-accent-bg{background:var(--brand-orange-soft)}
 .btn.danger{color:var(--bad);border-color:var(--bad)}
 .btn:disabled{opacity:.45}
 .scroll{overflow-x:auto}
@@ -264,8 +268,8 @@ td.r,th.r{text-align:right}
 .loading{position:fixed;inset:0;z-index:60;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
 .lbox{display:grid;gap:14px;max-width:480px;text-align:center}
 .lbox strong{font-family:var(--font-head);font-size:20px}
-/* Pantalla del cliente: aspecto propio de alto contraste */
-.cust{--cv-bg:#07140f;--cv-fg:#ffffff;--cv-mut:#9fc4b4;--cv-acc:#4b9be0;--cv-warn:#f28c28;--cv-card:#10281e;--cv-line:#1e4333;
+/* Pantalla del cliente: alto contraste con identidad SAINEI */
+.cust{--cv-bg:#071a2e;--cv-fg:#ffffff;--cv-mut:#b4c9dd;--cv-acc:#4b9be0;--cv-warn:#f28c28;--cv-card:#102d4b;--cv-line:#254a70;
   position:fixed;inset:0;z-index:35;background:var(--cv-bg);color:var(--cv-fg);display:flex;flex-direction:column;padding:2vh 2.5vw;gap:2vh;font-family:var(--font-body);overflow:hidden}
 .cust .cv-brand{display:flex;align-items:center;gap:2vw;font-family:var(--font-head);font-size:clamp(20px,2.6vw,40px);font-weight:700;color:var(--cv-mut);min-height:6vh}
 .cust .cv-brand img{height:clamp(36px,6vh,80px);background:#fff;border-radius:8px;padding:4px 8px}
