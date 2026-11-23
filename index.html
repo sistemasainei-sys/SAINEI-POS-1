@@ -2438,10 +2438,17 @@ function showLicenseScreen(lic){
   var box=$('#lockBox');
   $('#lockScr').hidden=false;
   box.innerHTML='<div class="lk-brand"><strong>SAINEI POS</strong></div><h2>Activación del sistema</h2>'+
-    '<p class="hint">Para habilitar este negocio, solicitá tu código de activación a SAINEI.</p>'+
-    '<p class="hint"><b>Código de instalación:</b><br><code style="font-size:16px;word-break:break-all">'+esc(lic.installId)+'</code></p>'+
-    '<label>Código de activación<input id="licenseCode" class="input" type="text" autocomplete="off" placeholder="Pegá aquí tu código"></label>'+
+    '<p class="hint">Si es una instalación nueva, copiá el código de instalación y solicitá tu licencia a SAINEI. Si ya tenés un código de activación, pegalo abajo.</p>'+
+    '<p class="hint"><b>Código de instalación:</b><br><code id="installCode" style="font-size:16px;word-break:break-all">'+esc(lic.installId)+'</code></p>'+
+    '<button class="btn" id="copyInstallCode" type="button">GENERAR / COPIAR CÓDIGO</button>'+
+    '<label style="margin-top:18px">Agregar código de activación<input id="licenseCode" class="input" type="text" autocomplete="off" placeholder="Pegá aquí tu código copiado"></label>'+
     '<p class="err" id="licenseMsg"></p><button class="btn primary" id="licenseActivate">ACTIVAR SAINEI POS</button>';
+  $('#copyInstallCode').addEventListener('click',function(){
+    var code=lic.installId,btn=this;
+    function copied(){btn.textContent='CÓDIGO COPIADO';setTimeout(function(){btn.textContent='GENERAR / COPIAR CÓDIGO';},1800);}
+    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(copied).catch(function(){var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();try{document.execCommand('copy');copied();}catch(e){$('#licenseMsg').textContent='No se pudo copiar. Mantené presionado el código para copiarlo.';}t.remove();});}
+    else {var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();try{document.execCommand('copy');copied();}catch(e){$('#licenseMsg').textContent='No se pudo copiar. Mantené presionado el código para copiarlo.';}t.remove();}
+  });
   $('#licenseActivate').addEventListener('click',function(){
     var code=$('#licenseCode').value.trim(),msg=$('#licenseMsg');
     if(!code){msg.textContent='Ingresá el código de activación.';return;}
