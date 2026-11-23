@@ -46,3 +46,8 @@ También se puede definir la variable `SAINEI_BACKUP_DEST` con la ruta de destin
 ## Alcance
 
 El iniciador no instala Node.js, no configura VPN, no configura impresoras y no publica el sistema en internet. Tampoco habilita modo sin conexión: las computadoras cliente necesitan conexión con la computadora servidor para confirmar operaciones.
+
+
+## Inicio automático al entrar a Windows
+
+Ejecutar una vez `instalar-sainei-pos-windows.bat`. El instalador registra una tarea programada para iniciar SAINEI POS en segundo plano al iniciar sesión con el mismo usuario de Windows y abre el navegador cuando el puerto 8080 responde. La PC servidor debe permanecer encendida y con esa sesión abierta durante la operación. Para iniciar manualmente, ejecutar `iniciar-sainei-pos-windows.bat`. Para revisar fallos, consultar `servidor.log` y `servidor-inicio.log` en `%LOCALAPPDATA%\SAINEI-POS\datos`.
