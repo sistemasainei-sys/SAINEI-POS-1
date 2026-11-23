@@ -334,9 +334,17 @@ function processSync(user, body) {
         }
       }
       if (body.sing && typeof body.sing === 'object') {
+        const clientSince = Math.max(0, parseInt(body.since || 0, 10) || 0);
         for (const k of SING) {
           if (!(k in body.sing)) continue;
           if (user.role !== 'admin') { res.rejected.push({ sing: k }); continue; }
+          // Rechazar escrituras basadas en una revisión anterior a la última edición
+          // de esta configuración. collect() devolverá al cliente el valor vigente.
+          const current = prep('SELECT rev FROM sing WHERE k=?').get(k);
+          if (current && Number(current.rev) > clientSince) {
+            res.rejected.push({ sing: k, conflict: true });
+            continue;
+          }
           const v = Object.assign({}, body.sing[k]); if (k === 'sec') delete v.rec;
           prep('INSERT OR REPLACE INTO sing(k,j,rev) VALUES(?,?,?)').run(k, JSON.stringify(v), R());
         }
