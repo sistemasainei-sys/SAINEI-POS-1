@@ -51,3 +51,12 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - Las claves PIN aceptadas tienen un máximo de 64 caracteres; los intentos de autenticación que exceden ese límite se rechazan antes de calcular el hash.
 - La API de administración rechaza identificadores de usuario inválidos y no convierte una edición de un usuario inexistente en un alta nueva.
 - Estos cambios son una revisión estática; no se ejecutaron pruebas de autenticación ni de sesión.
+
+
+## Integridad de compras
+
+- El servidor valida que cada compra nueva tenga proveedor, fecha válida, condición contado/crédito, al menos un artículo y total positivo.
+- Cada artículo debe referir a un producto existente y activo, con cantidad positiva y costo unitario entero no negativo.
+- El servidor recalcula el total desde las líneas y rechaza la compra si no coincide con el total recibido.
+- Las compras existentes son inmutables desde sincronización: una modificación no idéntica se rechaza para evitar cambiar documentos que ya pueden tener pagos asociados.
+- No se ejecutaron pruebas; queda pendiente la validación operativa de compras, pagos y reposición de stock.
