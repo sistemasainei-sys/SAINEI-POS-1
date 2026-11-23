@@ -187,7 +187,16 @@ function allowed(user, coll, op, rec, existing) {
 }
 
 function processSync(user, body) {
-  const res = { rejected: [] }, changes = body.changes || {}, savedRev = REV;
+  const res = { rejected: [] }, changes = body && body.changes && typeof body.changes === 'object' && !Array.isArray(body.changes) ? body.changes : {}, savedRev = REV;
+  // Limitar el tamaño lógico de cada lote además del límite HTTP en bytes.
+  // Evita que un cliente autenticado monopolice la transacción con miles de filas.
+  for (const [coll, batch] of Object.entries(changes)) {
+    if (!Object.prototype.hasOwnProperty.call(COLLS, coll) || !batch || typeof batch !== 'object' || Array.isArray(batch) ||
+        (batch.up != null && (!Array.isArray(batch.up) || batch.up.length > 1000)) ||
+        (batch.del != null && (!Array.isArray(batch.del) || batch.del.length > 1000))) {
+      throw Object.assign(new Error('Lote de sincronización inválido o demasiado grande.'), { code: 400 });
+    }
+  }
   let wrote = false;
   const R = () => { if (!wrote) { wrote = true; REV++; } return REV; };
   // Una venta y sus movimientos de salida se aceptan como una sola unidad.
