@@ -32,6 +32,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [x] Variantes de producto (talle, color, modelo, presentación) con SKU/código y stock independiente (implementado; falta prueba funcional).
 - [x] Etiquetas imprimibles con nombre, precio y código del producto.
 - [x] Documentar compatibilidad, configuración y límites de impresoras térmicas, lectores y balanzas; la integración física por modelo sigue pendiente.
+- [x] Mejorar el script de respaldo USB: comprobar que existan copias `.db` en origen, que el destino sea accesible y que haya archivos `.db` al finalizar. La restauración íntegra sigue pendiente de verificación aislada.
 - [x] Historial de proveedores con compras, pagos registrados, saldos y vencimientos (vista de consulta).
 - [x] Cuentas por cobrar: descontar devoluciones registradas del crédito pendiente y recalcular vencimientos con pagos aplicados por antigüedad.
 - [x] Fidelización opcional de clientes y puntos, con reglas configurables (canje e historial implementados; falta prueba funcional).
