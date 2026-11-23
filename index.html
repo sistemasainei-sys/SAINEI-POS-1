@@ -2420,37 +2420,7 @@ function probeServer(){
     catch(e){done=true;clearTimeout(t);res(null);}
   });
 }
-function bootServer(info){
-  SERVER=true;INFO=info;DB=null;
-  state=normalize({shop:{name:info.shopName||'SAINEI POS'}});
-  api('GET','/api/license/status').then(function(l){
-    if(!l.active){ showLicenseScreen(l); return; }
-    finishBoot().catch(function(e){showFatal((e&&e.message)||String(e));});
-  }).catch(function(e){showFatal('No se pudo comprobar la licencia: '+(e.message||'Error de conexión'));});
-}
-function showLicenseScreen(lic){
-  var box=$('#lockBox');
-  $('#lockScr').hidden=false;
-  box.innerHTML='<div class="lk-brand"><strong>SAINEI POS</strong></div><h2>Activación del sistema</h2>'+
-    '<p class="hint">Si es una instalación nueva, copiá el código de instalación y solicitá tu licencia a SAINEI. Si ya tenés un código de activación, pegalo abajo.</p>'+
-    '<p class="hint"><b>Código de instalación:</b><br><code id="installCode" style="font-size:16px;word-break:break-all">'+esc(lic.installId)+'</code></p>'+
-    '<button class="btn" id="copyInstallCode" type="button">GENERAR / COPIAR CÓDIGO</button>'+
-    '<label style="margin-top:18px">Agregar código de activación<input id="licenseCode" class="input" type="text" autocomplete="off" placeholder="Pegá aquí tu código copiado"></label>'+
-    '<p class="err" id="licenseMsg"></p><button class="btn primary" id="licenseActivate">ACTIVAR SAINEI POS</button>';
-  $('#copyInstallCode').addEventListener('click',function(){
-    var code=lic.installId,btn=this;
-    function copied(){btn.textContent='CÓDIGO COPIADO';setTimeout(function(){btn.textContent='GENERAR / COPIAR CÓDIGO';},1800);}
-    if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(code).then(copied).catch(function(){var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();try{document.execCommand('copy');copied();}catch(e){$('#licenseMsg').textContent='No se pudo copiar. Mantené presionado el código para copiarlo.';}t.remove();});}
-    else {var t=document.createElement('textarea');t.value=code;document.body.appendChild(t);t.select();try{document.execCommand('copy');copied();}catch(e){$('#licenseMsg').textContent='No se pudo copiar. Mantené presionado el código para copiarlo.';}t.remove();}
-  });
-  $('#licenseActivate').addEventListener('click',function(){
-    var code=$('#licenseCode').value.trim(),msg=$('#licenseMsg');
-    if(!code){msg.textContent='Ingresá el código de activación.';return;}
-    msg.textContent='Verificando código…';
-    api('POST','/api/license/activate',{code:code}).then(function(){msg.textContent='Licencia activada. Preparando el sistema…';location.reload();}).catch(function(e){msg.textContent=e.message||'Código no válido.';});
-  });
-}
-/* Números únicos: el servidor entrega bloques de números a cada caja (nunca se repiten). */
+ el servidor entrega bloques de números a cada caja (nunca se repiten). */
 function srvId(kind){
   var q=SYNC.pool[kind];
   if(q&&q.length)return q.shift();
