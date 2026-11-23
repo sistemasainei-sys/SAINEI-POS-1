@@ -166,7 +166,36 @@ function processSync(user, body) {
           if (!allowed(user, coll, op, rec, ex)) { res.rejected.push({ coll, id }); continue; }
           let out = rec;
           if (coll === 'products') { out = Object.assign({}, rec, { stock: ex ? ex.stock : 0 }); }
-          else if (coll === 'sales' && ex) { if (ex.void || !rec.void) continue; out = Object.assign({}, ex, { void: true, voidBy: String(rec.voidBy || user.name) }); }
+          else if (coll === 'sales' && ex) {
+            if (ex.void || rec.void) {
+              if (!ex.void && rec.void) out = Object.assign({}, ex, { void: true, voidBy: String(rec.voidBy || user.name) });
+              else continue;
+            } else {
+              // Las ventas existentes son inmutables, salvo agregar devoluciones verificadas.
+              const before = Object.assign({}, ex), after = Object.assign({}, rec);
+              delete before.returns; delete after.returns;
+              if (JSON.stringify(before) !== JSON.stringify(after)) { res.rejected.push({ coll, id }); continue; }
+              const oldReturns = Array.isArray(ex.returns) ? ex.returns : [];
+              const newReturns = Array.isArray(rec.returns) ? rec.returns : [];
+              if (newReturns.length < oldReturns.length || oldReturns.some((r, i) => JSON.stringify(r) !== JSON.stringify(newReturns[i]))) { res.rejected.push({ coll, id }); continue; }
+              const known = new Set(oldReturns.map(r => String(r.id)));
+              const sold = Array.isArray(ex.items) ? ex.items : [];
+              const used = sold.map((_, i) => oldReturns.reduce((n, r) => n + (r.items || []).filter(x => Number(x.lineIndex) === i).reduce((a, x) => a + Number(x.qty || 0), 0), 0));
+              let valid = true;
+              for (const ret of newReturns.slice(oldReturns.length)) {
+                if (!ret || !ret.id || known.has(String(ret.id)) || !Array.isArray(ret.items) || !ret.items.length) { valid = false; break; }
+                known.add(String(ret.id));
+                for (const item of ret.items) {
+                  const ix = Number(item.lineIndex), qty = Number(item.qty);
+                  if (!Number.isInteger(ix) || ix < 0 || ix >= sold.length || !Number.isFinite(qty) || qty <= 0 || used[ix] + qty > Number(sold[ix].qty || 0) + 1e-9) { valid = false; break; }
+                  used[ix] += qty;
+                }
+                if (!valid) break;
+              }
+              if (!valid) { res.rejected.push({ coll, id }); continue; }
+              out = Object.assign({}, ex, { returns: newReturns });
+            }
+          }
           else if ((coll === 'payments' || coll === 'moves') && ex) continue;
           else if (coll === 'clients' && user.role === 'cajero') { out = Object.assign({}, rec, { limit: ex ? ex.limit : 0 }); }
           if (coll === 'sales' && !ex) out = Object.assign({}, rec, { uname: rec.uname || user.name });
