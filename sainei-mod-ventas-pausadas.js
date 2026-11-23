@@ -27,14 +27,15 @@ window.SAINEI_POS_MODULES.push({
    if(s.suspendedSales.length>=200){err.textContent='Se alcanzó el límite de 200 ventas pausadas. Eliminá algunas antes de continuar.';return;}
    var u=current(),label=document.getElementById('vs-label');
    s.suspendedSales.push({id:api.newId('move'),date:new Date().toISOString(),uid:Number(u.id)||0,uname:u.name||'',label:String(label&&label.value||'').trim().slice(0,60),items:snap.items,disc:snap.disc,clientId:snap.clientId,pendingBudget:snap.pendingBudget});
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){err.textContent='No se confirmó el guardado. La venta sigue en caja.';return;}api.closeModal();api.clearCart();api.refresh();api.toast('Venta pausada y guardada.');}).catch(function(){err.textContent='No se pudo guardar. La venta sigue en caja.';});
+   var saved=s.suspendedSales[s.suspendedSales.length-1];
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){s.suspendedSales=s.suspendedSales.filter(function(z){return z!==saved;});err.textContent='No se confirmó el guardado. La venta sigue en caja.';return;}api.closeModal();api.clearCart();api.refresh();api.toast('Venta pausada y guardada.');}).catch(function(){s.suspendedSales=s.suspendedSales.filter(function(z){return z!==saved;});err.textContent='No se pudo guardar. La venta sigue en caja.';});
   }
   function restore(el){
    var s=api.state(),id=Number(el&&el.dataset&&el.dataset.id),x=(s.suspendedSales||[]).filter(function(z){return Number(z.id)===id&&visible(z);})[0];if(!x)return;
    if(api.cartSnapshot().items.length){api.toast('Primero terminá o pausá la venta actual.');return;}
    if(!api.restoreCart(x)){api.toast('No se pudo restaurar: revisá el stock disponible de los productos.');return;}
    s.suspendedSales=s.suspendedSales.filter(function(z){return Number(z.id)!==id;});
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){api.clearCart();api.toast('No se confirmó la restauración. La venta pausada se conserva.');return;}api.refresh();api.toast('Venta restaurada. Revisá cantidades y precios antes de cobrar.');}).catch(function(){api.clearCart();api.toast('Error al restaurar. La venta pausada se conserva.');});
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){s.suspendedSales.push(x);api.clearCart();api.toast('No se confirmó la restauración. La venta pausada se conserva.');return;}api.refresh();api.toast('Venta restaurada. Revisá cantidades y precios antes de cobrar.');}).catch(function(){s.suspendedSales.push(x);api.clearCart();api.toast('Error al restaurar. La venta pausada se conserva.');});
   }
   function remove(el){
    var s=api.state(),id=Number(el&&el.dataset&&el.dataset.id),x=(s.suspendedSales||[]).filter(function(z){return Number(z.id)===id&&visible(z);})[0];if(!x)return;
