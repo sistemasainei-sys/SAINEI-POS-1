@@ -43,3 +43,11 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - Configurar el servidor y los respaldos en el equipo real del comercio.
 
 **No declarar producción lista** hasta resolver los riesgos de transporte, persistencia y recuperación de datos, y completar las verificaciones del entorno real.
+
+
+## Refuerzos adicionales de credenciales y recuperación
+
+- La recuperación de la clave del administrador revoca todas las sesiones activas anteriores de esa cuenta. El usuario debe iniciar sesión nuevamente con la nueva clave.
+- Las claves PIN aceptadas tienen un máximo de 64 caracteres; los intentos de autenticación que exceden ese límite se rechazan antes de calcular el hash.
+- La API de administración rechaza identificadores de usuario inválidos y no convierte una edición de un usuario inexistente en un alta nueva.
+- Estos cambios son una revisión estática; no se ejecutaron pruebas de autenticación ni de sesión.
