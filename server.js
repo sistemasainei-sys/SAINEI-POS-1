@@ -93,7 +93,7 @@ function checkPin(u, pin) {
   const a = Buffer.from(hashPin(pin, u.salt), 'hex'), b = Buffer.from(u.hash, 'hex');
   return a.length === b.length && crypto.timingSafeEqual(a, b);
 }
-const weakPin = p => String(p).length < 4 || /^(.)\1+$/.test(p) || ['1234', '12345', '123456', '0123', '4321'].includes(p);
+const weakPin = p => String(p).length < 4 || String(p).length > 64 || /^(.)\1+$/.test(String(p)) || ['1234', '12345', '123456', '0123', '4321'].includes(String(p));
 const ROLES = ['admin', 'encargado', 'cajero'];
 function newRecCode() { const al = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypto.randomBytes(16); let o = ''; for (let i = 0; i < 16; i++) { o += al[b[i] % al.length]; if (i % 4 === 3 && i < 15) o += '-'; } return o; }
 const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
