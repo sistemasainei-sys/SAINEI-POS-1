@@ -34,4 +34,9 @@ assert.match(index, /function closeShiftModal\(id\)/);
 assert.match(index, /function doCloseShift\(\)\s*\{\s*var sh=closingShiftTarget\?/);
 assert.match(index, /closeothershift:function\(el,id\)\{closeShiftModal\(id\);\}/);
 
+// Los movimientos de stock se validan dentro de la transacción contra el saldo actual.
+assert.match(server, /if \(coll === 'moves' && !ex\)/);
+assert.match(server, /const product = JSON\.parse\(productRow\.j\), nextStock = round3\(Number\(product\.stock \|\| 0\) \+ qty\)/);
+assert.match(server, /nextStock < 0/);
+
 console.log('OK: activación, restauración, sincronización y cierre controlado de turnos verificados.');
