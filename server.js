@@ -607,7 +607,7 @@ async function handle(req, res) {
     }
     return send(res, 200, { users: allUsers().map(pubUser) });
   }
-  if (p === '/api/newrec' && m === 'POST') { const code = newRecCode(), rc = mkPin(normCode(code)); setMeta('recSalt', rc.salt); setMeta('recHash', rc.hash); audit(me.name, 'Genero un nuevo codigo de recuperacion'); return send(res, 200, { code }); }
+  if (p === '/api/newrec' && m === 'POST') { if (!admin) return fail(res, 403, 'Solo el administrador principal puede generar un código de recuperación.'); const code = newRecCode(), rc = mkPin(normCode(code)); setMeta('recSalt', rc.salt); setMeta('recHash', rc.hash); audit(me.name, 'Genero un nuevo codigo de recuperacion'); return send(res, 200, { code }); }
   if (p === '/api/audit' && m === 'GET') {
     if (!admin) return fail(res, 403, 'Solo el administrador principal puede consultar la auditoría.');
     const lim = Math.min(1000, Math.max(1, parseInt(url.searchParams.get('limit') || '200', 10) || 200));
