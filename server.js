@@ -601,7 +601,8 @@ async function handle(req, res) {
   }
   if (p === '/api/newrec' && m === 'POST') { const code = newRecCode(), rc = mkPin(normCode(code)); setMeta('recSalt', rc.salt); setMeta('recHash', rc.hash); audit(me.name, 'Genero un nuevo codigo de recuperacion'); return send(res, 200, { code }); }
   if (p === '/api/audit' && m === 'GET') {
-    const lim = Math.min(1000, parseInt(url.searchParams.get('limit') || '200', 10) || 200);
+    if (!admin) return fail(res, 403, 'Solo el administrador principal puede consultar la auditoría.');
+    const lim = Math.min(1000, Math.max(1, parseInt(url.searchParams.get('limit') || '200', 10) || 200));
     return send(res, 200, { rows: prep('SELECT t,u,a FROM audit ORDER BY id DESC LIMIT ?').all(lim).map(r => ({ t: r.t, u: r.u, a: r.a })) });
   }
   if (p === '/api/export' && m === 'GET') { audit(me.name, 'Descargo una copia de seguridad'); return send(res, 200, fullState(), { 'Content-Disposition': 'attachment; filename="copia-sainei-' + dayStamp() + '.json"' }); }
