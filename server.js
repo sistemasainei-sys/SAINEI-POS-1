@@ -172,6 +172,7 @@ function processSync(user, body) {
   const incomingMoves = Array.isArray(changes.moves && changes.moves.up) ? changes.moves.up : [];
   const rejectedTickets = new Set();
   const rejectedReturnTickets = new Set();
+  const validReturnTickets = new Set();
   const virtualStock = new Map();
   const ticketMoves = new Map();
   // Una devolución y su reposición de inventario deben aceptarse juntas.
@@ -189,11 +190,23 @@ function processSync(user, body) {
     const previous = JSON.parse(row.j), before = Array.isArray(previous.returns) ? previous.returns : [];
     const after = Array.isArray(sale.returns) ? sale.returns : [];
     if (after.length <= before.length) continue;
-    const required = new Map(), supplied = new Map();
+    const required = new Map(), supplied = new Map(), cumulative = new Map();
     let valid = true;
     for (let i = 0; i < before.length; i++) if (JSON.stringify(before[i]) !== JSON.stringify(after[i])) valid = false;
     if (after.length < before.length) valid = false;
     const sold = Array.isArray(previous.items) ? previous.items : [];
+    // Sumar devoluciones anteriores y nuevas por línea de venta: nunca permitir
+    // que la cantidad acumulada devuelta supere lo que realmente se vendió.
+    for (const ret of after) {
+      if (!ret || !Array.isArray(ret.items)) { valid = false; break; }
+      for (const item of ret.items) {
+        const ix = Number(item.lineIndex), qty = Number(item.qty), src = sold[ix];
+        if (!Number.isInteger(ix) || ix < 0 || ix >= sold.length || !src || !Number.isFinite(qty) || qty <= 0 || Number(item.id) !== Number(src.id)) { valid = false; break; }
+        cumulative.set(ix, round3((cumulative.get(ix) || 0) + qty));
+      }
+      if (!valid) break;
+    }
+    for (const [ix, qty] of cumulative) if (qty > Number(sold[ix].qty || 0) + 0.001) valid = false;
     for (const ret of after.slice(before.length)) {
       if (!ret || !ret.id || !Array.isArray(ret.items) || !ret.items.length) { valid = false; break; }
       for (const item of ret.items) {
@@ -212,7 +225,7 @@ function processSync(user, body) {
     if (required.size !== supplied.size) valid = false;
     for (const [pid, qty] of required) if (Math.abs((supplied.get(pid) || 0) - qty) > 0.001) valid = false;
     for (const pid of supplied.keys()) if (!required.has(pid)) valid = false;
-    if (!valid) rejectedReturnTickets.add(saleId);
+    if (!valid) rejectedReturnTickets.add(saleId); else validReturnTickets.add(saleId);
   }
   for (const move of incomingMoves) {
     const match = /^Ticket (\d+)$/.exec(String(move && move.note || ''));
@@ -268,7 +281,7 @@ function processSync(user, body) {
           if (coll === 'sales' && rejectedReturnTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
           if (coll === 'moves' && !row) {
             const returnTicket = /^Devolución ticket (\\d+)$/.exec(String(rec.note || ''));
-            if (returnTicket && rejectedReturnTickets.has(Number(returnTicket[1]))) { res.rejected.push({ coll, id }); continue; }
+            if (returnTicket && !validReturnTickets.has(Number(returnTicket[1]))) { res.rejected.push({ coll, id }); continue; }
           }
           if (coll === 'moves' && !row) {
             const ticket = /^Ticket (\d+)$/.exec(String(rec.note || ''));
