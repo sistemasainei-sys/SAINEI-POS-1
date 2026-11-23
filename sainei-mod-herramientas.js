@@ -5,6 +5,27 @@ window.SAINEI_POS_MODULES.push({
  init:function(api){
   api.addTab({id:'etiquetas',label:'Etiquetas',canView:function(u){return u&&['admin','encargado'].indexOf(u.role)>=0;},render:labels});
   api.addTab({id:'proveedores-hist',label:'Proveedores',canView:function(u){return u&&['admin','encargado'].indexOf(u.role)>=0;},render:suppliers});
+  var payingPurchaseId=0;
+  api.addAction('proveedor-pagar',function(el){
+   payingPurchaseId=Number(el.dataset.id)||0;
+   var st=api.state(),pu=(st.purchases||[]).filter(function(x){return Number(x.id)===payingPurchaseId;})[0];
+   if(!pu){api.toast('No se encontró la compra.');return;}
+   var paid=(st.spay||[]).filter(function(x){return Number(x.purchId)===payingPurchaseId;}).reduce(function(a,x){return a+Number(x.amount||0);},0),out=Math.max(0,Number(pu.total||0)-paid);
+   if(!out){api.toast('Esta compra ya está pagada.');return;}
+   api.openModal('<h2>Registrar pago a '+esc(pu.supplier)+'</h2><p class="muted">Compra '+esc(pu.docNo||('#'+pu.id))+' · Saldo pendiente: <strong>'+money(out)+'</strong></p><label>Monto a pagar (Gs.)<input id="ph-pay-amount" type="number" min="1" max="'+out+'" step="1" value="'+out+'" inputmode="numeric"></label><label>Medio de pago<select id="ph-pay-method"><option value="banco">Transferencia / banco</option><option value="otro">Otro medio fuera de caja</option></select></label><p id="ph-pay-error" class="err" role="alert"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button><button class="btn primary" data-a="proveedor-confirmar-pago">Guardar pago</button></div>',{wide:false});
+  });
+  api.addAction('proveedor-confirmar-pago',function(){
+   var st=api.state(),pu=(st.purchases||[]).filter(function(x){return Number(x.id)===payingPurchaseId;})[0],err=document.getElementById('ph-pay-error');
+   if(!pu||!err)return;
+   var paid=(st.spay||[]).filter(function(x){return Number(x.purchId)===payingPurchaseId;}).reduce(function(a,x){return a+Number(x.amount||0);},0),out=Math.max(0,Number(pu.total||0)-paid),amount=Math.round(Number(document.getElementById('ph-pay-amount').value)||0);
+   if(!(amount>0)||amount>out){err.textContent='Ingresá un monto mayor a cero y no superior al saldo pendiente.';return;}
+   var method=document.getElementById('ph-pay-method').value,record={id:api.newId('spay'),date:new Date().toISOString(),purchId:payingPurchaseId,amount:amount,method:method==='banco'?'banco':'otro',shiftId:0};
+   st.spay.push(record);
+   Promise.resolve(api.save()).then(function(ok){
+    if(ok===false){st.spay=st.spay.filter(function(x){return x!==record;});err.textContent='El servidor no confirmó el pago. Revisá la conexión y volvé a intentar.';return;}
+    api.closeModal();api.refresh();api.toast('Pago al proveedor registrado.');
+   }).catch(function(){st.spay=st.spay.filter(function(x){return x!==record;});err.textContent='No se pudo guardar el pago. Revisá la conexión.';});
+  });
   function esc(v){return api.escape(v==null?'':String(v));}
   function money(v){return api.money(Math.round(Number(v)||0));}
   function labels(sec){
@@ -28,7 +49,7 @@ window.SAINEI_POS_MODULES.push({
    var keys=Object.keys(names).sort(function(a,b){return a.localeCompare(b,'es');});
    var rows=keys.map(function(n){var ps=names[n].slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);}),total=ps.reduce(function(t,p){return t+Number(p.total||0);},0),out=ps.reduce(function(t,p){return t+Math.max(0,Number(p.total||0)-Number(p.paid||0));},0),late=ps.reduce(function(t,p){return t+(p.due&&new Date(p.due)<new Date()&&Number(p.total||0)>Number(p.paid||0)?Number(p.total||0)-Number(p.paid||0):0);},0);return {name:n,ps:ps,total:total,out:out,late:late};});
    var total=rows.reduce(function(t,x){return t+x.out;},0),late=rows.reduce(function(t,x){return t+x.late;},0);
-   sec.innerHTML='<div class="card" style="padding:16px;margin:12px 0"><h2>Historial de proveedores</h2><p class="muted">Resumen basado en compras y pagos registrados. Los saldos se calculan con los datos existentes de cada compra.</p><div class="tiles">'+tile('Proveedores',String(rows.length))+tile('Saldo por pagar',money(total))+tile('Vencido',money(late))+'</div></div>'+(rows.length?rows.map(function(x,i){return '<details class="card" style="padding:14px;margin:10px 0"><summary><strong>'+esc(x.name)+'</strong> · Saldo '+money(x.out)+' · '+x.ps.length+' compras</summary><div class="kv"><span>Total histórico comprado</span><strong>'+money(x.total)+'</strong></div><div class="kv"><span>Saldo vencido</span><strong>'+money(x.late)+'</strong></div><div style="overflow:auto"><table class="table"><thead><tr><th>Fecha</th><th>Documento</th><th>Vence</th><th class="r">Total</th><th class="r">Pagado</th><th class="r">Saldo</th></tr></thead><tbody>'+x.ps.map(function(p){var paid=Number(p.paid||0),out=Math.max(0,Number(p.total||0)-paid);return '<tr><td>'+esc(date(p.date))+'</td><td>'+esc(p.doc||p.invoice||'—')+'</td><td>'+esc(date(p.due))+'</td><td class="r">'+money(p.total)+'</td><td class="r">'+money(paid)+'</td><td class="r">'+money(out)+'</td></tr>';}).join('')+'</tbody></table></div></details>';}).join(''):'<div class="card" style="padding:16px">Todavía no hay compras con proveedor registrado.</div>');
+   sec.innerHTML='<div class="card" style="padding:16px;margin:12px 0"><h2>Historial de proveedores</h2><p class="muted">Resumen basado en compras y pagos registrados. Los saldos se calculan con los datos existentes de cada compra.</p><div class="tiles">'+tile('Proveedores',String(rows.length))+tile('Saldo por pagar',money(total))+tile('Vencido',money(late))+'</div></div>'+(rows.length?rows.map(function(x,i){return '<details class="card" style="padding:14px;margin:10px 0"><summary><strong>'+esc(x.name)+'</strong> · Saldo '+money(x.out)+' · '+x.ps.length+' compras</summary><div class="kv"><span>Total histórico comprado</span><strong>'+money(x.total)+'</strong></div><div class="kv"><span>Saldo vencido</span><strong>'+money(x.late)+'</strong></div><div style="overflow:auto"><table class="table"><thead><tr><th>Fecha</th><th>Documento</th><th>Vence</th><th class="r">Total</th><th class="r">Pagado</th><th class="r">Saldo</th><th>Acción</th></tr></thead><tbody>'+x.ps.map(function(p){var paid=Number(p.paid||0),out=Math.max(0,Number(p.total||0)-paid);return '<tr><td>'+esc(date(p.date))+'</td><td>'+esc(p.doc||p.invoice||'—')+'</td><td>'+esc(date(p.due))+'</td><td class="r">'+money(p.total)+'</td><td class="r">'+money(paid)+'</td><td class="r">'+money(out)+'</td><td><button class="btn" data-a="proveedor-pagar" data-id="'+p.id+'"'+(out<=0?' disabled':'')+'>Pagar</button></td></tr>';}).join('')+'</tbody></table></div></details>';}).join(''):'<div class="card" style="padding:16px">Todavía no hay compras con proveedor registrado.</div>');
   }
   function date(v){var d=new Date(v);return isNaN(d)?'—':d.toLocaleDateString('es-PY');}
   function tile(l,v){return '<div class="tile"><div class="muted">'+esc(l)+'</div><strong>'+esc(v)+'</strong></div>';}
