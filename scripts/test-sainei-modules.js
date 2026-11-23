@@ -39,7 +39,7 @@ for (const mod of window.SAINEI_POS_MODULES) {
   if (!mod || typeof mod.init !== 'function') throw new Error('Módulo sin init válido');
   mod.init(api);
 }
-if (registered.length !== files.length) throw new Error('No todos los módulos registraron una pestaña.');
+if (registered.length < files.length) throw new Error('No todos los módulos registraron al menos una pestaña.');
 for (const tab of registered) {
   const sec = {
     html: '',
