@@ -177,12 +177,17 @@ function processSync(user, body) {
   const ticketMoves = new Map();
   // Una devolución y su reposición de inventario deben aceptarse juntas.
   const returnMoves = new Map();
+  const returnMoveIds = new Set();
+  const duplicateReturnMoveTickets = new Set();
   for (const move of incomingMoves) {
     const match = /^Devolución ticket (\\d+)$/.exec(String(move && move.note || ''));
     if (!match) continue;
     const ticket = Number(match[1]);
     if (!returnMoves.has(ticket)) returnMoves.set(ticket, []);
     returnMoves.get(ticket).push(move);
+    const moveId = Number(move && move.id);
+    if (!Number.isInteger(moveId) || moveId <= 0 || returnMoveIds.has(moveId) || getRec('moves', moveId)) duplicateReturnMoveTickets.add(ticket);
+    returnMoveIds.add(moveId);
   }
   for (const sale of incomingSales) {
     const saleId = Number(sale && sale.id), row = Number.isInteger(saleId) ? getRec('sales', saleId) : null;
@@ -191,7 +196,7 @@ function processSync(user, body) {
     const after = Array.isArray(sale.returns) ? sale.returns : [];
     if (after.length <= before.length) continue;
     const required = new Map(), supplied = new Map(), cumulative = new Map();
-    let valid = true;
+    let valid = !duplicateReturnMoveTickets.has(saleId);
     for (let i = 0; i < before.length; i++) if (JSON.stringify(before[i]) !== JSON.stringify(after[i])) valid = false;
     if (after.length < before.length) valid = false;
     const sold = Array.isArray(previous.items) ? previous.items : [];
