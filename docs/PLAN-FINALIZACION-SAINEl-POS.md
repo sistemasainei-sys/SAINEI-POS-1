@@ -16,6 +16,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [ ] Definir acceso remoto mediante VPN o túnel autenticado y documentar instalación/rotación de certificados.
 - [x] Documentar controles existentes y brechas de sesiones, permisos, intentos fallidos y Origin/CSRF en `docs/REVISION-SEGURIDAD-OPERACION.md`.
 - [ ] Pruebas de sesiones vencidas, revocación de usuarios, permisos por rol y protección CSRF/origen.
+- [x] Persistir en SQLite el contador de intentos fallidos de acceso para que sobreviva reinicios; falta verificarlo en ejecución.
 - [ ] Revisar almacenamiento de fotos y logos para evitar bases de datos excesivamente grandes.
 
 **Criterio de aceptación:** tráfico de autenticación y negocio cifrado; ninguna ruta administrativa accesible sin permiso.
