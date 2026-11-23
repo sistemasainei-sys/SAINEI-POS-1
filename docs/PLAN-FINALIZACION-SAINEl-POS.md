@@ -153,3 +153,12 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] En Windows, detectar cada 10 minutos unidades extraíbles con etiqueta exacta `SAINEI_BACKUP` y copiar los respaldos a `SAINEI-RESPALDOS`.
 - [x] Verificar tamaño de los archivos copiados y registrar incidencias en `servidor.log`.
 - [ ] Verificar físicamente detección, copia y restauración con una unidad USB de prueba en el equipo de instalación. No se ejecutaron pruebas.
+
+
+### Instalación y respaldo automatizados
+
+- [x] Agregar instalador guiado Windows con instalación de Node.js LTS mediante `winget` cuando no esté disponible, validación de versión y preparación de carpeta de datos.
+- [x] La primera ejecución del servidor crea automáticamente la base SQLite y las tablas requeridas.
+- [x] Detectar unidades extraíbles con etiqueta `SAINEI_BACKUP` y sincronizar respaldos locales a la unidad externa cada 10 minutos, con verificación de tamaño.
+- [ ] Verificar instalación y detección de USB en equipo Windows real; confirmar copia y restauración aislada. No se ejecutaron pruebas.
+- [ ] Completar instalación silenciosa como servicio de Windows y apertura automática del navegador, si se decide que el servidor deba arrancar con Windows sin dejar una consola abierta.
