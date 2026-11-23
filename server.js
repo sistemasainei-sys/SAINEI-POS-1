@@ -344,6 +344,16 @@ function processSync(user, body) {
               continue;
             }
           }
+          if (coll === 'products') {
+            const name = String(rec.name || '').trim();
+            const price = Number(rec.price), cost = Number(rec.cost || 0), min = Number(rec.min || 0);
+            if (!name || name.length > 160 || !Number.isSafeInteger(price) || price < 0 ||
+                !Number.isSafeInteger(cost) || cost < 0 || !Number.isFinite(min) || min < 0 ||
+                !['u', 'peso', 'medida'].includes(String(rec.type || 'u'))) {
+              res.rejected.push({ coll, id });
+              continue;
+            }
+          }
           if (coll === 'shifts' && user.role !== 'admin') {
             const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value));
             if (!ex) {
@@ -447,7 +457,11 @@ function processSync(user, body) {
           // Evita que dos cajas descuenten simultáneamente unidades inexistentes.
           if (coll === 'moves' && !ex) {
             const pid = Number(rec.pid), qty = Number(rec.qty), productRow = Number.isInteger(pid) && pid > 0 ? getRec('products', pid) : null;
-            if (!productRow || productRow.del || !Number.isFinite(qty) || qty === 0) { res.rejected.push({ coll, id }); continue; }
+            if (!productRow || productRow.del || !Number.isFinite(qty) || qty === 0 ||
+                Math.abs(qty) > 1000000000 || !Number.isFinite(Date.parse(rec.date)) ||
+                String(rec.type || '').length > 32 || String(rec.note || '').length > 240) {
+              res.rejected.push({ coll, id }); continue;
+            }
             const product = JSON.parse(productRow.j), nextStock = round3(Number(product.stock || 0) + qty);
             if (!Number.isFinite(nextStock) || nextStock < 0) { res.rejected.push({ coll, id }); continue; }
           }
