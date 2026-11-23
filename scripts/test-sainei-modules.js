@@ -73,6 +73,8 @@ const promoTab = registered.find((x) => x.id === 'promociones');
 if (!promoTab || typeof actions['promo-nueva'] !== 'function' || typeof actions['promo-aplicar'] !== 'function') {
   throw new Error('Falta el módulo de promociones o sus acciones.');
 }
+const indexSource = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
+const serverSource = fs.readFileSync(path.join(process.cwd(), 'server.js'), 'utf8');
 const securityChecks = [
   ["rechazo de origen cruzado", /new URL\(origin\)\.host !== req\.headers\.host/],
   ["autenticación antes de sincronizar", /const me = auth\(req\);[\s\S]*?if \(!me\) return fail\(res, 401/],
@@ -83,8 +85,7 @@ const securityChecks = [
 for (const [label, pattern] of securityChecks) {
   if (!pattern.test(serverSource)) throw new Error("Falta protección del servidor: " + label);
 }
-const indexSource = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
-const serverSource = fs.readFileSync(path.join(process.cwd(), 'server.js'), 'utf8');
+
 if (!indexSource.includes("'suspendedSales'") || !serverSource.includes("suspendedSales: 'move'") || !serverSource.includes("coll === 'suspendedSales' && user.role === 'cajero'")) {
   throw new Error('Las ventas pausadas no están incluidas en la sincronización por usuario y sus permisos.');
 }
