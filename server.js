@@ -1,7 +1,7 @@
 'use strict';
 /* SAINEI POS - servidor local (sin dependencias). Requiere Node.js 22.13 o superior.
    Datos: base SQLite en la carpeta "datos". Todo queda dentro del establecimiento. */
-const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto'), os = require('os');
+const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto'), os = require('os'), childProcess = require('child_process');
 let DatabaseSync;
 try { ({ DatabaseSync } = require('node:sqlite')); } catch (e) {
   console.error('Este programa necesita Node.js 22.13 o superior (incluye SQLite). Version actual: ' + process.version);
@@ -143,7 +143,31 @@ function pruneBackups() {
   for (const k of Object.keys(keep)) all.filter(b => b.name.startsWith(k + '-')).slice(keep[k]).forEach(b => { try { fs.unlinkSync(path.join(COPIAS, b.name)); } catch (e) {} });
 }
 function autoBackup() { try { const n = 'auto-' + dayStamp(); if (!fs.existsSync(path.join(COPIAS, n + '.db'))) { makeBackup('auto', n); log('Copia automatica creada: ' + n + '.db'); } } catch (e) { log('ERROR copia automatica: ' + e.message); } }
-autoBackup(); setInterval(autoBackup, 3600000).unref();
+function copyToConfiguredUsb() {
+  if (process.platform !== 'win32') return;
+  try {
+    const ps = "$ErrorActionPreference='Stop'; Get-CimInstance Win32_LogicalDisk -Filter 'DriveType=2' | Where-Object { $_.VolumeName -eq 'SAINEI_BACKUP' } | Select-Object -ExpandProperty DeviceID | ConvertTo-Json -Compress";
+    const raw = childProcess.execFileSync('powershell.exe', ['-NoProfile', '-NonInteractive', '-Command', ps], { encoding: 'utf8', timeout: 12000, windowsHide: true }).trim();
+    if (!raw) return;
+    const parsed = JSON.parse(raw), drives = (Array.isArray(parsed) ? parsed : [parsed]).filter(x => /^[A-Z]:$/.test(String(x)));
+    for (const drive of drives) {
+      const dest = path.join(drive + path.sep, 'SAINEI-RESPALDOS');
+      fs.mkdirSync(dest, { recursive: true });
+      for (const backup of listBackups()) {
+        const source = path.join(COPIAS, backup.name), target = path.join(dest, backup.name);
+        if (fs.existsSync(target) && fs.statSync(target).size === backup.size) continue;
+        const temp = target + '.partial';
+        fs.copyFileSync(source, temp);
+        if (fs.statSync(temp).size !== backup.size) { fs.unlinkSync(temp); throw new Error('Verificacion de tamaño fallida: ' + backup.name); }
+        fs.renameSync(temp, target);
+      }
+      log('Respaldos sincronizados en unidad externa SAINEI_BACKUP: ' + dest);
+    }
+  } catch (e) { log('AVISO: no se pudo sincronizar la copia USB: ' + e.message); }
+}
+autoBackup();
+copyToConfiguredUsb();
+setInterval(() => { autoBackup(); copyToConfiguredUsb(); }, 600000).unref();
 
 /* ---------- Registros ---------- */
 const getRec = (coll, id) => prep('SELECT j,del FROM rec WHERE coll=? AND id=?').get(coll, id);
