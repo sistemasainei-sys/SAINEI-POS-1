@@ -68,13 +68,13 @@ let REV = parseInt(getMeta('rev') || '0', 10);
 let EPOCH = getMeta('epoch'); if (!EPOCH) { EPOCH = crypto.randomBytes(6).toString('hex'); setMeta('epoch', EPOCH); }
 function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (_) {} throw e; } }
 
-const COLLS = { products: 'prod', sales: 'sale', clients: 'client', purchases: 'purch', payments: 'pay', expenses: 'exp', shifts: 'shift', moves: 'move', spay: 'spay' };
-const ORDER = ['products', 'clients', 'purchases', 'expenses', 'spay', 'shifts', 'sales', 'payments', 'moves'];
+const COLLS = { products: 'prod', sales: 'sale', clients: 'client', purchases: 'purch', payments: 'pay', expenses: 'exp', shifts: 'shift', moves: 'move', spay: 'spay', budgets: 'budget' };
+const ORDER = ['products', 'clients', 'budgets', 'purchases', 'expenses', 'spay', 'shifts', 'sales', 'payments', 'moves'];
 const SING = ['shop', 'scale', 'print', 'scan', 'sec', 'check'];
 const DELETABLE = { products: 1, clients: 1 };
 const PERM = {
-  cajero: { sales: { ins: 1 }, moves: { ins: 1 }, clients: { ins: 1, upd: 1 }, payments: { ins: 1 }, shifts: { ins: 1, upd: 1 } },
-  encargado: { products: { ins: 1, upd: 1, del: 1 }, sales: { ins: 1, upd: 1 }, clients: { ins: 1, upd: 1, del: 1 }, purchases: { ins: 1, upd: 1 }, payments: { ins: 1 }, expenses: { ins: 1, upd: 1 }, shifts: { ins: 1, upd: 1 }, moves: { ins: 1 }, spay: { ins: 1, upd: 1 } }
+  cajero: { sales: { ins: 1 }, moves: { ins: 1 }, clients: { ins: 1, upd: 1 }, budgets: { ins: 1, upd: 1 }, payments: { ins: 1 }, shifts: { ins: 1, upd: 1 } },
+  encargado: { products: { ins: 1, upd: 1, del: 1 }, sales: { ins: 1, upd: 1 }, clients: { ins: 1, upd: 1, del: 1 }, budgets: { ins: 1, upd: 1 }, purchases: { ins: 1, upd: 1 }, payments: { ins: 1 }, expenses: { ins: 1, upd: 1 }, shifts: { ins: 1, upd: 1 }, moves: { ins: 1 }, spay: { ins: 1, upd: 1 } }
 };
 const round3 = n => Math.round(n * 1000) / 1000;
 const nowIso = () => new Date().toISOString();
@@ -297,6 +297,12 @@ async function handle(req, res) {
       res.writeHead(200, { 'Content-Type': CT['.html'], 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
       return res.end(fs.readFileSync(APP));
     }
+    if (/^\/sainei-mod-[a-z0-9_-]+\.js$/i.test(p)) {
+      const name = p.slice(1), file = path.join(ROOT, name);
+      if (!fs.existsSync(file) || !fs.statSync(file).isFile()) return fail(res, 404, 'Módulo no encontrado');
+      res.writeHead(200, { 'Content-Type': 'text/javascript; charset=utf-8', 'Cache-Control': 'no-cache', 'X-Content-Type-Options': 'nosniff' });
+      return res.end(fs.readFileSync(file));
+    }
     const ST = { '/manifest.webmanifest': 'application/manifest+json', '/sw.js': 'text/javascript; charset=utf-8', '/icon-192.png': 'image/png', '/icon-512.png': 'image/png', '/icon-maskable-512.png': 'image/png', '/apple-touch-icon.png': 'image/png' };
     if (ST[p]) {
       const f = path.join(path.dirname(APP), p.slice(1));
@@ -308,6 +314,10 @@ async function handle(req, res) {
     return fail(res, 404, 'No encontrado');
   }
   if (p === '/api/ping') return send(res, 200, { ok: true, server: true });
+  if (p === '/api/modules' && m === 'GET') {
+    const modules = fs.readdirSync(ROOT).filter(f => /^sainei-mod-[a-z0-9_-]+\.js$/i.test(f) && fs.statSync(path.join(ROOT, f)).isFile()).sort();
+    return send(res, 200, { modules });
+  }
   if (p === '/api/license/status' && m === 'GET') return send(res, 200, licenseState());
   if (p === '/api/license/activate' && m === 'POST') {
     const b = await readBody(req), token = String(b.code || '').trim();
