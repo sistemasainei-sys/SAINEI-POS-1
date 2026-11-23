@@ -171,8 +171,49 @@ function processSync(user, body) {
   const incomingSales = Array.isArray(changes.sales && changes.sales.up) ? changes.sales.up : [];
   const incomingMoves = Array.isArray(changes.moves && changes.moves.up) ? changes.moves.up : [];
   const rejectedTickets = new Set();
+  const rejectedReturnTickets = new Set();
   const virtualStock = new Map();
   const ticketMoves = new Map();
+  // Una devolución y su reposición de inventario deben aceptarse juntas.
+  const returnMoves = new Map();
+  for (const move of incomingMoves) {
+    const match = /^Devolución ticket (\\d+)$/.exec(String(move && move.note || ''));
+    if (!match) continue;
+    const ticket = Number(match[1]);
+    if (!returnMoves.has(ticket)) returnMoves.set(ticket, []);
+    returnMoves.get(ticket).push(move);
+  }
+  for (const sale of incomingSales) {
+    const saleId = Number(sale && sale.id), row = Number.isInteger(saleId) ? getRec('sales', saleId) : null;
+    if (!row || row.del) continue;
+    const previous = JSON.parse(row.j), before = Array.isArray(previous.returns) ? previous.returns : [];
+    const after = Array.isArray(sale.returns) ? sale.returns : [];
+    if (after.length <= before.length) continue;
+    const required = new Map(), supplied = new Map();
+    let valid = true;
+    for (let i = 0; i < before.length; i++) if (JSON.stringify(before[i]) !== JSON.stringify(after[i])) valid = false;
+    if (after.length < before.length) valid = false;
+    const sold = Array.isArray(previous.items) ? previous.items : [];
+    for (const ret of after.slice(before.length)) {
+      if (!ret || !ret.id || !Array.isArray(ret.items) || !ret.items.length) { valid = false; break; }
+      for (const item of ret.items) {
+        const ix = Number(item.lineIndex), qty = Number(item.qty), src = sold[ix];
+        if (!Number.isInteger(ix) || ix < 0 || ix >= sold.length || !src || !Number.isFinite(qty) || qty <= 0 || Number(item.id) !== Number(src.id)) { valid = false; break; }
+        const pid = Number(src.id);
+        required.set(pid, round3((required.get(pid) || 0) + qty));
+      }
+      if (!valid) break;
+    }
+    for (const move of (returnMoves.get(saleId) || [])) {
+      const pid = Number(move.pid), qty = Number(move.qty);
+      if (!Number.isInteger(pid) || !Number.isFinite(qty) || qty <= 0 || move.type !== 'devolucion') { valid = false; continue; }
+      supplied.set(pid, round3((supplied.get(pid) || 0) + qty));
+    }
+    if (required.size !== supplied.size) valid = false;
+    for (const [pid, qty] of required) if (Math.abs((supplied.get(pid) || 0) - qty) > 0.001) valid = false;
+    for (const pid of supplied.keys()) if (!required.has(pid)) valid = false;
+    if (!valid) rejectedReturnTickets.add(saleId);
+  }
   for (const move of incomingMoves) {
     const match = /^Ticket (\d+)$/.exec(String(move && move.note || ''));
     if (!match) continue;
@@ -224,6 +265,11 @@ function processSync(user, body) {
           const row = getRec(coll, id);
           if (row && row.del) { res.rejected.push({ coll, id }); continue; }
           if (coll === 'sales' && !row && rejectedTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
+          if (coll === 'sales' && rejectedReturnTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
+          if (coll === 'moves' && !row) {
+            const returnTicket = /^Devolución ticket (\\d+)$/.exec(String(rec.note || ''));
+            if (returnTicket && rejectedReturnTickets.has(Number(returnTicket[1]))) { res.rejected.push({ coll, id }); continue; }
+          }
           if (coll === 'moves' && !row) {
             const ticket = /^Ticket (\d+)$/.exec(String(rec.note || ''));
             if (ticket && rejectedTickets.has(Number(ticket[1]))) { res.rejected.push({ coll, id }); continue; }
