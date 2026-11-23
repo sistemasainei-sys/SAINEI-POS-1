@@ -302,7 +302,9 @@ function processSync(user, body) {
             if (!clientRow || clientRow.del || !Number.isSafeInteger(amount) || amount <= 0 ||
                 !validMethods.includes(String(rec.method || '')) ||
                 !Number.isFinite(dateValue) || !Number.isInteger(shiftId) || shiftId < 0 ||
-                (shiftId > 0 && (!shiftRow || shiftRow.del))) {
+                (shiftId > 0 && (!shiftRow || shiftRow.del)) ||
+                (shiftId > 0 && rec.method !== 'efectivo') ||
+                (shiftId > 0 && user.role === 'cajero' && Number(JSON.parse(shiftRow.j).uid) !== Number(user.uid))) {
               res.rejected.push({ coll, id });
               continue;
             }
