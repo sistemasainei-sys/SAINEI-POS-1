@@ -2,7 +2,7 @@
 
 ## Objetivo
 
-Permitir que el comercio use el servidor SAINEI POS en una computadora Windows sin contratar un plan de alojamiento pago. La computadora principal debe permanecer encendida y conectada a internet/red local mientras se usa el sistema.
+Permitir que el comercio use SAINEI POS en una computadora Windows sin Render ni plan de alojamiento. La computadora principal guarda la base SQLite del comercio y debe permanecer encendida y conectada a la red local mientras se usa el sistema. Después de activar la licencia, las operaciones dentro del local no necesitan internet; sí necesitan que funcione la red local.
 
 ## Inicio
 
@@ -15,7 +15,7 @@ El iniciador configura `SAINEI_DATA` en `%LOCALAPPDATA%\\SAINEI-POS\\datos`. La 
 
 ## Acceso desde otras computadoras de la misma red
 
-El servidor muestra las direcciones disponibles al iniciar. En las otras computadoras, abrir la dirección LAN indicada por el servidor, usando el mismo puerto (8080). No publicar esa dirección ni abrir el puerto del router hacia internet.
+El servidor muestra las direcciones disponibles al iniciar. En las otras computadoras del mismo comercio, abrir la dirección LAN indicada por el servidor, usando el mismo puerto (8080). Todas las cajas usan la misma base de datos de esa computadora principal. No publicar esa dirección ni abrir el puerto del router hacia internet.
 
 Para limitar el acceso entrante en Windows:
 
@@ -37,7 +37,8 @@ También se puede definir la variable `SAINEI_BACKUP_DEST` con la ruta de destin
 
 ## Límites importantes
 
-- Este modo evita depender del servicio gratuito de Render para guardar la base de datos del comercio.
+- Este modo no usa Render ni una base de datos externa: las ventas y demás datos quedan en la computadora principal de ese comercio.
+- Cada comercio debe tener su propia instalación y su propia carpeta de datos. No compartir la misma base entre comercios.
 - La computadora principal debe estar encendida; si se apaga, las demás computadoras no podrán operar.
 - El acceso desde fuera del local requiere una VPN o túnel autenticado configurado por separado. No está habilitado por estos archivos.
 - Las copias externas deben guardarse en una unidad separada y mantenerse bajo control del administrador. Este script no verifica una restauración.
