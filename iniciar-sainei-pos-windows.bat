@@ -7,9 +7,8 @@ if errorlevel 1 (
   pause
   exit /b 1
 )
-for /f "tokens=1,2 delims=v." %%a in ('node -v') do set NODE_MAJOR=%%a& set NODE_MINOR=%%b
-set NODE_MAJOR=%NODE_MAJOR: v=%
-if %NODE_MAJOR% LSS 22 (
+node -e "const [a,b]=process.versions.node.split('.').map(Number);process.exit(a>22||(a===22&&b>=13)?0:1)"
+if errorlevel 1 (
   echo ERROR: SAINEI POS requiere Node.js 22.13 o superior.
   pause
   exit /b 1
