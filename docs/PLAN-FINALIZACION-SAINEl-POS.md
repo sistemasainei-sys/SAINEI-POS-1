@@ -162,3 +162,11 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] Detectar unidades extraíbles con etiqueta `SAINEI_BACKUP` y sincronizar respaldos locales a la unidad externa cada 10 minutos, con verificación de tamaño.
 - [ ] Verificar instalación y detección de USB en equipo Windows real; confirmar copia y restauración aislada. No se ejecutaron pruebas.
 - [ ] Completar instalación silenciosa como servicio de Windows y apertura automática del navegador, si se decide que el servidor deba arrancar con Windows sin dejar una consola abierta.
+
+
+### Inicio automático de Windows
+
+- [x] Agregar tarea programada por usuario para iniciar el servidor SAINEI POS en segundo plano al iniciar sesión en Windows.
+- [x] El instalador espera disponibilidad del puerto local y abre el navegador cuando el servidor responde.
+- [x] Agregar registro de errores de inicio del proceso en la carpeta de datos.
+- [ ] Verificar la tarea programada y el reinicio real en una PC Windows del comercio. No se ejecutaron pruebas.
