@@ -22,7 +22,7 @@ window.SAINEI_POS_MODULES.push({
    var rows=clients.map(function(c){
     var cs=valid.filter(function(x){return Number(x.clientId)===Number(c.id);});
     var gross=cs.reduce(function(a,x){return a+Math.max(0,Number(x.total)||0);},0);
-    var refunded=returns.filter(function(r){return Number(r.clientId)===Number(c.id)&&!r.void;}).reduce(function(a,r){return a+Math.max(0,Number(r.total||r.amount)||0);},0);
+    var refunded=cs.reduce(function(a,x){return a+(x.returns||[]).reduce(function(t,r){return t+Math.max(0,Number(r.amount)||0);},0);},0);
     var net=Math.max(0,gross-refunded),points=Math.floor(net/rate);
     return {c:c,gross:gross,refunded:refunded,net:net,points:points,count:cs.length};
    }).filter(function(x){return x.count>0;}).sort(function(a,b){return b.points-a.points||b.net-a.net;});
