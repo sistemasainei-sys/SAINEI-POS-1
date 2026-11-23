@@ -395,6 +395,10 @@ main{padding-top:20px}
  .lk-brand{padding:24px}
 }
 
+
+/* El sistema conserva la identidad clara también si el dispositivo usa modo oscuro */
+:root[data-theme="dark"]{--bg:#f2f5fa;--surface:#fff;--surface-2:#edf1f7;--fg:#17243a;--muted:#64748b;--line:#dce5f0;--accent:#f28a1e;--accent-fg:#142b4b;--accent-soft:#fff0dc;color-scheme:light}
+@media(prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#f2f5fa;--surface:#fff;--surface-2:#edf1f7;--fg:#17243a;--muted:#64748b;--line:#dce5f0;--accent:#f28a1e;--accent-fg:#142b4b;--accent-soft:#fff0dc;color-scheme:light}}
 </style>
 
 </head>
