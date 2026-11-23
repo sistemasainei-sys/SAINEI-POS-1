@@ -22,6 +22,8 @@ jobs:
             [ -f "$file" ] || continue
             node --check "$file"
           done
+      - name: Check main application inline JavaScript syntax
+        run: node scripts/check-index-scripts.js
       - name: Check server syntax
         run: node --check server.js
       - name: Smoke-test module registration
