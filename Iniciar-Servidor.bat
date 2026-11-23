@@ -4,7 +4,7 @@ cd /d "%~dp0"
 set "SAINEI_DATA=%~dp0datos"
 title SAINEI POS - Servidor (no cerrar esta ventana)
 :loop
-node "%~dp0servidor\server.js"
+node "%~dp0server.js"
 if errorlevel 2 (
   echo Hace falta Node.js 22.13 o mas nuevo. Ejecuta 1-INSTALAR.bat
   pause
