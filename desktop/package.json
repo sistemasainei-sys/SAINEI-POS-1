@@ -1,0 +1,32 @@
+{
+  "name": "sainei-pos-desktop",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Instalador local e independiente de SAINEI POS para Windows",
+  "scripts": {
+    "prepare-app": "node prepare.cjs",
+    "build:win": "npm run prepare-app && electron-builder --win nsis"
+  },
+  "devDependencies": {
+    "electron": "^36.0.0",
+    "electron-builder": "^26.0.12"
+  },
+  "build": {
+    "appId": "py.sainei.pos",
+    "productName": "SAINEI POS",
+    "directories": {
+      "app": "app",
+      "output": "dist"
+    },
+    "files": ["**/*"],
+    "asar": true,
+    "win": {
+      "target": ["nsis"]
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true,
+      "deleteAppDataOnUninstall": false
+    }
+  }
+}
