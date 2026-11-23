@@ -740,8 +740,16 @@ async function handle(req, res) {
   if (p === '/api/logout' && m === 'POST') { sessions.delete(me.token); return send(res, 200, { ok: true }); }
   if (p === '/api/me' && m === 'GET') return send(res, 200, { user: { id: me.uid, name: me.name, role: me.role } });
   if (p === '/api/ids' && m === 'GET') {
-    const kind = url.searchParams.get('kind'), n = Math.min(500, Math.max(1, parseInt(url.searchParams.get('n') || '1', 10)));
-    if (!Object.values(COLLS).includes(kind)) return fail(res, 400, 'Tipo invalido');
+    const kind = url.searchParams.get('kind'), rawN = url.searchParams.get('n') || '1';
+    const requested = Number(rawN), n = Number.isSafeInteger(requested) ? requested : 0;
+    if (!Object.values(COLLS).includes(kind) || n < 1 || n > 500) return fail(res, 400, 'Tipo o cantidad invalida');
+    // Un usuario limitado solo puede reservar IDs para colecciones donde
+    // tenga permiso de alta; conocer otros contadores no debe habilitar su uso.
+    if (me.role !== 'admin') {
+      const permitted = Object.keys(COLLS).some(coll => COLLS[coll] === kind &&
+        !!((PERM[me.role] || {})[coll] || {}).ins);
+      if (!permitted) return fail(res, 403, 'No tenes permiso para reservar identificadores de este tipo.');
+    }
     const r = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get(kind), cur = c ? c.n : 0; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run(kind, cur + n); return { start: cur + 1, end: cur + n }; });
     return send(res, 200, r);
   }
