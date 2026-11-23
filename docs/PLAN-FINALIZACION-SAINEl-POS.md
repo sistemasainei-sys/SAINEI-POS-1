@@ -33,6 +33,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [x] Etiquetas imprimibles con nombre, precio y código del producto.
 - [x] Documentar compatibilidad, configuración y límites de impresoras térmicas, lectores y balanzas; la integración física por modelo sigue pendiente.
 - [x] Historial de proveedores con compras, pagos registrados, saldos y vencimientos (vista de consulta).
+- [x] Cuentas por cobrar: descontar devoluciones registradas del crédito pendiente y recalcular vencimientos con pagos aplicados por antigüedad.
 - [x] Fidelización opcional de clientes y puntos, con reglas configurables (canje e historial implementados; falta prueba funcional).
 
 ## Prioridad 5 — Compatibilidad y publicación
@@ -58,6 +59,7 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 - [x] Variantes agrupadas: vincular productos ya existentes por grupo y nombre, manteniendo SKU, precio y stock independientes.
 - [x] Promociones porcentuales con fechas de vigencia y respeto del límite de descuento por usuario.
 - [x] API interna para guardar/restaurar carritos y persistir las nuevas configuraciones en modo servidor.
+- [x] Corrección de cuentas por cobrar: las devoluciones reducen el saldo de crédito en el resumen general y en el detalle de cada cliente.
 
 **Pendiente para estas funciones:** pruebas funcionales de punta a punta con datos de prueba, revisión de permisos en cajero/encargado/administrador y verificación de sincronización en dos equipos. No usar datos reales para estas pruebas.
 
