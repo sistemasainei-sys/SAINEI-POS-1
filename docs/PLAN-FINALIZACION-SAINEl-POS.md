@@ -119,3 +119,11 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] La suma de pagos anteriores y nuevos no puede superar el total de la compra; se calcula dentro de la transacción para impedir sobrepagos concurrentes.
 - [x] Los pagos en efectivo deben referenciar una caja existente; los pagos bancarios no pueden alterar el arqueo mediante un identificador de caja.
 - [ ] Falta verificar en ejecución compras de contado, pagos parciales, arqueo y sincronización. No se ejecutaron pruebas.
+
+
+### Validación estática — gastos y caja
+
+- [x] El servidor exige concepto no vacío (máximo 80 caracteres), monto entero positivo, fecha válida y medio de pago permitido al registrar o modificar gastos.
+- [x] Un gasto en efectivo debe referenciar una caja vigente; un gasto bancario no puede asociarse a la caja para alterar el arqueo.
+- [x] Encargados y cajeros solo pueden imputar el gasto a una caja de su propio usuario; el administrador conserva acceso general.
+- [ ] Falta verificar en ejecución el arqueo con gastos, pagos a proveedores y cierres simultáneos. No se ejecutaron pruebas.
