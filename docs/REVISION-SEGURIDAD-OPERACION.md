@@ -84,3 +84,11 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - Administradores conservan acceso a todos los contadores.
 - Encargados y cajeros solo pueden reservar identificadores para colecciones donde su rol tenga permiso de alta, evitando que consuman contadores de módulos no autorizados.
 - No se ejecutaron pruebas.
+
+
+## Límites de sincronización
+
+- El servidor valida que `changes` sea un objeto y que cada colección pertenezca al catálogo permitido.
+- Cada lote de altas/actualizaciones (`up`) y bajas (`del`) admite como máximo 1.000 registros por colección; tipos de lote inválidos o excesivos se rechazan antes de abrir la transacción.
+- Este límite lógico complementa el máximo de 25 MB del cuerpo HTTP.
+- No se ejecutaron pruebas.
