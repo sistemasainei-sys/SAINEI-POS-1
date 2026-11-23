@@ -75,3 +75,8 @@ Esta rama reúne funciones y preparación operativa adicionales, pero no equival
 ## Respaldo USB automático en Windows
 
 SAINEI POS detecta cada 10 minutos las unidades extraíbles cuyo nombre de volumen sea exactamente `SAINEI_BACKUP` y sincroniza allí las copias `.db` en la carpeta `SAINEI-RESPALDOS`. También lo intenta al iniciar el servidor. Solo se utiliza una unidad marcada expresamente para este fin; no se copian datos a cualquier memoria USB. Para activarlo, asignar una vez esa etiqueta desde Windows sin formatear la unidad. Revisar `servidor.log` para confirmar la sincronización.
+
+
+## Instalador guiado de Windows
+
+Ejecutar `instalar-sainei-pos-windows.bat`. Si Node.js no está instalado, el instalador intenta instalar Node.js LTS desde Windows Package Manager (`winget`), valida la versión mínima y prepara la carpeta permanente de datos antes de iniciar el servidor. Si `winget` no está disponible, indica instalar Node.js desde el sitio oficial. La primera ejecución crea automáticamente `sainei.db` y sus tablas; la configuración inicial del comercio y el alta del administrador se completan desde la pantalla de inicio.
