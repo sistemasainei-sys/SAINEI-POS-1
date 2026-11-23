@@ -164,6 +164,14 @@ function processSync(user, body) {
           if (row && row.del) { res.rejected.push({ coll, id }); continue; }
           const ex = row ? JSON.parse(row.j) : null, op = ex ? 'upd' : 'ins';
           if (!allowed(user, coll, op, rec, ex)) { res.rejected.push({ coll, id }); continue; }
+          // Validar cada movimiento contra el stock vigente dentro de la transacción.
+          // Evita que dos cajas descuenten simultáneamente unidades inexistentes.
+          if (coll === 'moves' && !ex) {
+            const pid = Number(rec.pid), qty = Number(rec.qty), productRow = Number.isInteger(pid) && pid > 0 ? getRec('products', pid) : null;
+            if (!productRow || productRow.del || !Number.isFinite(qty) || qty === 0) { res.rejected.push({ coll, id }); continue; }
+            const product = JSON.parse(productRow.j), nextStock = round3(Number(product.stock || 0) + qty);
+            if (!Number.isFinite(nextStock) || nextStock < 0) { res.rejected.push({ coll, id }); continue; }
+          }
           let out = rec;
           if (coll === 'products') { out = Object.assign({}, rec, { stock: ex ? ex.stock : 0 }); }
           else if (coll === 'sales' && ex) {
