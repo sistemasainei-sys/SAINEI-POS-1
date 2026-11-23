@@ -581,7 +581,27 @@ function fullState() {
 
 function resetEpoch() { EPOCH = crypto.randomBytes(6).toString('hex'); setMeta('epoch', EPOCH); }
 
+function validateRestoreState(s) {
+  if (!s || typeof s !== 'object' || Array.isArray(s) ||
+      !Array.isArray(s.products) || !Array.isArray(s.sales)) return false;
+  for (const coll of Object.keys(COLLS)) {
+    if (s[coll] == null) continue;
+    if (!Array.isArray(s[coll]) || s[coll].length > 100000) return false;
+    const ids = new Set();
+    for (const rec of s[coll]) {
+      if (!rec || typeof rec !== 'object' || Array.isArray(rec) ||
+          !Number.isSafeInteger(rec.id) || rec.id <= 0 || ids.has(rec.id)) return false;
+      ids.add(rec.id);
+    }
+  }
+  for (const k of SING) {
+    if (s[k] != null && (typeof s[k] !== 'object' || Array.isArray(s[k]))) return false;
+  }
+  return true;
+}
+
 function restoreJson(s) {
+  if (!validateRestoreState(s)) throw Object.assign(new Error('El archivo no es una copia válida o contiene registros incorrectos.'), { code: 400 });
   makeBackup('antes');
   tx(() => {
     REV++; prep('DELETE FROM rec').run();
@@ -829,8 +849,8 @@ async function handle(req, res) {
   if (p === '/api/export' && m === 'GET') { if (!admin) return fail(res, 403, 'Solo el administrador principal puede exportar los datos.'); audit(me.name, 'Descargo una copia de seguridad'); return send(res, 200, fullState(), { 'Content-Disposition': 'attachment; filename="copia-sainei-' + dayStamp() + '.json"' }); }
   if (p === '/api/restore' && m === 'POST') {
     if (!admin) return fail(res, 403, 'Solo el administrador principal puede restaurar una copia.');
-    const b = await readBody(req), s = b.state;
-    if (!s || !Array.isArray(s.products) || !Array.isArray(s.sales)) return fail(res, 400, 'El archivo no es una copia valida.');
+    const b = await readBody(req), s = b && b.state;
+    if (!validateRestoreState(s)) return fail(res, 400, 'El archivo no es una copia válida o contiene registros incorrectos.');
     restoreJson(s); audit(me.name, 'Restauro una copia desde archivo'); return send(res, 200, { ok: true });
   }
   if (p === '/api/clear' && m === 'POST') { if (!admin) return fail(res, 403, 'Solo el administrador principal puede vaciar los datos.'); clearAll(); audit(me.name, 'Vacio todos los datos del negocio'); return send(res, 200, { ok: true }); }
