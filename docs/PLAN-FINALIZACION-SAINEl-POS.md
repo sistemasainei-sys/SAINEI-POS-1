@@ -146,3 +146,10 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [ ] Falta verificar en ejecución la secuencia de cierre y sincronización diferida. No se ejecutaron pruebas.
 
 - [x] Los cobros de clientes en efectivo se rechazan si la caja está cerrada o pertenece a otro usuario no administrador.
+
+
+### Automatización de respaldo externo
+
+- [x] En Windows, detectar cada 10 minutos unidades extraíbles con etiqueta exacta `SAINEI_BACKUP` y copiar los respaldos a `SAINEI-RESPALDOS`.
+- [x] Verificar tamaño de los archivos copiados y registrar incidencias en `servidor.log`.
+- [ ] Verificar físicamente detección, copia y restauración con una unidad USB de prueba en el equipo de instalación. No se ejecutaron pruebas.
