@@ -39,4 +39,8 @@ assert.match(server, /if \(coll === 'moves' && !ex\)/);
 assert.match(server, /const product = JSON\.parse\(productRow\.j\), nextStock = round3\(Number\(product\.stock \|\| 0\) \+ qty\)/);
 assert.match(server, /nextStock < 0/);
 
+// Cambiar la clave o desactivar una cuenta invalida sus sesiones existentes.
+assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\)/);
+assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\);\s*else \{ s\.role = role; s\.name = name; \}/);
+
 console.log('OK: activación, restauración, sincronización y cierre controlado de turnos verificados.');
