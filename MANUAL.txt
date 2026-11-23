@@ -123,6 +123,6 @@ LO QUE ESTA VERSIÓN NO INCLUYE (honestidad)
 - Fotos de productos: incluidas en el catálogo y en el formulario de productos. Se reducen automáticamente al cargarlas.
 - Acceso remoto desde fuera del local: no incluido (futuro, con VPN o similar; los datos seguirían en el local).
 - La red del local usa HTTP sin cifrar: usá un Wi-Fi con clave y no dejes que extraños se conecten.
-- La caja de un cajero que se olvidó de cerrarla no la puede cerrar otro usuario: la cierra él al volver.
+- El principal o encargado puede revisar y cerrar una caja de otro cajero desde Finanzas > Caja, contando el efectivo y dejando la observación correspondiente.
 - Los scripts de instalación (.bat) y el instalador están hechos pero NO fueron probados en una PC con Windows
   real por quien los desarrolló: probalos en una PC de prueba antes de instalar en un cliente.
