@@ -72,6 +72,12 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 
 **No se modificó esta regla contable:** falta definir si una devolución debe acreditarse a la deuda, reembolsarse al cliente o permitir una distribución entre ambas opciones. Evitar corregirla por suposición para no alterar saldos reales.
 
+### Hallazgo de revisión estática — sincronización de configuraciones
+
+- [ ] Añadir control de concurrencia/versionado por clave para los registros de configuración `SING` (incluye fidelización, promociones y configuración del comercio). El servidor actualmente reemplaza cada objeto completo que recibe un administrador; dos equipos administradores que editen la misma configuración desde estados distintos pueden sobrescribirse cambios.
+- [ ] Para `loyaltyRedemptions` y `promotions`, valorar migrar los registros tipo historial a colecciones con IDs individuales en vez de guardar el historial como un único objeto. Hacerlo requiere migración aditiva y compatibilidad con datos existentes.
+- [x] Confirmado en revisión estática del flujo `processSync`: las claves `SING` se guardan como objetos completos y no se compara una revisión esperada por clave. No se ejecutaron pruebas.
+
 ## Seguridad del trabajo
 
 - Trabajar únicamente en `sainei-pos-finalizacion-segura`.
