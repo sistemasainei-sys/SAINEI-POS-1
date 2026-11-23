@@ -144,3 +144,5 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] El servidor rechaza gastos asociados a una caja cerrada.
 - [x] Para pagos/gastos en efectivo, usuarios no administradores solo pueden usar una caja propia; se valida en servidor aunque la solicitud se envíe manualmente.
 - [ ] Falta verificar en ejecución la secuencia de cierre y sincronización diferida. No se ejecutaron pruebas.
+
+- [x] Los cobros de clientes en efectivo se rechazan si la caja está cerrada o pertenece a otro usuario no administrador.
