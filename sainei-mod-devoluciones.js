@@ -27,9 +27,11 @@ window.SAINEI_POS_MODULES.push({
   function saveReturn(){
    var box=document.getElementById('overlay'),btn=box&&box.querySelector('[data-a="return-save"]');if(!btn)return;
    var s=getSale(Number(btn.dataset.id)),err=document.getElementById('ret-err');if(!s||s.void)return;
-   var inputs=Array.prototype.slice.call(box.querySelectorAll('[data-ret-idx]')),items=[],amount=0;
-   inputs.forEach(function(inp){var idx=Number(inp.dataset.retIdx),src=s.items[idx],qty=Number(inp.value)||0;if(!src||qty<=0)return;var left=available(s,src,idx);if(qty>left){err.textContent='La cantidad supera lo que todavía se puede devolver.';items=[];return;}var line=Number(src.amount!=null?src.amount:Number(src.price||0)*Number(src.qty||0));var unit=line/Math.max(Number(src.qty||0),0.000001);var val=Math.round(unit*qty*(1-Math.max(0,Math.min(100,Number(s.discPct||0)))/100));items.push({id:src.id,lineIndex:idx,name:src.name,qty:qty,amount:val});amount+=val;});
-   if(!items.length){err.textContent=err.textContent||'Ingresá al menos una cantidad a devolver.';return;}
+   var inputs=Array.prototype.slice.call(box.querySelectorAll('[data-ret-idx]')),items=[],amount=0,s0Products=(api.state().products||[]);
+   var invalid=false;
+   inputs.forEach(function(inp){var idx=Number(inp.dataset.retIdx),src=s.items[idx],raw=String(inp.value==null?'':inp.value).trim(),qty=raw===''?0:Number(raw);if(!src||qty===0)return;if(!Number.isFinite(qty)||qty<0||(src.type==='u'&&!Number.isInteger(qty))){invalid=true;err.textContent='Revisá las cantidades: los artículos por unidad deben devolverse en números enteros.';return;}var left=available(s,src,idx);if(qty>left+0.000001){invalid=true;err.textContent='La cantidad supera lo que todavía se puede devolver.';return;}var product=(s0Products||[]).filter(function(p){return Number(p.id)===Number(src.id);})[0];if(!product){invalid=true;err.textContent='No se encuentra el producto '+(src.name||'')+' en el inventario. No se registró la devolución.';return;}var line=Number(src.amount!=null?src.amount:Number(src.price||0)*Number(src.qty||0));var unit=line/Math.max(Number(src.qty||0),0.000001);var val=Math.round(unit*qty*(1-Math.max(0,Math.min(100,Number(s.discPct||0)))/100));items.push({id:src.id,lineIndex:idx,name:src.name,qty:qty,amount:val});amount+=val;});
+   if(invalid){return;}
+   if(!items.length){err.textContent='Ingresá al menos una cantidad a devolver.';return;}
    var method=document.getElementById('ret-method').value,shift=(api.state().shifts||[]).slice().reverse().filter(function(x){return !x.closedAt;})[0]||null;
    if(method==='caja'&&!shift){err.textContent='No hay una caja abierta. Abrí la caja o elegí otro medio de reembolso.';return;}
    var s0=api.state(),stamp=new Date().toISOString(),rid=api.newId('move');if(!Array.isArray(s0.moves))s0.moves=[];if(!Array.isArray(s0.expenses))s0.expenses=[];
