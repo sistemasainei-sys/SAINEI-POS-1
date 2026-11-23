@@ -111,3 +111,11 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 
 - [x] Un cobro en efectivo solo puede asociarse a una caja existente; si lo registra un cajero, el servidor exige que esa caja pertenezca a su propio usuario. Los medios transferencia y tarjeta no pueden alterar el arqueo de efectivo mediante un `shiftId` enviado manualmente.
 - [ ] Falta verificar en ejecución el flujo de cobros, arqueo de caja y sincronización multiusuario. No se ejecutaron pruebas.
+
+
+### Validación estática — pagos a proveedores
+
+- [x] El servidor exige una compra existente, fecha válida, importe entero positivo y medio permitido para registrar un pago a proveedor.
+- [x] La suma de pagos anteriores y nuevos no puede superar el total de la compra; se calcula dentro de la transacción para impedir sobrepagos concurrentes.
+- [x] Los pagos en efectivo deben referenciar una caja existente; los pagos bancarios no pueden alterar el arqueo mediante un identificador de caja.
+- [ ] Falta verificar en ejecución compras de contado, pagos parciales, arqueo y sincronización. No se ejecutaron pruebas.
