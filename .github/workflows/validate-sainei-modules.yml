@@ -1,0 +1,26 @@
+name: Validate SAINEI POS modules
+
+on:
+  push:
+    branches:
+      - sainei-pos-finalizacion-independiente
+  pull_request:
+    branches:
+      - main
+
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Check additional modules syntax
+        run: |
+          for file in sainei-mod-*.js; do
+            [ -f "$file" ] || continue
+            node --check "$file"
+          done
+      - name: Check server syntax
+        run: node --check server.js
