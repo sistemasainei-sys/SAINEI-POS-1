@@ -1125,19 +1125,14 @@ function shiftSummary(sh){
 
 /* ---------- Crédito ---------- */
 function clientAccount(cid){
-  var cs=state.sales.filter(function(s){return s.clientId===cid&&saleCredit(s)>0&&!s.void;}).sort(function(a,b){return a.id-b.id;});
-  var pays=state.payments.filter(function(p){return p.clientId===cid;});
-  var total=cs.reduce(function(a,s){return a+saleCredit(s);},0),paid=sum(pays,'amount'),rem=paid,overdue=0,rows=[],now=Date.now();
-  cs.forEach(function(s){
-    var out;
-    var credit=saleCredit(s);if(rem>=credit){out=0;rem-=credit;}else{out=credit-rem;rem=0;}
-    var late=out>0&&!!s.due&&new Date(s.due).getTime()<now;
-    if(late)overdue+=out;
-    rows.push({sale:s,out:out,late:late});
-  });
-  return {rows:rows,pays:pays,total:total,paid:paid,balance:total-paid,overdue:overdue};
-}
-function totalReceivable(){return state.clients.reduce(function(a,c){return a+Math.max(0,clientAccount(c.id).balance);},0);}
+   var cs=state.sales.filter(function(s){return s.clientId===cid&&saleCredit(s)>0&&!s.void;}).sort(function(a,b){return a.id-b.id;});
+   var pays=state.payments.filter(function(p){return p.clientId===cid;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
+   var netCredits=cs.map(function(s){var returned=(s.returns||[]).reduce(function(n,r){return n+Math.max(0,Number(r.amount)||0);},0);return {sale:s,credit:Math.max(0,saleCredit(s)-returned)};});
+   var total=netCredits.reduce(function(a,x){return a+x.credit;},0),paid=sum(pays,'amount'),rem=paid,overdue=0,rows=[],now=Date.now();
+   netCredits.forEach(function(x){var out;if(rem>=x.credit){out=0;rem-=x.credit;}else{out=x.credit-rem;rem=0;}var late=out>0&&!!x.sale.due&&new Date(x.sale.due).getTime()<now;if(late)overdue+=out;rows.push({sale:x.sale,out:out,late:late,credit:x.credit});});
+   return {rows:rows,pays:pays,total:total,paid:paid,balance:total-paid,overdue:overdue};
+ }
+ function totalReceivable(){return state.clients.reduce(function(a,c){return a+Math.max(0,clientAccount(c.id).balance);},0);}
 function purchaseOut(pu){return pu.total-state.spay.filter(function(p){return p.purchId===pu.id;}).reduce(function(a,p){return a+p.amount;},0);}
 function totalPayable(){return state.purchases.reduce(function(a,pu){return a+Math.max(0,purchaseOut(pu));},0);}
 
