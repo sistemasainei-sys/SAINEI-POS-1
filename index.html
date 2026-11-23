@@ -2759,7 +2759,7 @@ function syncOnce(poll,full){
   });
   if(diff&&SYNC.role==='admin')SINGK.forEach(function(k){var v=stable(state[k]);if(v!==SYNC.sing[k]){sg[k]=state[k];sgk.push([k,v]);any=true;}});
   return api('POST','/api/sync',{since:SYNC.rev,epoch:SYNC.epoch,changes:ch,sing:sg,audit:aud},any?20000:8000).then(function(r){
-    var wasErr=SYNC.err;SYNC.err='';SYNC.lastBackup=r.lastBackup||SYNC.lastBackup;
+    var wasErr=SYNC.err;SYNC.err='';SYNC.lastSync=nowIso();SYNC.lastBackup=r.lastBackup||SYNC.lastBackup;
     if(r.reset){
       COLLS.forEach(function(c){state[c]=[];});SYNC.base={};
       SINGK.forEach(function(k){SYNC.sing[k]=stable(state[k]);});
@@ -2804,7 +2804,8 @@ purchaseOk=guardNet(purchaseOk,[['purch',1],['move',60]]);
 importProducts=guardNet(importProducts,[['prod',200],['move',400]]);
 function renderSafeSrv(){
   var b=$('#safeBody');if(!b)return;
-  b.innerHTML='<div class="kv"><span>Servidor</span><span><span class="pill '+(SYNC.err?'out':'ok')+'">'+(SYNC.err?'Sin conexión':'Conectado')+'</span></span></div>'+
+  b.innerHTML='<div class="kv"><span>Servidor</span><span><span class="pill '+(SYNC.err?'out':'ok')+'">'+(SYNC.err?'Sin conexión · ventas bloqueadas':(SYNC.dirty||SYNC.pend.length?'Conectado · cambios pendientes':'Conectado'))+'</span></span></div>'+
+    '<div class="kv"><span>Última sincronización</span><span>'+(SYNC.lastSync?fdt(SYNC.lastSync):'Aún no confirmada en esta sesión')+'</span></div>'+
     '<div class="kv"><span>Última copia en el servidor</span><span>'+(SYNC.lastBackup?fdt(SYNC.lastBackup):'Nunca')+'</span></div>'+
     '<div class="controls"><button class="btn primary" data-a="srvbackup">Hacer copia ahora</button><button class="btn" data-a="export">Descargar copia (archivo)</button></div>'+
     '<p class="hint" style="margin:0">El servidor hace una copia sola cada día (guarda las últimas 14) y las que hagas a mano. Están en la carpeta "datos\\copias" de la PC servidor: copiala de vez en cuando a un pendrive o a la nube.</p>'+
