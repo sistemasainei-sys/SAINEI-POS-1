@@ -13,7 +13,7 @@ assert.doesNotMatch(activation, /DELETE FROM users|DELETE FROM rec|clearAll\(|re
 // El asistente de configuración nunca debe crear un segundo administrador.
 const setup = server.slice(server.indexOf("if (p === '/api/setup'"), server.indexOf("if (p === '/api/login'"));
 assert.match(setup, /if \(hasAdmin\(\)\) return fail\(res, 409/);
-assert.match(server, /function hasAdmin\(\)/);
+assert.match(server, /const hasAdmin = \(\) =>/);
 
 // La restauración desde JSON mantiene la tabla users y el token de licencia,
 // ya que solo sustituye registros comerciales y preferencias.
