@@ -1543,7 +1543,7 @@ function renderProdList(){
   $('#prodTiles').innerHTML=tile('Productos',state.products.length)+tile('Por balanza',state.products.filter(function(p){return p.type==='peso';}).length)+tile('Agotados',state.products.filter(function(p){return p.stock<=0;}).length)+tile('Valor del stock a costo',gs(val));
   $('#prodBody').innerHTML=list.length?list.map(function(p){
     var net=p.price/(1+p.iva/100),mg=p.cost>0&&net>0?Math.round((net-p.cost)/net*100)+'%':'—';
-    return '<tr><td class="num">'+esc(p.code||(p.plu?'PLU '+p.plu:'—'))+'</td><td>'+esc(p.name)+(p.type==='peso'?' <span class="pill tag">Balanza</span>':'')+'</td><td>'+esc(p.cat)+'</td><td class="r num">'+gs(p.cost)+'</td><td class="r num">'+gs(p.price)+(p.type==='peso'?' /kg':'')+'</td><td class="r num">'+mg+'</td><td>'+ivaTxt(p)+'</td><td class="r num">'+fq(p.stock,p)+'</td><td>'+stockPill(p)+'</td><td class="r"><button class="btn" data-a="edit" data-id="'+p.id+'">Editar</button></td></tr>';
+    return '<tr><td class="num">'+esc(p.code||(p.plu?'PLU '+p.plu:'—'))+'</td><td>'+esc(p.name)+(p.variantName?' <span class="pill tag">'+esc(p.variantName)+'</span>':'')+(p.type==='peso'?' <span class="pill tag">Balanza</span>':'')+'</td><td>'+esc(p.cat)+'</td><td class="r num">'+gs(p.cost)+'</td><td class="r num">'+gs(p.price)+(p.type==='peso'?' /kg':'')+'</td><td class="r num">'+mg+'</td><td>'+ivaTxt(p)+'</td><td class="r num">'+fq(p.stock,p)+'</td><td>'+stockPill(p)+'</td><td class="r"><button class="btn" data-a="edit" data-id="'+p.id+'">Editar</button></td></tr>';
   }).join(''):emptyRow(10,'No hay productos que coincidan. Usá "Agregar producto" o importá una planilla.');
 }
 function renderScale(){
@@ -1584,6 +1584,8 @@ function productForm(p,pref){
   return '<h2>'+(p?'Editar producto':'Agregar producto')+'</h2><div class="form">'+
     fld('pf-name','Nombre',v.name,'type="text" maxlength="80"',true)+
     fld('pf-code','Código de barras (escaneá con el lector)',v.code,'type="text" inputmode="numeric" maxlength="20"')+
+    fld('pf-variant-group','Grupo / producto base (opcional)',v.variantGroup||'','type="text" maxlength="60"')+
+    fld('pf-variant-name','Variante (talle, color, modelo)',v.variantName||'','type="text" maxlength="60"')+
     '<label>Categoría<input id="pf-cat" class="input" type="text" list="pf-cats" maxlength="40" value="'+esc(v.cat)+'"><datalist id="pf-cats">'+cats.map(function(c){return '<option value="'+esc(c)+'">';}).join('')+'</datalist></label>'+
     sel('pf-type','Se vende',[['u','Por unidad'],['peso','Por peso (balanza)'],['medida','Por medida / metraje']],v.type==='peso'?'peso':(v.type==='medida'?'medida':'u'))+
     sel('pf-unit','Unidad de medida',[['m','Metro (m)'],['cm','Centímetro (cm)'],['kg','Kilogramo (kg)'],['L','Litro (L)'],['m²','Metro cuadrado (m²)'],['m³','Metro cúbico (m³)']],v.unit||'m')+
@@ -1649,7 +1651,7 @@ function saveProduct(){
   var dup=state.products.filter(function(x){return code&&x.code===code&&x.id!==ui.editId;})[0];
   if(dup){err.textContent='Ese código ya pertenece a "'+dup.name+'".';return;}
   var prior=ui.editId?getP(ui.editId):null,imageInput=$('#pf-image-data');
-  var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim(),image:imageInput?imageInput.value:(prior&&prior.image||'')};
+  var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim(),variantGroup:$('#pf-variant-group').value.trim(),variantName:$('#pf-variant-name').value.trim(),image:imageInput?imageInput.value:(prior&&prior.image||'')};
   if(ui.editId){
     var p=getP(ui.editId);
     if(round3(p.stock)!==data.stock)addMove(p.id,'ajuste',data.stock-p.stock,'Edición del producto');
