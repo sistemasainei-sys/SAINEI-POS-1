@@ -613,16 +613,17 @@ async function handle(req, res) {
     const lim = Math.min(1000, Math.max(1, parseInt(url.searchParams.get('limit') || '200', 10) || 200));
     return send(res, 200, { rows: prep('SELECT t,u,a FROM audit ORDER BY id DESC LIMIT ?').all(lim).map(r => ({ t: r.t, u: r.u, a: r.a })) });
   }
-  if (p === '/api/export' && m === 'GET') { audit(me.name, 'Descargo una copia de seguridad'); return send(res, 200, fullState(), { 'Content-Disposition': 'attachment; filename="copia-sainei-' + dayStamp() + '.json"' }); }
+  if (p === '/api/export' && m === 'GET') { if (!admin) return fail(res, 403, 'Solo el administrador principal puede exportar los datos.'); audit(me.name, 'Descargo una copia de seguridad'); return send(res, 200, fullState(), { 'Content-Disposition': 'attachment; filename="copia-sainei-' + dayStamp() + '.json"' }); }
   if (p === '/api/restore' && m === 'POST') {
+    if (!admin) return fail(res, 403, 'Solo el administrador principal puede restaurar una copia.');
     const b = await readBody(req), s = b.state;
     if (!s || !Array.isArray(s.products) || !Array.isArray(s.sales)) return fail(res, 400, 'El archivo no es una copia valida.');
     restoreJson(s); audit(me.name, 'Restauro una copia desde archivo'); return send(res, 200, { ok: true });
   }
-  if (p === '/api/clear' && m === 'POST') { clearAll(); audit(me.name, 'Vacio todos los datos del negocio'); return send(res, 200, { ok: true }); }
-  if (p === '/api/backups' && m === 'GET') return send(res, 200, { list: listBackups(), dir: COPIAS });
-  if (p === '/api/backups/make' && m === 'POST') { const n = makeBackup('manual'); audit(me.name, 'Hizo una copia manual ' + n); return send(res, 200, { name: n }); }
-  if (p === '/api/backups/restore' && m === 'POST') { const b = await readBody(req); restoreFile(String(b.name || '')); audit(me.name, 'Restauro la copia ' + b.name); return send(res, 200, { ok: true }); }
+  if (p === '/api/clear' && m === 'POST') { if (!admin) return fail(res, 403, 'Solo el administrador principal puede vaciar los datos.'); clearAll(); audit(me.name, 'Vacio todos los datos del negocio'); return send(res, 200, { ok: true }); }
+  if (p === '/api/backups' && m === 'GET') { if (!admin) return fail(res, 403, 'Solo el administrador principal puede consultar las copias.'); return send(res, 200, { list: listBackups(), dir: COPIAS }); }
+  if (p === '/api/backups/make' && m === 'POST') { if (!admin) return fail(res, 403, 'Solo el administrador principal puede crear copias manuales.'); const n = makeBackup('manual'); audit(me.name, 'Hizo una copia manual ' + n); return send(res, 200, { name: n }); }
+  if (p === '/api/backups/restore' && m === 'POST') { if (!admin) return fail(res, 403, 'Solo el administrador principal puede restaurar copias.'); const b = await readBody(req); restoreFile(String(b.name || '')); audit(me.name, 'Restauro la copia ' + b.name); return send(res, 200, { ok: true }); }
   return fail(res, 404, 'No encontrado');
 }
 
