@@ -305,7 +305,7 @@ function readBody(req) {
 }
 function send(res, code, obj, extra) {
   const body = typeof obj === 'string' ? obj : JSON.stringify(obj);
-  res.writeHead(code, Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' }, extra || {}));
+  res.writeHead(code, Object.assign({ 'Content-Type': 'application/json; charset=utf-8', 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff', 'X-Frame-Options': 'DENY', 'Referrer-Policy': 'same-origin', 'Permissions-Policy': 'camera=(), microphone=(), geolocation=()' }, extra || {}));
   res.end(body);
 }
 const fail = (res, code, msg, more) => send(res, code, Object.assign({ error: msg }, more || {}));
@@ -324,6 +324,14 @@ const CT = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.cs
 async function handle(req, res) {
   const url = new URL(req.url, 'http://x'), p = url.pathname, m = req.method;
   const ip = (req.socket.remoteAddress || '').replace('::ffff:', '');
+  // Rechazar peticiones mutables iniciadas desde otro sitio web.
+  if (p.startsWith('/api/') && !['GET','HEAD','OPTIONS'].includes(m)) {
+    const origin = req.headers.origin;
+    if (origin) {
+      try { if (new URL(origin).host !== req.headers.host) return fail(res, 403, 'Origen no permitido.'); }
+      catch (_) { return fail(res, 403, 'Origen no permitido.'); }
+    }
+  }
   if (!p.startsWith('/api/')) {
     if (m !== 'GET' && m !== 'HEAD') return fail(res, 405, 'Metodo no permitido');
     if (p === '/' || p === '/index.html') {
