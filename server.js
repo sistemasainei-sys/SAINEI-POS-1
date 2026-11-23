@@ -187,7 +187,13 @@ function allowed(user, coll, op, rec, existing) {
 }
 
 function processSync(user, body) {
-  const res = { rejected: [] }, changes = body && body.changes && typeof body.changes === 'object' && !Array.isArray(body.changes) ? body.changes : {}, savedRev = REV;
+  if (!body || typeof body !== 'object' || Array.isArray(body) ||
+      (body.changes != null && (typeof body.changes !== 'object' || Array.isArray(body.changes))) ||
+      (body.sing != null && (typeof body.sing !== 'object' || Array.isArray(body.sing))) ||
+      (body.audit != null && !Array.isArray(body.audit))) {
+    throw Object.assign(new Error('Estructura de sincronización inválida.'), { code: 400 });
+  }
+  const res = { rejected: [] }, changes = body.changes || {}, savedRev = REV;
   // Limitar el tamaño lógico de cada lote además del límite HTTP en bytes.
   // Evita que un cliente autenticado monopolice la transacción con miles de filas.
   for (const [coll, batch] of Object.entries(changes)) {
