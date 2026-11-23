@@ -1599,7 +1599,7 @@ function productForm(p,pref){
 }
 function prepareProductImage(file){
   return new Promise(function(resolve,reject){
-    if(!file||!/^image\\/(jpeg|png|webp)$/.test(file.type)){reject(new Error('Elegí una imagen JPG, PNG o WebP.'));return;}
+    if(!file||!/^image\/(jpeg|png|webp)$/.test(file.type)){reject(new Error('Elegí una imagen JPG, PNG o WebP.'));return;}
     if(file.size>12*1024*1024){reject(new Error('La imagen supera 12 MB.'));return;}
     var reader=new FileReader();
     reader.onerror=function(){reject(new Error('No se pudo leer la imagen.'));};
