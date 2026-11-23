@@ -47,4 +47,10 @@ assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\);\s*else \{ s
 const mypin = server.slice(server.indexOf("if (p === '/api/mypin'"), server.indexOf("if (!admin)"));
 assert.match(mypin, /session\.uid === me\.uid && token !== me\.token\) sessions\.delete\(token\)/);
 
+// Una venta nueva debe incluir sus salidas de inventario completas; si no, se rechaza el ticket y sus movimientos.
+assert.match(server, /const rejectedTickets = new Set\(\)/);
+assert.match(server, /if \(Math\.abs\(\(delivered\.get\(pid\) \|\| 0\) - qty\) > 0\.001\) rejectedTickets\.add\(saleId\)/);
+assert.match(server, /coll === 'sales' && !row && rejectedTickets\.has\(id\)/);
+assert.match(server, /coll === 'moves' && !row[\s\S]{0,180}rejectedTickets\.has\(Number\(ticket\[1\]\)\)/);
+
 console.log('OK: activación, restauración, sincronización y cierre controlado de turnos verificados.');
