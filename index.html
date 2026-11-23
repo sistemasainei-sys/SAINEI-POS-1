@@ -2618,7 +2618,7 @@ var SERVER=false,INFO=null,TOKEN='';
 var SYNC={dirty:false,rev:0,epoch:'',base:{},sing:{},pend:[],busy:false,err:'',lastBackup:null,q:false,pool:{},role:''};
 var COLLS=['products','sales','clients','purchases','payments','expenses','shifts','moves','spay','budgets'];
 var DELCOLL={products:1,clients:1};
-var SINGK=['shop','scale','print','scan','sec','check','loyaltyRedemptions','suspendedSales'];
+var SINGK=['shop','scale','print','scan','sec','check','loyaltyRedemptions','suspendedSales','promotions'];
 function stable(o){if(o===null||typeof o!=='object')return JSON.stringify(o);if(Array.isArray(o))return '['+o.map(stable).join(',')+']';return '{'+Object.keys(o).sort().map(function(k){return JSON.stringify(k)+':'+stable(o[k]);}).join(',')+'}';}
 function recKey(coll,r){if(coll==='products'){var c=Object.assign({},r);delete c.stock;return stable(c);}return stable(r);}
 function api(method,path,body,ms){
@@ -2936,6 +2936,8 @@ var moduleApi={
  escape:function(v){return esc(v);},money:function(v){return gs(v);},number:function(v){return num(v);},round3:function(v){return round3(v);},
  newId:function(kind){return nid(kind);},log:function(v){log(String(v));},openModal:function(html,opts){openModal(html,opts||{});},closeModal:function(){closeModal();},
  refresh:function(){renderCurrent();},
+ isAdmin:function(){return isAdmin();},maxDiscount:function(){return maxDisc();},
+ applyDiscount:function(value){var n=Number(value);if(!Number.isFinite(n)||n<0||n>100||(!isAdmin()&&n>maxDisc()))return false;ui.disc=n;var el=$('#disc');if(el)el.value=String(n);if(ui.tab!=='caja')setTab('caja');else renderCart();return true;},
  cartSnapshot:function(){return {items:ui.cart.map(function(l){return {k:l.k,id:l.id,qty:l.qty,amount:l.amount,price:l.price};}),disc:ui.disc||0,clientId:ui.clientId||0,pendingBudget:ui.pendingBudget||0};},
  clearCart:function(){ui.cart=[];ui.disc=0;ui.clientId=0;ui.pendingBudget=0;renderCart();},
  restoreCart:function(snapshot){
