@@ -2767,7 +2767,7 @@ function syncOnce(poll,full){
     SYNC.pend.splice(0,aud.length);
     var changed=applyRemote(r);
     SYNC.rev=r.rev;SYNC.epoch=r.epoch;
-    if(r.rejected&&r.rejected.length)toast('Algunos cambios no estaban permitidos y se revirtieron.');
+    if(r.rejected&&r.rejected.length){var cfgConflict=r.rejected.some(function(x){return !!x.conflict;});toast(cfgConflict?'Una configuración fue modificada desde otro equipo. Se conservó la versión más reciente del servidor.':'Algunos cambios no estaban permitidos y se revirtieron.');}
     if(changed||(r.rejected&&r.rejected.length))afterRemote();
     if(wasErr||needBackupChanged())renderBanner();
     return true;
