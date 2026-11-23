@@ -763,7 +763,12 @@ async function handle(req, res) {
     return send(res, 200, r);
   }
   if (p === '/api/sync' && m === 'POST') {
-    const b = await readBody(req), since = Math.max(0, parseInt(b.since || 0, 10) || 0);
+    const b = await readBody(req);
+    if (!b || typeof b !== 'object' || Array.isArray(b)) return fail(res, 400, 'Solicitud de sincronización inválida.');
+    const since = b.since == null ? 0 : b.since;
+    if (!Number.isSafeInteger(since) || since < 0 || (b.epoch != null && (typeof b.epoch !== 'string' || b.epoch.length > 128))) {
+      return fail(res, 400, 'Versión de sincronización inválida.');
+    }
     if (b.epoch && b.epoch !== EPOCH) { const c = collect(0, null); return send(res, 200, { reset: true, rev: REV, epoch: EPOCH, recs: c.recs, dels: c.dels, sing: c.sing, lastBackup: lastBackup() }); }
     const r = processSync({ uid: me.uid, name: me.name, role: me.role }, b), c = collect(since, r);
     return send(res, 200, { rev: REV, epoch: EPOCH, recs: c.recs, dels: c.dels, sing: c.sing, rejected: r.rejected, lastBackup: lastBackup() });
