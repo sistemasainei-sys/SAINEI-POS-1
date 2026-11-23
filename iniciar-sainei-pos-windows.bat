@@ -14,6 +14,7 @@ if errorlevel 1 (
   exit /b 1
 )
 if not defined LOCALAPPDATA set LOCALAPPDATA=%USERPROFILE%\AppData\Local
+set "SAINEI_LOCAL_MODE=1"
 set "SAINEI_DATA=%LOCALAPPDATA%\SAINEI-POS\datos"
 if not exist "%SAINEI_DATA%" mkdir "%SAINEI_DATA%"
 echo SAINEI POS guardara los datos en:
