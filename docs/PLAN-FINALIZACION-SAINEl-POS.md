@@ -127,3 +127,12 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] Un gasto en efectivo debe referenciar una caja vigente; un gasto bancario no puede asociarse a la caja para alterar el arqueo.
 - [x] Encargados y cajeros solo pueden imputar el gasto a una caja de su propio usuario; el administrador conserva acceso general.
 - [ ] Falta verificar en ejecución el arqueo con gastos, pagos a proveedores y cierres simultáneos. No se ejecutaron pruebas.
+
+
+### Protección adicional — turnos y arqueos de caja
+
+- [x] Los usuarios no administradores solo pueden crear y modificar turnos de caja propios; se aplica a cajeros y encargados.
+- [x] Al abrir una caja, el servidor valida propietario, fecha y fondo inicial no negativo.
+- [x] Al cerrar, el servidor impide cambiar el propietario, la fecha/fondo de apertura o volver a modificar una caja ya cerrada.
+- [x] El cierre exige fecha válida, efectivo contado entero no negativo, valores de arqueo numéricos coherentes y el usuario autenticado como responsable del cierre.
+- [ ] Falta verificar en ejecución apertura/cierre concurrente y arqueos con varios medios de pago. No se ejecutaron pruebas.
