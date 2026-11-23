@@ -402,7 +402,8 @@ const server = http.createServer((req, res) => {
   handle(req, res).catch(e => { log('ERROR ' + req.method + ' ' + req.url + ': ' + (e && e.stack || e)); if (!res.headersSent) fail(res, e && e.code === 413 ? 413 : (e && e.code === 400 ? 400 : 500), e && e.code ? e.message : 'Error interno del servidor'); else res.end(); });
 });
 server.on('error', e => { log(e.code === 'EADDRINUSE' ? 'El puerto ' + PORT + ' ya esta en uso. Cerra otra copia del servidor o cambia el puerto.' : 'ERROR del servidor: ' + e.message); process.exit(1); });
-server.listen(PORT, '0.0.0.0', () => {
+const HOST = arg('host', process.env.SAINEI_HOST || '0.0.0.0');
+server.listen(PORT, HOST, () => {
   const ips = []; for (const l of Object.values(os.networkInterfaces())) for (const a of (l || [])) if (a.family === 'IPv4' && !a.internal) ips.push(a.address);
   const lines = ['SAINEI POS - servidor ' + (DEMO ? 'DE PRUEBA ' : '') + 'en marcha', 'Datos: ' + DATA, 'En esta PC:      http://localhost:' + PORT, ...ips.map(i => 'Desde otras PC:   http://' + i + ':' + PORT)];
   lines.forEach(l => log(l)); try { fs.writeFileSync(path.join(DATA, 'direcciones.txt'), lines.join('\r\n') + '\r\n'); } catch (e) {}
