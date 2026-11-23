@@ -925,11 +925,24 @@ function noServerScreen(){
   $('#loadNoSrv').hidden=false;
   setInterval(function(){fetch('/api/ping',{cache:'no-store'}).then(function(r){if(r.ok)location.reload();}).catch(function(){});},3000);
 }
+function bootServer(info){
+  SERVER=true;INFO=info||null;
+  /* El servidor conserva los datos; el navegador solo mantiene el estado de trabajo. */
+  state=normalize(seed());
+  SYNC.lastBackup=info&&info.lastBackup||null;
+  if(!info||info.server!==true)throw new Error('Respuesta inválida del servidor.');
+  showLock(info.hasAdmin?'login':'setup');
+  renderClientSelect();renderNote();renderBanner();
+  $('#loading').hidden=true;
+}
 function boot(){
   probeServer().then(function(info){
     if(info){bootServer(info);return;}
     if(window.SAINEI_PACKAGE&&/^https?:$/.test(location.protocol)){noServerScreen();return;}
     openAndLoad().then(finishBoot).catch(function(err){showFatal((err&&err.message)||String(err));});
+  }).catch(function(err){
+    if(window.SAINEI_PACKAGE&&/^https?:$/.test(location.protocol)){noServerScreen();return;}
+    showFatal((err&&err.message)||'No se pudo iniciar SAINEI POS.');
   });
 }
 function setupChannels(){
