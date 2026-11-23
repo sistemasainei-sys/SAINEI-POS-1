@@ -70,3 +70,8 @@ Una copia no se considera recuperable hasta que se haya comprobado una restaurac
 ## Estado de esta rama
 
 Esta rama reúne funciones y preparación operativa adicionales, pero no equivale a una publicación final. Antes de usarla con ventas reales se debe completar la instalación en el equipo del comercio, configurar almacenamiento y respaldos externos, comprobar restauración y realizar las verificaciones de seguridad y periféricos correspondientes. No se ejecutaron pruebas como parte de estos cambios.
+
+
+## Respaldo USB automático en Windows
+
+SAINEI POS detecta cada 10 minutos las unidades extraíbles cuyo nombre de volumen sea exactamente `SAINEI_BACKUP` y sincroniza allí las copias `.db` en la carpeta `SAINEI-RESPALDOS`. También lo intenta al iniciar el servidor. Solo se utiliza una unidad marcada expresamente para este fin; no se copian datos a cualquier memoria USB. Para activarlo, asignar una vez esa etiqueta desde Windows sin formatear la unidad. Revisar `servidor.log` para confirmar la sincronización.
