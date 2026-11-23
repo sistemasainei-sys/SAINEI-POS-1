@@ -5,15 +5,16 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 ## Prioridad 1 — Operación en línea y respaldo de datos
 
 - [x] Definir que SAINEI POS requiere conexión a internet/servidor para confirmar ventas; no ofrecer operación sin conexión.
-- [ ] Verificar restauración y copias antes/después de cada actualización.
+- [ ] Verificar restauración y copias antes/después de cada actualización. La guía de riesgos de backup externo está en `docs/REVISION-SEGURIDAD-OPERACION.md`.
 - [ ] Confirmar almacenamiento persistente de la base de datos en el servicio publicado antes de usarlo con datos reales.
 
 **Decisión de alcance:** el usuario decidió dejar fuera el modo sin conexión. El cliente debe tener internet para operar y confirmar ventas. No se implementará cola offline ni sincronización posterior en esta entrega.
 
 ## Prioridad 2 — Seguridad de conexión y acceso
 
-- [ ] HTTPS para conexiones LAN y acceso remoto seguro, sin exponer la base de datos ni el puerto interno directamente a internet.
+- [ ] HTTPS para conexiones LAN y acceso remoto seguro, sin exponer la base de datos ni el puerto interno directamente a internet. Revisión estática de riesgos documentada en `docs/REVISION-SEGURIDAD-OPERACION.md`.
 - [ ] Definir acceso remoto mediante VPN o túnel autenticado y documentar instalación/rotación de certificados.
+- [x] Documentar controles existentes y brechas de sesiones, permisos, intentos fallidos y Origin/CSRF en `docs/REVISION-SEGURIDAD-OPERACION.md`.
 - [ ] Pruebas de sesiones vencidas, revocación de usuarios, permisos por rol y protección CSRF/origen.
 - [ ] Revisar almacenamiento de fotos y logos para evitar bases de datos excesivamente grandes.
 
@@ -66,3 +67,4 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 - No ejecutar borrados, restauraciones ni migraciones destructivas sobre datos existentes.
 - Toda nueva migración debe ser aditiva, reversible y probada con una copia aislada.
 - Diseño técnico agregado en `docs/ARQUITECTURA-SIN-CONEXION-Y-ACCESO-SEGURO.md`; no habilita todavía el modo offline ni el acceso remoto.
+- Revisión estática de seguridad y operación agregada en `docs/REVISION-SEGURIDAD-OPERACION.md`; no sustituye auditoría ni pruebas.
