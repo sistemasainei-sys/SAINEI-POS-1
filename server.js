@@ -384,6 +384,17 @@ function processSync(user, body) {
               continue;
             }
           }
+          if (coll === 'spay' && ex) {
+            // Los comprobantes de pago son registros de auditoría: no se editan ni
+            // se reasignan después de aceptados. Los ajustes requieren un registro nuevo.
+            if (JSON.stringify(ex) !== JSON.stringify(rec)) res.rejected.push({ coll, id });
+            continue;
+          }
+          if (coll === 'payments' && ex) {
+            // Evitar alterar retroactivamente cobros ya asentados.
+            if (JSON.stringify(ex) !== JSON.stringify(rec)) res.rejected.push({ coll, id });
+            continue;
+          }
           if (coll === 'spay') {
             const purchId = Number(rec.purchId), amount = Number(rec.amount), shiftId = Number(rec.shiftId || 0);
             const purchaseRow = Number.isInteger(purchId) && purchId > 0 ? getRec('purchases', purchId) : null;
