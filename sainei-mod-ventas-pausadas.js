@@ -40,8 +40,8 @@ window.SAINEI_POS_MODULES.push({
   function remove(el){
    var s=api.state(),id=Number(el&&el.dataset&&el.dataset.id),x=(s.suspendedSales||[]).filter(function(z){return Number(z.id)===id&&z.status==='paused'&&visible(z);})[0];if(!x)return;
    if(!window.confirm('¿Eliminar esta venta pausada?'))return;
-   s.suspendedSales=s.suspendedSales.filter(function(z){return Number(z.id)!==id;});
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){api.toast('No se confirmó el cambio.');return;}api.refresh();api.toast('Venta pausada eliminada.');}).catch(function(){api.toast('No se pudo guardar el cambio.');});
+   x.status='deleted';x.deletedAt=new Date().toISOString();
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){x.status='paused';delete x.deletedAt;api.toast('No se confirmó el cambio.');return;}api.refresh();api.toast('Venta pausada eliminada.');}).catch(function(){x.status='paused';delete x.deletedAt;api.toast('No se pudo guardar el cambio.');});
   }
  }
 });
