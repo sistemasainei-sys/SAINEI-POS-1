@@ -675,7 +675,10 @@ async function handle(req, res) {
     if (!u || u.role !== 'admin' || !u.active || !checkPin(rc, normCode(b.code))) { failAdd(key); audit(u ? u.name : '-', 'Codigo de recuperacion incorrecto'); return fail(res, 401, 'El codigo no es correcto.'); }
     if (weakPin(String(b.pin || ''))) return fail(res, 400, 'La clave nueva es muy facil.');
     failClear(key); const k = mkPin(String(b.pin)); prep('UPDATE users SET salt=?,hash=? WHERE id=?').run(k.salt, k.hash, uid);
-    audit(u.name, 'Cambio su clave con el codigo de recuperacion'); return send(res, 200, { ok: true });
+    // La recuperación cambia la credencial: revocar todas las sesiones anteriores del administrador.
+    for (const [token, session] of [...sessions]) if (session.uid === uid) sessions.delete(token);
+    audit(u.name, 'Cambio su clave con el codigo de recuperacion y revoco sus sesiones activas');
+    return send(res, 200, { ok: true, reauthenticate: true });
   }
 
   const me = auth(req);
