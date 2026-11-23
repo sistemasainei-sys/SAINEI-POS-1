@@ -73,13 +73,13 @@ let REV = parseInt(getMeta('rev') || '0', 10);
 let EPOCH = getMeta('epoch'); if (!EPOCH) { EPOCH = crypto.randomBytes(6).toString('hex'); setMeta('epoch', EPOCH); }
 function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (_) {} throw e; } }
 
-const COLLS = { products: 'prod', sales: 'sale', clients: 'client', purchases: 'purch', payments: 'pay', expenses: 'exp', shifts: 'shift', moves: 'move', spay: 'spay', budgets: 'budget' };
-const ORDER = ['products', 'clients', 'budgets', 'purchases', 'expenses', 'spay', 'shifts', 'sales', 'payments', 'moves'];
-const SING = ['shop', 'scale', 'print', 'scan', 'sec', 'check', 'loyaltyRedemptions', 'suspendedSales', 'promotions'];
+const COLLS = { products: 'prod', sales: 'sale', clients: 'client', purchases: 'purch', payments: 'pay', expenses: 'exp', shifts: 'shift', moves: 'move', spay: 'spay', budgets: 'budget', suspendedSales: 'move' };
+const ORDER = ['products', 'clients', 'budgets', 'purchases', 'expenses', 'spay', 'shifts', 'sales', 'payments', 'moves', 'suspendedSales'];
+const SING = ['shop', 'scale', 'print', 'scan', 'sec', 'check', 'loyaltyRedemptions', 'promotions'];
 const DELETABLE = { products: 1, clients: 1 };
 const PERM = {
-  cajero: { sales: { ins: 1 }, moves: { ins: 1 }, clients: { ins: 1, upd: 1 }, budgets: { ins: 1, upd: 1 }, payments: { ins: 1 }, shifts: { ins: 1, upd: 1 } },
-  encargado: { products: { ins: 1, upd: 1, del: 1 }, sales: { ins: 1, upd: 1 }, clients: { ins: 1, upd: 1, del: 1 }, budgets: { ins: 1, upd: 1 }, purchases: { ins: 1, upd: 1 }, payments: { ins: 1 }, expenses: { ins: 1, upd: 1 }, shifts: { ins: 1, upd: 1 }, moves: { ins: 1 }, spay: { ins: 1, upd: 1 } }
+  cajero: { sales: { ins: 1 }, moves: { ins: 1 }, clients: { ins: 1, upd: 1 }, budgets: { ins: 1, upd: 1 }, payments: { ins: 1 }, shifts: { ins: 1, upd: 1 }, suspendedSales: { ins: 1, upd: 1 } },
+  encargado: { products: { ins: 1, upd: 1, del: 1 }, sales: { ins: 1, upd: 1 }, clients: { ins: 1, upd: 1, del: 1 }, budgets: { ins: 1, upd: 1 }, purchases: { ins: 1, upd: 1 }, payments: { ins: 1 }, expenses: { ins: 1, upd: 1 }, shifts: { ins: 1, upd: 1 }, moves: { ins: 1 }, spay: { ins: 1, upd: 1 }, suspendedSales: { ins: 1, upd: 1 } }
 };
 const round3 = n => Math.round(n * 1000) / 1000;
 const nowIso = () => new Date().toISOString();
@@ -215,6 +215,7 @@ function processSync(user, body) {
             if (ticket && rejectedTickets.has(Number(ticket[1]))) { res.rejected.push({ coll, id }); continue; }
           }
           const ex = row ? JSON.parse(row.j) : null, op = ex ? 'upd' : 'ins';
+          if (coll === 'suspendedSales' && user.role === 'cajero' && ((ex && Number(ex.uid) !== user.id) || Number(rec.uid) !== user.id)) { res.rejected.push({ coll, id }); continue; }
           if (!allowed(user, coll, op, rec, ex)) { res.rejected.push({ coll, id }); continue; }
           // Validar cada movimiento contra el stock vigente dentro de la transacción.
           // Evita que dos cajas descuenten simultáneamente unidades inexistentes.
