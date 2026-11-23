@@ -31,8 +31,8 @@ window.SAINEI_POS_MODULES.push({
    var n=Math.floor(Number(inp.value)||0),p=pointsFor(s,cid);
    if(!Number.isSafeInteger(n)||n<1||n>p.balance){err.textContent='El canje debe estar entre 1 y '+p.balance+' puntos.';return;}
    s.loyaltyRedemptions=Array.isArray(s.loyaltyRedemptions)?s.loyaltyRedemptions:[];
-   s.loyaltyRedemptions.push({id:api.newId('move'),clientId:cid,points:n,note:String(note&&note.value||'').trim().slice(0,120),date:new Date().toISOString(),user:(api.user()||{}).name||''});
-   Promise.resolve(api.save()).then(function(ok){if(ok===false){err.textContent='El servidor no confirmó el guardado. No cierres esta pantalla.';return;}api.closeModal();api.refresh();api.toast('Canje registrado.');}).catch(function(){err.textContent='No se pudo guardar. Revisá la conexión.';});
+   var redemption={id:api.newId('move'),clientId:cid,points:n,note:String(note&&note.value||'').trim().slice(0,120),date:new Date().toISOString(),user:(api.user()||{}).name||''};s.loyaltyRedemptions.push(redemption);
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){s.loyaltyRedemptions=s.loyaltyRedemptions.filter(function(x){return x!==redemption;});err.textContent='El servidor no confirmó el canje. No se descontaron puntos.';return;}api.closeModal();api.refresh();api.toast('Canje registrado.');}).catch(function(){s.loyaltyRedemptions=s.loyaltyRedemptions.filter(function(x){return x!==redemption;});err.textContent='No se pudo guardar. No se descontaron puntos.';});
   }
  }
 });
