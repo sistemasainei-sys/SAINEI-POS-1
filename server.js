@@ -293,6 +293,20 @@ function processSync(user, body) {
             if (ticket && rejectedTickets.has(Number(ticket[1]))) { res.rejected.push({ coll, id }); continue; }
           }
           const ex = row ? JSON.parse(row.j) : null, op = ex ? 'upd' : 'ins';
+          if (coll === 'payments' && !ex) {
+            const clientId = Number(rec.clientId), amount = Number(rec.amount), shiftId = Number(rec.shiftId || 0);
+            const clientRow = Number.isInteger(clientId) && clientId > 0 ? getRec('clients', clientId) : null;
+            const validMethods = ['efectivo', 'transferencia', 'tarjeta'];
+            const dateValue = Date.parse(rec.date);
+            const shiftRow = shiftId > 0 ? getRec('shifts', shiftId) : null;
+            if (!clientRow || clientRow.del || !Number.isSafeInteger(amount) || amount <= 0 ||
+                !validMethods.includes(String(rec.method || '')) ||
+                !Number.isFinite(dateValue) || !Number.isInteger(shiftId) || shiftId < 0 ||
+                (shiftId > 0 && (!shiftRow || shiftRow.del))) {
+              res.rejected.push({ coll, id });
+              continue;
+            }
+          }
           if (coll === 'suspendedSales' && user.role === 'cajero' && ((ex && Number(ex.uid) !== user.id) || Number(rec.uid) !== user.id)) { res.rejected.push({ coll, id }); continue; }
           if (!allowed(user, coll, op, rec, ex)) { res.rejected.push({ coll, id }); continue; }
           // Validar cada movimiento contra el stock vigente dentro de la transacción.
