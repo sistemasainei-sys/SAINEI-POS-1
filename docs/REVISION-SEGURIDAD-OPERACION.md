@@ -76,3 +76,11 @@ Estado: revisión estática del código de la rama `sainei-pos-finalizacion-segu
 - Los movimientos nuevos deben apuntar a un producto activo, tener cantidad finita y distinta de cero, fecha válida, cantidad acotada y campos tipo/detalle de longitud limitada.
 - El stock persistido continúa derivándose de los movimientos aceptados; el valor de stock enviado directamente en una edición de producto no reemplaza el stock del servidor.
 - No se ejecutaron pruebas; la compatibilidad con productos pesables y de medida queda pendiente de comprobación operativa.
+
+
+## Reserva de identificadores API
+
+- El endpoint de reserva de IDs valida que la cantidad sea un entero seguro entre 1 y 500; ya no normaliza silenciosamente valores inválidos.
+- Administradores conservan acceso a todos los contadores.
+- Encargados y cajeros solo pueden reservar identificadores para colecciones donde su rol tenga permiso de alta, evitando que consuman contadores de módulos no autorizados.
+- No se ejecutaron pruebas.
