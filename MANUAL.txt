@@ -1,0 +1,128 @@
+SAINEI POS - MANUAL DE INSTALACIÓN Y USO (versión 1)
+=====================================================
+Sistema de punto de venta para comercios. Funciona SIN internet. Todos los datos
+quedan en la computadora principal del comercio. No se envía nada a servidores externos.
+
+CÓMO FUNCIONA
+-------------
+- Una PC es la PRINCIPAL (servidor). Ahí viven la base de datos y las copias.
+- Las otras cajas (PC) y el celular del dueño se conectan por cable de red o Wi-Fi
+  del propio comercio, usando el navegador. No hace falta internet.
+- Todas las cajas comparten productos, precios, clientes, ventas y stock. Si dos cajas
+  venden el mismo producto al mismo tiempo, el stock se descuenta bien y cada ticket
+  tiene un número distinto.
+- Si la PC principal se apaga, las otras cajas no pueden vender (avisan "Sin conexión
+  con el servidor"). Por eso: PC principal siempre encendida en horario de atención.
+
+REQUISITOS
+----------
+- Windows 10 u 11 en la PC principal. Microsoft Edge o Google Chrome (ya vienen o son gratis).
+- Node.js 22.13 o más nuevo (gratuito). El instalador intenta ponerlo con winget; para
+  eso necesita internet UNA sola vez. Si no puede, instalalo desde https://nodejs.org (versión LTS).
+
+INSTALACIÓN EN LA PC PRINCIPAL
+------------------------------
+1. Descomprimí el ZIP en una carpeta fija, por ejemplo C:\SAINEI-POS. No la muevas después.
+2. Doble clic en "1-INSTALAR.bat" y aceptá el permiso de administrador.
+   Si falta Node.js lo instala (puede pedir que lo vuelvas a abrir).
+   El instalador: permite el acceso desde la red local, programa el inicio automático
+   del servidor y crea el acceso directo "SAINEI POS" en el Escritorio.
+3. Al terminar muestra las direcciones para las otras PC (ejemplo: http://192.168.1.20:8080).
+4. Abrí "SAINEI POS" del Escritorio.
+
+LICENCIA SAINEI
+---------------
+- Antes de crear el usuario principal, el cliente debe activar SAINEI POS con un código emitido por SAINEI.
+- La pantalla muestra un código de instalación. El cliente debe enviarlo a SAINEI después de pagar.
+- SAINEI verifica el pago y genera un código permanente o mensual con la herramienta privada de licencias.
+- El cliente pega el código para habilitar el sistema. La licencia queda guardada en la base local del servidor.
+- El generador privado se entrega en un ZIP separado. NUNCA incluirlo en la carpeta del cliente: contiene la clave privada de SAINEI.
+- La activación requiere que el dispositivo pueda comunicarse con el servidor local; no requiere nube para ventas diarias.
+
+PRIMER USO
+----------
+1. Pide crear el USUARIO PRINCIPAL (nombre y clave). Muestra un CÓDIGO DE RECUPERACIÓN:
+   anotalo en papel y guardalo. Es la única forma de recuperar la clave si se olvida.
+2. Ajustes > Datos del comercio: nombre, RUC, dirección, teléfono. Subí el logo.
+3. Ajustes > Impresora de tickets: papel, copias; imprimí un ticket de prueba.
+4. Productos: cargalos a mano o importá una planilla (Excel/CSV). Confirmá el IVA con tu contador.
+5. Ajustes > Usuarios y permisos: creá un usuario por cada cajero (y un encargado si hace falta).
+6. Cada cajero ingresa con su usuario y abre SU caja con el fondo inicial.
+
+OTRAS PC Y CELULAR
+------------------
+- Otra PC con Windows: copiá la carpeta (o solo "Conectar-desde-otra-PC.bat") y abrilo. Pide la
+  dirección de la PC principal (la que mostró el instalador) y queda guardada.
+  Si no abre: revisá que estén en la misma red y que la PC principal esté encendida.
+- Cualquier PC o celular: abrí el navegador y escribí la dirección, por ejemplo
+  http://192.168.1.20:8080 . Ingresá con tu usuario. El dueño puede ver el panel y los reportes desde el celular.
+- Recomendación: en el router, reservá una IP fija para la PC principal así la dirección no cambia.
+
+USUARIOS Y PERMISOS
+-------------------
+PRINCIPAL: todo, incluido Ajustes, usuarios, copias, restaurar, vaciar datos y registro de actividad.
+ENCARGADO: Caja, Panel, Productos, Stock, Compras, Clientes, Finanzas, Ventas (puede anular ventas
+           y cambiar costos y precios). No entra a Ajustes ni crea usuarios.
+CAJERO:    Caja y Clientes. Vende, cobra, abre y cierra SU caja. No anula ventas, no ve costos ni
+           ganancias, no cambia productos, stock ni configuración. Descuento con tope fijado por el principal.
+- Cada venta queda con el nombre del cajero y el número de ticket único.
+- El servidor controla los permisos: aunque alguien manipule su pantalla, el servidor rechaza lo no permitido.
+- Registro de actividad (Ajustes): ingresos, claves incorrectas, ventas, anulaciones, cambios de precio,
+  ajustes de stock, gastos, aperturas/cierres de caja, cambios de usuarios.
+- Tras 5 claves incorrectas el sistema espera unos segundos. La pantalla se bloquea sola por inactividad.
+
+USO DIARIO
+----------
+- Caja: pasá los productos con el lector (o buscalos), se ven en grande con su precio y el TOTAL A COBRAR.
+  F2 cobra. Efectivo: se escribe lo recibido y se ve el VUELTO. "Pantalla del cliente" muestra la compra al cliente.
+- Cierre de caja al final del turno: cuenta el efectivo y el sistema muestra si cuadra.
+- Los tickets dicen "Comprobante interno, no es factura" y llevan al pie SAINEI POS.
+
+COPIAS DE SEGURIDAD
+-------------------
+- El servidor hace una copia automática CADA DÍA (guarda las últimas 14) en la carpeta datos\copias.
+- Ajustes > Seguridad de los datos: "Hacer copia ahora", ver copias y RESTAURAR una (pide confirmar dos veces).
+  Antes de restaurar o vaciar, el servidor guarda una copia automática de lo que había.
+- "Descargar copia (archivo)" baja un .json que se puede restaurar desde Ajustes > Restaurar copia.
+- IMPORTANTE: las copias están en la misma PC. Usá "Copiar-copias-a-USB.bat" seguido (o copiá la carpeta
+  datos a un pendrive o a la nube) para protegerte si se rompe la computadora.
+- Para recuperar tras una falla: instalá de nuevo, copiá tus archivos .db a datos\copias y restaurá desde Ajustes.
+
+MODO PRUEBA (datos separados)
+-----------------------------
+"Iniciar-Servidor-PRUEBA.bat" y luego "2b-Abrir-Caja-PRUEBA.bat": usa datos de ejemplo en la carpeta
+datos-prueba y el puerto 8081. No toca los datos reales. Sirve para capacitar o mostrar el sistema.
+
+INSTALAR COMO APLICACIÓN (en cualquier dispositivo)
+---------------------------------------------------
+SAINEI POS también se instala como una app con su ícono. La app se abre en pantalla completa, como cualquier otra.
+- PC principal (Windows): el acceso "SAINEI POS" del Escritorio ya abre el programa como aplicación. Si preferís,
+  en Edge abrí http://localhost:8080 y elegí menú (...) > Aplicaciones > Instalar este sitio como una aplicación.
+- Otra PC con Windows: Conectar-desde-otra-PC.bat abre la app en su propia ventana.
+- Android: abrí la dirección en Chrome, menú (⋮) > "Agregar a la pantalla principal" (o "Instalar app").
+- iPhone / iPad: abrí la dirección en Safari, botón Compartir > "Agregar a inicio".
+Aclaración técnica: en celulares y tablets conectados por la red del local la dirección es http:// (sin certificado).
+Android e iPhone la agregan como acceso directo con su ícono; la instalación "completa" de Chrome solo se ofrece
+cuando la dirección es https:// o localhost. Para el uso en el comercio el resultado es el mismo.
+Si el servidor está apagado, la app muestra "Sin conexión con el servidor" y se reconecta sola al encenderlo.
+
+PROBLEMAS FRECUENTES
+--------------------
+- "Sin conexión con el servidor": la PC principal está apagada, dormida o cambió de dirección. Encendela y esperá unos segundos.
+- Otra PC no abre la dirección: misma red/Wi-Fi, firewall (volvé a ejecutar 1-INSTALAR.bat en la principal).
+- El puerto 8080 está ocupado: cerrá otra copia del servidor. El servidor guarda registros en datos\servidor.log.
+- Se olvidó la clave del principal: "Olvidé mi clave" en la pantalla de ingreso, con el código de recuperación.
+- Reiniciar el servidor cierra las sesiones: cada usuario ingresa de nuevo (las ventas guardadas no se pierden).
+- Quitar el sistema: "Desinstalar.bat" (no borra los datos).
+
+LO QUE ESTA VERSIÓN NO INCLUYE (honestidad)
+-------------------------------------------
+- Facturación legal / SIFEN / e-Kuatia: NO incluida. Los tickets son comprobantes internos. La arquitectura queda
+  lista para sumar un módulo fiscal después, pero hoy no existe.
+- Sucursales y transferencias entre sucursales: no incluidas (se desarrollan si el cliente lo pide).
+- Fotos de productos: no incluidas todavía.
+- Acceso remoto desde fuera del local: no incluido (futuro, con VPN o similar; los datos seguirían en el local).
+- La red del local usa HTTP sin cifrar: usá un Wi-Fi con clave y no dejes que extraños se conecten.
+- La caja de un cajero que se olvidó de cerrarla no la puede cerrar otro usuario: la cierra él al volver.
+- Los scripts de instalación (.bat) y el instalador están hechos pero NO fueron probados en una PC con Windows
+  real por quien los desarrolló: probalos en una PC de prueba antes de instalar en un cliente.

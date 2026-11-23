@@ -1,0 +1,30 @@
+SAINEI POS — ARCHIVOS SUELTOS PARA GITHUB
+
+IMPORTANTE: ESTE PAQUETE NO NECESITA CREAR NI SUBIR CARPETAS.
+Descomprimí este ZIP en el teléfono. Seleccioná TODOS los archivos que quedaron dentro y subilos directamente a la RAÍZ del repositorio GitHub.
+
+En la raíz de GitHub deben verse directamente:
+- index.html
+- server.js
+- package.json
+- render.yaml
+- sw.js
+- manifest.webmanifest
+- icon-192.png
+- icon-512.png
+- icon-maskable-512.png
+- apple-touch-icon.png
+
+No subas el ZIP comprimido. No crees carpetas app ni SAINEI-POS.
+No cambies los nombres de los archivos.
+
+RENDER (servicio Web Service existente):
+- Branch: main
+- Root Directory: dejar vacío
+- Build Command: npm install
+- Start Command: npm start
+- Runtime: Node
+El render.yaml también queda en la raíz, con Node 22.13.1.
+
+NOTA: El plan gratuito puede perder datos al reiniciar o redesplegar. Usar solo para pruebas; no registrar ventas reales hasta configurar almacenamiento persistente y verificar respaldos.
+La activación de licencia requiere que la clave pública incluida coincida con la clave privada del panel emisor.

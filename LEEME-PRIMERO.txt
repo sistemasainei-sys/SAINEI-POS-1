@@ -1,0 +1,8 @@
+﻿SAINEI POS
+==========
+1) Doble clic en 1-INSTALAR.bat (en la PC principal).
+2) Abrí "SAINEI POS" del Escritorio.
+3) Leé MANUAL.txt (es corto).
+
+Otras PC / celular: Conectar-desde-otra-PC.bat o el navegador con la dirección que muestra el instalador.
+Datos de prueba: Iniciar-Servidor-PRUEBA.bat y 2b-Abrir-Caja-PRUEBA.bat

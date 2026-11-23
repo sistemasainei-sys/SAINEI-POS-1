@@ -1,0 +1,8 @@
+{
+  "name": "sainei-pos",
+  "version": "1.0.1",
+  "private": true,
+  "description": "SAINEI POS - aplicacion web instalable",
+  "engines": { "node": ">=22.13.0" },
+  "scripts": { "start": "node server.js" }
+}
