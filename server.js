@@ -56,6 +56,8 @@ if (!INSTALL_ID) INSTALL_ID = crypto.randomBytes(12).toString('hex').toUpperCase
 // El identificador configurado en Render prevalece sobre SQLite para que no cambie al redeplegar.
 if (getMeta('installId') !== INSTALL_ID) setMeta('installId', INSTALL_ID);
 function licenseState() {
+  // Modo local: la operación no depende de Render ni de activación en línea.
+  if (process.env.SAINEI_LOCAL_MODE === '1') return { active: true, local: true, installId: INSTALL_ID, type: 'local' };
   const raw = getMeta('licenseToken');
   if (!raw) return { active: false, installId: INSTALL_ID };
   try {
