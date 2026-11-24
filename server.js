@@ -9,7 +9,7 @@ try { ({ DatabaseSync } = require('node:sqlite')); } catch (e) {
 }
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const a = argv.find(x => x.startsWith('--' + n + '=')); return a ? a.split('=').slice(1).join('=') : d; };
-const DEMO = argv.includes('--demo');
+const DEMO = argv.includes('--demo') || process.env.SAINEI_DEMO_MODE === 'true';
 const PORT = parseInt(arg('port', process.env.PORT || process.env.SAINEI_PORT || '8080'), 10);
 const ROOT = __dirname;
 const DATA = path.resolve(arg('data', process.env.SAINEI_DATA || path.join(ROOT, DEMO ? 'datos-prueba' : 'datos')));
@@ -55,6 +55,8 @@ if (!INSTALL_ID) INSTALL_ID = crypto.randomBytes(12).toString('hex').toUpperCase
 // Cada instalación conserva su propio identificador dentro de su base SQLite local.
 if (getMeta('installId') !== INSTALL_ID) setMeta('installId', INSTALL_ID);
 function licenseState() {
+  // El bypass de licencia existe únicamente en el servicio de demostración, activado por entorno.
+  if (DEMO) return { active: true, demo: true, installId: INSTALL_ID };
   const raw = getMeta('licenseToken');
   if (!raw) return { active: false, installId: INSTALL_ID };
   try {
