@@ -382,9 +382,11 @@ function processSync(user, body) {
           if (coll === 'shifts' && user.role !== 'admin') {
             const validDate = value => typeof value === 'string' && Number.isFinite(Date.parse(value));
             if (!ex) {
+              const anotherOpenShift = prep('SELECT id,j FROM rec WHERE coll=? AND del=0').all('shifts')
+                .some(row => Number(row.id) !== id && Number(JSON.parse(row.j).uid) === Number(user.uid) && !JSON.parse(row.j).closedAt);
               if (Number(rec.uid) !== Number(user.uid) || !validDate(rec.openAt) ||
                   !Number.isSafeInteger(Number(rec.openAmt)) || Number(rec.openAmt) < 0 ||
-                  (rec.closedAt != null && rec.closedAt !== '')) {
+                  (rec.closedAt != null && rec.closedAt !== '') || anotherOpenShift) {
                 res.rejected.push({ coll, id }); continue;
               }
             } else {
