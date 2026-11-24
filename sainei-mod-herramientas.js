@@ -75,7 +75,7 @@ window.SAINEI_POS_MODULES.push({
     if(editing)Object.assign(editing,data);else directory.push(Object.assign({id:api.newId('sup'),active:true,createdAt:new Date().toISOString()},data));
     editingSupplierId=null;Promise.resolve(api.save()).then(function(ok){if(ok===false){if(err)err.textContent='No se pudo confirmar el guardado. Revisá la conexión.';return;}api.toast('Proveedor guardado');api.refresh();});
    });
-   if(!sec.dataset.phBound){sec.dataset.phBound='1';sec.addEventListener('click',function(e){var b=e.target.closest('[data-ph-edit],[data-ph-cancel]');if(!b)return;if(b.hasAttribute('data-ph-cancel'))editingSupplierId=null;else editingSupplierId=b.getAttribute('data-ph-edit');suppliers(sec);});}
+   if(sec.dataset&&!sec.dataset.phBound){sec.dataset.phBound='1';sec.addEventListener('click',function(e){var b=e.target.closest('[data-ph-edit],[data-ph-cancel]');if(!b)return;if(b.hasAttribute('data-ph-cancel'))editingSupplierId=null;else editingSupplierId=b.getAttribute('data-ph-edit');suppliers(sec);});}
   }
   function date(v){var d=new Date(v);return isNaN(d)?'—':d.toLocaleDateString('es-PY');}
   function tile(l,v){return '<div class="tile"><div class="muted">'+esc(l)+'</div><strong>'+esc(v)+'</strong></div>';}
