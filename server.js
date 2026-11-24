@@ -756,6 +756,13 @@ async function handle(req, res) {
       return res.end(fs.readFileSync(f));
     }
     if (p === '/favicon.ico') { res.writeHead(204); return res.end(); }
+    // Rutas de navegación de la aplicación: devolver la pantalla principal
+    // para que Safari pueda abrir enlaces internos y rutas compartidas.
+    if (req.headers.accept && req.headers.accept.includes('text/html') && !path.extname(p)) {
+      if (!fs.existsSync(APP)) return fail(res, 500, 'Falta app/index.html');
+      res.writeHead(200, { 'Content-Type': CT['.html'], 'Cache-Control': 'no-store', 'X-Content-Type-Options': 'nosniff' });
+      return res.end(fs.readFileSync(APP));
+    }
     return fail(res, 404, 'No encontrado');
   }
   if (p === '/api/ping') return send(res, 200, { ok: true, server: true });
