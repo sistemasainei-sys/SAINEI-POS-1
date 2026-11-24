@@ -14,7 +14,7 @@ window.SAINEI_POS_MODULES.push({
    (s.clients||[]).forEach(function(c){
     var sales=(s.sales||[]).filter(function(x){return x.clientId===c.id&&(Number(x.creditAmount||0)>0||x.method==='credito')&&!x.void;}).sort(function(a,b){return Number(a.id)-Number(b.id);});
     var pays=(s.payments||[]).filter(function(p){return p.clientId===c.id;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
-    var credits=sales.map(function(x){var base=x.creditAmount!=null?Number(x.creditAmount):Number(x.total||0),returned=(x.returns||[]).reduce(function(n,r){return n+Math.max(0,Number(r.amount)||0);},0);return {sale:x,amount:Math.max(0,base-returned)};});
+    var credits=sales.map(function(x){var base=x.creditAmount!=null?Number(x.creditAmount):Number(x.total||0),returned=(x.returns||[]).reduce(function(n,r){return n+Math.max(0,Number(r.creditAmount)||0);},0);return {sale:x,amount:Math.max(0,base-returned)};});
     var paid=pays.reduce(function(a,x){return a+Number(x.amount||0);},0),balance=credits.reduce(function(a,x){return a+x.amount;},0)-paid,remaining=paid,overdue=0,oldest=null;
     credits.forEach(function(entry){var x=entry.sale,out=entry.amount;if(remaining>=out){remaining-=out;out=0;}else{out-=remaining;remaining=0;}
      if(out>0){var due=date(x.due);if(due&&due<today)overdue+=out;if(!oldest||new Date(x.date)<oldest.date)oldest={date:new Date(x.date),due:x.due,amount:out};}
