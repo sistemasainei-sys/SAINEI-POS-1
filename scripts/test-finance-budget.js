@@ -24,7 +24,7 @@ need('rechazo de sobrepagos a proveedores', /paidBefore \+ amount > Number\(purc
 need('colección de bancos y cheques en el cliente', /'bankEntries'/, src);
 need('contador de identificadores bancarios', /bank:'bankEntries'/, src);
 need('colección bancaria sincronizada en servidor', /bankEntries: 'bank'/, server);
-need('colección bancaria incluida en la lectura de sincronización', /const ORDER = \\[[^\\]]*'bankEntries'/, server);
+need('colección bancaria incluida en la lectura de sincronización', /const ORDER = \[[^\]]*'bankEntries'/, server);
 need('permisos restringidos de bancos y cheques', /bankEntries: \{ ins: 1, upd: 1 \}/, server);
 need('validación de movimientos y cheques', /if \(coll === 'bankEntries'\)[\s\S]*?Number\.isSafeInteger\(amount\)/, server);
 need('protección de datos financieros inmutables', /delete before\.status; delete before\.reconciled; delete after\.status; delete after\.reconciled/, server);
