@@ -20,6 +20,8 @@ const api = {
   state: () => state,
   user: () => ({ id: 1, role: 'admin' }),
   isAdmin: () => true,
+  isServer: () => false,
+  request: () => Promise.resolve({ rows: [] }),
   maxDiscount: () => 10,
   applyDiscount: () => true,
   cartSnapshot: () => ({ items: [], disc: 0, clientId: 0, pendingBudget: 0 }),
@@ -30,6 +32,7 @@ const api = {
     actions[name] = fn;
   },
   openModal(html) { openedModal = html; },
+  closeModal() {},
   addTab(spec) {
     if (!spec || !/^[a-z][a-z0-9_-]{1,30}$/i.test(spec.id)) throw new Error('ID de pestaña inválido');
     if (!spec.label || typeof spec.render !== 'function') throw new Error('Definición de pestaña incompleta: ' + spec.id);
@@ -38,6 +41,7 @@ const api = {
   },
   escape: (v) => String(v).replace(/[&<>"']/g, ''),
   money: (v) => 'Gs. ' + v,
+  number: (v) => Number(v) || 0,
   round3: (v) => Math.round(v * 1000) / 1000,
   newId: () => 1,
   log: () => {},
