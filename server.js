@@ -693,7 +693,7 @@ function localAddresses() {
 }
 function trackClient(req, ip) {
   if (!ip || ip==='127.0.0.1' || ip==='::1') return;
-  const token=String(req.headers.authorization||'').replace(/^Bearer\\s+/,'');
+  const token=String(req.headers.authorization||'').replace('Bearer ','');
   const session=sessions.get(token), ua=String(req.headers['user-agent']||'');
   const key=ip+'|'+ua.slice(0,100);
   networkClients.set(key,{ip,ua:ua.slice(0,180),name:session?session.name:'Dispositivo sin identificar',role:session?session.role:'visitante',lastSeen:Date.now(),authenticated:!!session});
