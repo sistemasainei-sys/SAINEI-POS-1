@@ -41,6 +41,7 @@ if errorlevel 1 (
 rem Detectar primero si ya existe un servidor SAINEI POS en la red.
 if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
 set "SAINEI_DISCOVERY=%TEMP%\sainei-servidor-url.txt"
+if exist "%LOCALAPPDATA%\SAINEI-POS\cliente.url" goto mantener_cliente
 if exist "%~dp0descubrir-servidor-sainei.ps1" (
   powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0descubrir-servidor-sainei.ps1" > "%SAINEI_DISCOVERY%"
   if not errorlevel 1 (
@@ -58,6 +59,13 @@ if exist "%~dp0descubrir-servidor-sainei.ps1" (
     exit /b 0
   )
 )
+:mantener_cliente
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$target='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$target;$s.WorkingDirectory='%~dp0';$s.Save()"
+echo.
+echo Esta computadora ya esta registrada como CAJA CLIENTE.
+echo Se conserva su conexion al servidor del comercio.
+endlocal
+exit /b 0
 :configurar_servidor
 if exist "%SAINEI_DISCOVERY%" del "%SAINEI_DISCOVERY%" >nul 2>nul
 set "SAINEI_DATA=%LOCALAPPDATA%\SAINEI-POS\datos"
