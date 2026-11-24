@@ -2,6 +2,25 @@
 
 Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a main ni cambios en datos de comercios.
 
+## Estado de la versión local v1 (actualizado 24/11/2026)
+
+El desarrollo funcional principal de la versión local está implementado. La integración automática en CI ya verifica:
+
+- 14 módulos adicionales, sintaxis de la aplicación y del servidor.
+- Licencia RSA firmada, ID propio por instalación y persistencia después de reiniciar.
+- Alta de administrador, permisos de cajero y revocación inmediata de usuarios desactivados.
+- Ventas, movimientos de stock, rechazo de sobreventa y dos procesos independientes compartiendo la misma SQLite.
+- Devoluciones parciales y totales, rechazo de devoluciones excesivas y reposición de stock.
+- Compras a crédito, pagos parciales a proveedores y rechazo de sobrepagos.
+- Cobros de clientes, gastos, apertura/cierre de caja y conflictos de configuración.
+- Creación y restauración de copias SQLite en un entorno temporal aislado.
+
+**Lo que queda antes de usarlo comercialmente:** instalación y actualización física en Windows 10/11, detección LAN con dos equipos reales, prueba USB, navegadores móviles y periféricos. La próxima prueba del usuario debe ser la validación del paquete completo en un equipo Windows, no una revisión de módulos incompletos.
+
+**Fuera del alcance de esta versión local:** acceso remoto público/VPN, SIFEN/DNIT y sincronización entre sucursales. La base de datos de ventas permanece en la PC principal del comercio.
+
+---
+
 ## Modalidad principal acordada — instalación local por comercio
 
 - [x] Base SQLite local en la computadora principal de cada comercio; no requiere Render ni base de datos en la nube para guardar ventas.
@@ -89,9 +108,9 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 
 ### Hallazgo de revisión estática — sincronización de configuraciones
 
-- [ ] Añadir control de concurrencia/versionado por clave para los registros de configuración `SING` (incluye fidelización, promociones y configuración del comercio). El servidor actualmente reemplaza cada objeto completo que recibe un administrador; dos equipos administradores que editen la misma configuración desde estados distintos pueden sobrescribirse cambios.
+- [x] Control de concurrencia/versionado por clave para los registros de configuración `SING` (incluye fidelización, promociones y configuración del comercio); se rechazan escrituras basadas en una revisión anterior y se devuelve el valor vigente.
 - [ ] Para `loyaltyRedemptions` y `promotions`, valorar migrar los registros tipo historial a colecciones con IDs individuales en vez de guardar el historial como un único objeto. Hacerlo requiere migración aditiva y compatibilidad con datos existentes.
-- [x] Confirmado en revisión estática del flujo `processSync`: ahora compara la revisión del cliente con la última revisión de cada clave `SING`. No se ejecutaron pruebas.
+- [x] Prueba automática confirma el conflicto de `SING`: una segunda edición obsoleta no sobrescribe la primera.
 
 ## Seguridad del trabajo
 
