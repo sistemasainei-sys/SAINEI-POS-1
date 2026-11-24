@@ -4,7 +4,6 @@ if (-not $env:LOCALAPPDATA) { throw 'No se encontro LOCALAPPDATA para guardar lo
 $data = Join-Path $env:LOCALAPPDATA 'SAINEI-POS\datos'
 New-Item -ItemType Directory -Force -Path $data | Out-Null
 $env:SAINEI_DATA = $data
-$env:SAINEI_LOCAL_MODE = '1'
 Set-Location $root
 $node = (Get-Command node.exe -ErrorAction Stop).Source
 & $node (Join-Path $root 'server.js')
