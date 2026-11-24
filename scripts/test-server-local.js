@@ -110,6 +110,20 @@ async function main() {
   const deniedUsers = await json(base, '/api/users', { headers: cashierHeaders });
   assert.equal(deniedUsers.status, 403, 'El cajero no debe administrar usuarios.');
 
+  // Dos administradores con una revisión antigua no deben sobrescribir configuración más reciente.
+  const configFirst = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, sing: { shop: { name: 'Comercio versión A', phone: '0981000000' } } })
+  });
+  assert.equal(configFirst.status, 200);
+  const configStale = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, sing: { shop: { name: 'Comercio versión B', phone: '0982000000' } } })
+  });
+  assert.equal(configStale.status, 200);
+  assert.ok((configStale.body.rejected || []).some(x => x.sing === 'shop' && x.conflict), 'Debe rechazar una configuración enviada desde una revisión obsoleta.');
+  assert.equal(configStale.body.sing.shop.name, 'Comercio versión A', 'Debe devolver la configuración más reciente sin sobrescribirla.');
+
   const bankIds = await json(base, '/api/ids?kind=bank&n=2', { headers: adminHeaders });
   assert.equal(bankIds.status, 200, 'El administrador debe poder reservar IDs bancarios.');
   const bankEntry = {
