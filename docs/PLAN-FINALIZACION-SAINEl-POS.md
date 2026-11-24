@@ -196,3 +196,9 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] El servidor valida que cada devolución nueva tenga identificador, fecha, medio permitido e importe coherente con las líneas devueltas y el descuento de la venta.
 - [x] El importe enviado por el navegador ya no se acepta como dato confiable: se recalcula en el servidor antes de sincronizar la devolución.
 - [ ] Falta prueba funcional aislada de devoluciones parciales/totales y conciliación contable. No se ejecutaron pruebas.
+
+
+### Control de apertura de caja por usuario
+
+- [x] En la sincronización del servidor, un usuario no administrador no puede abrir un segundo turno mientras ya tenga otro turno abierto. La comprobación ocurre dentro de la transacción de sincronización, para reducir aperturas duplicadas por solicitudes simultáneas.
+- [ ] Falta validar con dos cajas y dos sesiones reales; no se ejecutaron pruebas funcionales.
