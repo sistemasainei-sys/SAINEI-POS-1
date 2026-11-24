@@ -1,8 +1,10 @@
 'use strict';
 const fs = require('fs');
 const path = require('path');
-const src = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
-const server = fs.readFileSync(path.join(process.cwd(), 'server.js'), 'utf8');
+const read = (name) => fs.readFileSync(path.join(process.cwd(), name), 'utf8');
+const src = read('index.html');
+const server = read('server.js');
+const tools = read('sainei-mod-herramientas.js');
 function need(label, pattern, text = src) {
   if (!pattern.test(text)) throw new Error('Falta validación de ' + label);
 }
@@ -15,7 +17,7 @@ need('impresión o PDF de presupuesto', /function printBudget\([\s\S]*?printArea
 need('presupuesto convertido solo después de confirmar la venta', /if\(ui\.pendingBudget\)[\s\S]*?pb\.status='convertido'[\s\S]*?pb\.saleId=sid/);
 need('colección de presupuestos sincronizada', /budgets: 'budget'/, server);
 need('presupuestos incluidos en sincronización', /'budgets'/);
-need('medios de pago bancarios en compras', /value="banco">Transferencia \/ banco/);
-need('pagos a proveedores registrados por colección', /spay/ , server);
-need('control de pagos a proveedores en servidor', /Pago de proveedor[\s\S]*?sobrepago|sobrepago[\s\S]*?spay/i, server);
+need('opción de transferencia bancaria para pagos a proveedores', /value="banco"[\s\S]*?Transferencia \/ banco/, tools);
+need('pagos a proveedores registrados por colección', /spay/, server);
+need('rechazo de sobrepagos a proveedores', /paidBefore \+ amount > Number\(purchase\.total\)/, server);
 console.log('OK: presupuestos, conversión controlada, impresión, sincronización y pagos bancarios a proveedores tienen verificaciones estáticas.');
