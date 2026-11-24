@@ -14,7 +14,7 @@ for (const file of files) {
 }
 const state = {
   clients: [{id:3,name:'Cliente prueba',phone:'0981'}], sales: [{id:9,clientId:3,total:25000,items:[],returns:[{amount:5000}]}], payments: [], expenses: [], spay: [{ id: 1, purchId: 7, amount: 20, method: 'banco' }], shifts: [],
-  products: [], moves: [], suspendedSales: [], promotions: [], loyaltyRedemptions: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
+  products: [], moves: [], suspendedSales: [], promotions: [], loyaltyRedemptions: [], bankEntries: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
 };
 const api = {
   state: () => state,
@@ -118,5 +118,14 @@ if (!loyaltySec.innerHTML.includes('Cliente prueba') || !loyaltySec.innerHTML.in
 }
 if (typeof actions['fidelizacion-configurar'] !== 'function' || typeof actions['fidelizacion-guardar'] !== 'function' || typeof actions['fidelizacion-csv'] !== 'function') {
   throw new Error('Faltan acciones del módulo Fidelización.');
+}
+const bankTab = registered.find((x) => x.id === 'bancos-cheques');
+if (!bankTab || !bankTab.canView({ role: 'admin' }) || bankTab.canView({ role: 'cajero' })) {
+  throw new Error('El módulo Bancos y cheques no tiene permisos de acceso correctos.');
+}
+const bankSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; }, querySelectorAll() { return []; } };
+bankTab.render(bankSec);
+if (!bankSec.innerHTML.includes('Bancos y cheques') || !bankSec.innerHTML.includes('Registrar cheque')) {
+  throw new Error('El módulo Bancos y cheques no genera su pantalla.');
 }
 console.log('OK: ' + files.length + ' módulos cargados, permisos registrados, renderizado inicial y flujo de saldo/pago parcial de proveedor verificados: ' + registered.map((x) => x.id).join(', '));
