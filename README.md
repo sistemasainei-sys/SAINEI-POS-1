@@ -24,7 +24,7 @@ SAINEI POS está preparado para guardar los datos comerciales en la computadora 
 - El servidor anuncia su presencia por UDP 45808 y el firewall privado permite TCP 8080 y UDP 45808 únicamente desde la subred local.
 - Para operar dentro del local, basta con que la computadora principal y la red local estén funcionando; no se necesita internet para las operaciones locales.
 - Si la computadora principal se apaga, las otras cajas no pueden operar hasta que vuelva a encenderse.
-- Node.js 22.13 o superior es requisito únicamente en la PC servidor; las cajas cliente detectadas no necesitan instalar Node.js. La instalación local no exige código de activación ni conexión a Render.
+- Node.js 22.13 o superior es requisito únicamente en la PC servidor; las cajas cliente detectadas no necesitan instalar Node.js. Cada instalación requiere una licencia firmada emitida por SAINEI después del pago; se activa una sola vez en la PC principal y queda guardada localmente. La activación y las ventas diarias no requieren Render ni alojamiento en la nube.
 - Se recomienda una unidad externa para copias de seguridad.
 
 ## Inicio en una computadora Windows
