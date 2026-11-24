@@ -8,7 +8,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [x] Las cajas adicionales se conectan a la computadora principal por la red local y usan la misma base del comercio.
 - [x] La carpeta de datos se mantiene separada de los archivos del programa para protegerla durante actualizaciones.
 - [x] Unificar el instalador Windows (`1-INSTALAR.bat`), inicio manual y automático, acceso directo y carpeta de datos separada. La actualización conserva los datos si no se reemplaza `%LOCALAPPDATA%\\SAINEI-POS\\datos`.
-- [ ] Completar y documentar un actualizador automático de archivos del programa que realice copia previa y excluya siempre la carpeta de datos.
+- [x] Incorporar actualizador guiado desde carpeta extraída: detiene el servidor, guarda copia completa de los datos en `actualizaciones` y excluye datos, repositorio, dependencias y configuración local al copiar el programa. Falta que el usuario lo verifique en su PC.
 - [ ] Verificar copia externa y restauración cuando el usuario autorice sus pruebas.
 
 **Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet. El modo local actual no solicita activación. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
