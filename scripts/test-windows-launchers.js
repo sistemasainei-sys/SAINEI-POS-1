@@ -68,6 +68,9 @@ if (!server.includes("dgram = require('dgram')") || !server.includes('SAINEI_POS
 if (!installer.includes('descubrir-servidor-sainei.ps1') || !installer.includes('cliente.url') || !installer.includes(':mantener_cliente') || installer.indexOf('descubrir-servidor-sainei.ps1') > installer.indexOf('where node')) {
   throw new Error('El instalador debe detectar cajas cliente antes de instalar dependencias del servidor.');
 }
+if (!installer.includes('servidor.local') || installer.indexOf('servidor.local') > installer.indexOf('cliente.url')) {
+  throw new Error('El instalador debe conservar la identidad del servidor antes de intentar detectar otra PC.');
+}
 if (!discovery.includes('SAINEI_POS_DISCOVER_V1') || !discovery.includes('IPAddress]::Broadcast')) {
   throw new Error('El detector de LAN debe emitir la solicitud de descubrimiento.');
 }
