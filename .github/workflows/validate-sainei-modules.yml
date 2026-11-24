@@ -5,6 +5,7 @@ on:
     branches:
       - sainei-pos-finalizacion-independiente
       - sainei-pos-finalizacion-segura
+      - sainei-pos-release-candidate
   pull_request:
     branches:
       - main
