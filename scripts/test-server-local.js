@@ -97,7 +97,7 @@ async function main() {
   assert.equal(status0.body.active, true, 'El sistema debe estar habilitado sin licencia.');
   assert.equal(status0.body.required, false, 'No debe requerir activación.');
   const setup = await json(base, '/api/setup', { method: 'POST', body: JSON.stringify({ name: 'Administrador', pin: '5729' }) });
-  assert.equal(setup.status, 200, 'Debe permitir crear el administrador después de activar la licencia.');
+  assert.equal(setup.status, 200, 'Debe permitir crear el administrador sin licencia.');
   const adminLogin = await json(base, '/api/login', { method: 'POST', body: JSON.stringify({ userId: setup.body.userId, pin: '5729' }) });
   assert.equal(adminLogin.status, 200);
   const adminHeaders = { Authorization: 'Bearer ' + adminLogin.body.token };
