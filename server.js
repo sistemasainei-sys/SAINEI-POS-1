@@ -1,3 +1,6 @@
+if (process.env.DATABASE_URL) {
+  require('./server-postgres');
+} else {
 'use strict';
 /* SAINEI POS - servidor local (sin dependencias). Requiere Node.js 22.13 o superior.
    Datos: base SQLite en la carpeta "datos". Todo queda dentro del establecimiento. */
@@ -562,3 +565,5 @@ server.listen(PORT, '0.0.0.0', () => {
 });
 function shutdown(sig) { log('Cerrando servidor (' + sig + ')'); try { autoBackup(); db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); db.close(); } catch (e) {} process.exit(0); }
 process.on('SIGINT', () => shutdown('SIGINT')); process.on('SIGTERM', () => shutdown('SIGTERM'));
+
+}

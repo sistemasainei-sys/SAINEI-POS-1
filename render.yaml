@@ -3,7 +3,7 @@ services:
     name: sainei-pos
     runtime: node
     plan: free
-    buildCommand: npm install
+    buildCommand: npm install && npm run check:postgres
     startCommand: npm start
     healthCheckPath: /api/ping
     envVars:
