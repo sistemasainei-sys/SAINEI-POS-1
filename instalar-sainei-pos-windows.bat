@@ -9,6 +9,9 @@ echo.
 if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
 set "SAINEI_DISCOVERY=%TEMP%\sainei-servidor-url.txt"
 
+rem Reconocer primero instalaciones servidor ya existentes para que no se detecten a si mismas como clientes.
+if exist "%LOCALAPPDATA%\SAINEI-POS\servidor.local" goto configurar_servidor
+if exist "%LOCALAPPDATA%\SAINEI-POS\datos\sainei.db" goto configurar_servidor
 rem Una PC que ya fue caja cliente conserva ese rol aunque el servidor este apagado.
 if exist "%LOCALAPPDATA%\SAINEI-POS\cliente.url" goto mantener_cliente
 
@@ -60,6 +63,8 @@ if errorlevel 1 (
   pause
   exit /b 4
 )
+if not exist "%LOCALAPPDATA%\SAINEI-POS" mkdir "%LOCALAPPDATA%\SAINEI-POS"
+>"%LOCALAPPDATA%\SAINEI-POS\servidor.local" echo SAINEI_POS_SERVER
 set "SAINEI_DATA=%LOCALAPPDATA%\SAINEI-POS\datos"
 if not exist "%SAINEI_DATA%" mkdir "%SAINEI_DATA%"
 if not exist "%SAINEI_DATA%\copias" mkdir "%SAINEI_DATA%\copias"
