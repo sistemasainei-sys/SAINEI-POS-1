@@ -18,23 +18,23 @@ SAINEI POS está preparado para guardar los datos comerciales en la computadora 
 ## Inicio en una computadora Windows
 
 1. Copiar la carpeta completa del proyecto a la computadora principal y no moverla después.
-2. Ejecutar `1-INSTALAR.bat` (usa `instalar-sainei-pos-windows.bat`). Si falta Node.js 22.13 o superior, intenta instalar Node.js LTS con `winget`.
-3. El instalador configura el inicio automático al iniciar sesión en Windows y crea el acceso directo `SAINEI POS` en el Escritorio.
-4. Abrir `SAINEI POS` desde el Escritorio o entrar a `http://localhost:8080`.
-5. Crear el usuario principal y guardar el código de recuperación en un lugar seguro.
+2. Ejecutar `1-INSTALAR.bat`. Si no encuentra otro servidor SAINEI POS activo, esta PC queda como servidor principal; instala Node.js LTS si hace falta, prepara los datos y configura el inicio automático.
+3. Abrir `SAINEI POS` desde el Escritorio, completar los datos del comercio, crear el usuario administrador y guardar el código de recuperación en un lugar seguro.
+4. Mantener encendida la PC servidor y conectada a la red privada del comercio.
 
 Para iniciar manualmente el servidor, usar `iniciar-sainei-pos-windows.bat`. Los datos se guardan en `%LOCALAPPDATA%\\SAINEI-POS\\datos`, fuera de la carpeta del programa.
 
 El iniciador guarda la base SQLite en `%LOCALAPPDATA%\SAINEI-POS\datos`, separada de los archivos del programa. No mover, borrar ni reemplazar esa carpeta al actualizar la aplicación.
 
-## Conectar otras computadoras
+## Conectar otras computadoras automáticamente
 
-1. Conectar todas las computadoras a la misma red privada del comercio.
-2. En la PC servidor, consultar la dirección LAN que aparece en la ventana del servidor o en `direcciones.txt` dentro de la carpeta de datos.
-3. Desde cada caja, abrir `http://DIRECCION-LAN-DEL-SERVIDOR:8080`.
-4. Iniciar sesión con el usuario correspondiente.
+1. Conectar la nueva PC a la misma red privada del comercio, con la PC servidor encendida.
+2. Copiar la misma carpeta completa del programa a esa PC.
+3. Ejecutar `Conectar-desde-otra-PC.bat` o `1-INSTALAR.bat`.
+4. El instalador encuentra el servidor por la red, guarda su dirección y crea el acceso directo `SAINEI POS`. No instala Node.js ni crea otra base de datos comercial.
+5. Abrir el acceso directo e iniciar sesión con el usuario de esa caja.
 
-Configurar el firewall de Windows con `configurar-firewall-sainei.ps1`, ejecutándolo como administrador y solo después de confirmar que la red está marcada como Privada. No abrir el puerto 8080 en el router ni exponerlo directamente a internet.
+Si la detección no funciona, verificar que Windows tenga la red marcada como Privada y que el firewall permita TCP 8080 y UDP 45808 desde la subred local. No abrir puertos del router ni exponer el servidor directamente a internet.
 
 ## Actualizar el programa sin borrar datos
 
