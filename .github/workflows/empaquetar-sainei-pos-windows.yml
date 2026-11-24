@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - sainei-pos-release-candidate
+      - sainei-pos-sin-licencia
   workflow_dispatch:
 
 permissions:

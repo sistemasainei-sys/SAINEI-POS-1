@@ -38,37 +38,10 @@ const P = {}; const prep = s => P[s] || (P[s] = db.prepare(s));
 const getMeta = k => { const r = prep('SELECT v FROM meta WHERE k=?').get(k); return r ? r.v : null; };
 const setMeta = (k, v) => prep('INSERT OR REPLACE INTO meta(k,v) VALUES(?,?)').run(k, String(v));
 
-/* ---------- Licencia SAINEI (firma RSA; la clave privada solo queda en el paquete del administrador) ---------- */
-const LICENSE_PUBLIC_KEY = `-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoaGt4FXqgVp3aehlIJGh
-Job3e1PkuucaLpICYHHIlId4TfO1RbYO2pjo7OYBvNE1sGAgiTyWYgIo78ojGqh/
-BobbJuYRo7uqMK0Twf7qEUlHeZSUVLowkRt3a2ga+9blMuuBGrhCWmJ8XVPV7cDv
-BEX85l4c+0ev8bbyYo/nxBhsa8g0OdeX36Qog749mh04+jN7PhkoUWSH4RGP2y/i
-G27FPmXlmXdyiQdOm+hj4kT11gNIyHCkZ/RklF+EGTPR5jTCnnoR5WegMM6Wh56M
-Vj1lHKEcgIdrkMFwGfI1RbmLYIH2X9JBD59IZicO5x13ywqKC8LTUKMC/JpyjNwM
-hwIDAQAB
------END PUBLIC KEY-----`;
-// ID anterior de SAINEI POS: se acepta su licencia firmada durante la migración.
-const LEGACY_INSTALL_IDS = ['7D217B560F4A5093C640751E'];
-let INSTALL_ID = getMeta('installId');
-if (!INSTALL_ID) INSTALL_ID = crypto.randomBytes(12).toString('hex').toUpperCase();
-// Cada instalación conserva su propio identificador dentro de su base SQLite local.
-if (getMeta('installId') !== INSTALL_ID) setMeta('installId', INSTALL_ID);
-function licenseState() {
-  const raw = getMeta('licenseToken');
-  if (!raw) return { active: false, installId: INSTALL_ID };
-  try {
-    const parts = raw.split('.'); if (parts.length !== 2) throw new Error('formato');
-    const payload = Buffer.from(parts[0], 'base64url').toString('utf8');
-    const sig = Buffer.from(parts[1], 'base64url');
-    if (!crypto.verify('RSA-SHA256', Buffer.from(parts[0]), LICENSE_PUBLIC_KEY, sig)) throw new Error('firma');
-    const data = JSON.parse(payload);
-    if (data.installId !== INSTALL_ID && !LEGACY_INSTALL_IDS.includes(String(data.installId || '').toUpperCase())) throw new Error('instalacion');
-    if (data.type === 'monthly' && (!data.expiresAt || Date.now() > data.expiresAt)) return { active: false, expired: true, installId: INSTALL_ID, type: data.type, expiresAt: data.expiresAt };
-    if (!['permanent','monthly'].includes(data.type)) throw new Error('tipo');
-    return { active: true, installId: INSTALL_ID, type: data.type, expiresAt: data.expiresAt || null, customer: data.customer || '' };
-  } catch (_) { return { active: false, invalid: true, installId: INSTALL_ID }; }
-}
+/* ---------- Instalación local sin activación ni licencia ---------- */
+const INSTALL_ID = getMeta('installId') || crypto.randomBytes(12).toString('hex').toUpperCase();
+if (!getMeta('installId')) setMeta('installId', INSTALL_ID);
+function licenseState() { return { active: true, required: false, installId: INSTALL_ID }; }
 let REV = parseInt(getMeta('rev') || '0', 10);
 let EPOCH = getMeta('epoch'); if (!EPOCH) { EPOCH = crypto.randomBytes(6).toString('hex'); setMeta('epoch', EPOCH); }
 function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (_) {} throw e; } }
@@ -782,26 +755,10 @@ async function handle(req, res) {
     return send(res, 200, { modules });
   }
   if (p === '/api/license/status' && m === 'GET') return send(res, 200, licenseState());
-  if (p === '/api/license/activate' && m === 'POST') {
-    const b = await readBody(req), token = String(b.code || '').trim();
-    const parts = token.split('.');
-    if (parts.length !== 2) return fail(res, 400, 'Código de activación inválido.');
-    try {
-      const payload = Buffer.from(parts[0], 'base64url').toString('utf8');
-      const sig = Buffer.from(parts[1], 'base64url');
-      if (!crypto.verify('RSA-SHA256', Buffer.from(parts[0]), LICENSE_PUBLIC_KEY, sig)) return fail(res, 400, 'Código no válido.');
-      const d = JSON.parse(payload);
-      if (d.installId !== INSTALL_ID && !LEGACY_INSTALL_IDS.includes(String(d.installId || '').toUpperCase())) return fail(res, 400, 'Este código pertenece a otra instalación.');
-      if (!['permanent','monthly'].includes(d.type)) return fail(res, 400, 'Tipo de licencia inválido.');
-      if (d.type === 'monthly' && (!d.expiresAt || Date.now() > d.expiresAt)) return fail(res, 400, 'La licencia mensual ya venció.');
-      setMeta('licenseToken', token); audit('LICENCIA', 'Activación ' + d.type + ' para ' + String(d.customer || 'cliente'));
-      return send(res, 200, { ok: true, license: licenseState() });
-    } catch (_) { return fail(res, 400, 'No se pudo verificar el código.'); }
-  }
+  if (p === '/api/license/activate' && m === 'POST') return send(res, 200, { ok: true, license: licenseState(), message: 'SAINEI POS no requiere licencia.' });
   if (p === '/api/info' && m === 'GET') return send(res, 200, info());
 
   if (p === '/api/setup' && m === 'POST') {
-    if (!licenseState().active) return fail(res, 403, 'Activá SAINEI POS con tu código de licencia.');
     const b = await readBody(req);
     if (hasAdmin()) return fail(res, 409, 'Ya existe un usuario principal.');
     const name = String(b.name || '').trim().slice(0, 40), pin = String(b.pin || '');
@@ -821,7 +778,6 @@ async function handle(req, res) {
     return send(res, 200, { ok: true, code, userId: setup.id });
   }
   if (p === '/api/login' && m === 'POST') {
-    if (!licenseState().active) return fail(res, 403, 'La licencia no está activa.');
     const b = await readBody(req), uid = Number(b.userId), key = ip + '|' + uid, w = failWait(key);
     if (w > 0) return fail(res, 429, 'Demasiados intentos. Espera ' + w + ' segundos.', { wait: w });
     const u = prep('SELECT * FROM users WHERE id=?').get(uid);
@@ -957,7 +913,7 @@ const discovery = dgram.createSocket({ type: 'udp4', reuseAddr: true });
 discovery.on('error', e => log('Aviso descubrimiento LAN: ' + e.message));
 discovery.on('message', (msg, remote) => {
   if (msg.toString('utf8').trim() !== 'SAINEI_POS_DISCOVER_V1') return;
-  const response = Buffer.from(JSON.stringify({ service: 'SAINEI_POS', version: 1, port: PORT, installId: INSTALL_ID }));
+  const response = Buffer.from(JSON.stringify({ service: 'SAINEI_POS', version: 1, port: PORT }));
   discovery.send(response, remote.port, remote.address, e => { if (e) log('No se pudo responder al descubrimiento LAN: ' + e.message); });
 });
 discovery.bind(45808, '0.0.0.0', () => log('Detección automática de cajas activa en UDP 45808'));

@@ -6,6 +6,7 @@ on:
       - sainei-pos-finalizacion-independiente
       - sainei-pos-finalizacion-segura
       - sainei-pos-release-candidate
+      - sainei-pos-sin-licencia
   pull_request:
     branches:
       - main
@@ -32,7 +33,7 @@ jobs:
         run: node scripts/test-sainei-modules.js
       - name: Verify Windows launchers and data safety
         run: node scripts/test-windows-launchers.js
-      - name: Verify license and user data safety
+      - name: Verify no-license operation and user data safety
         run: node scripts/test-license-data-safety.js
-      - name: Test local server license and persistence
+      - name: Test local server without license and persistence
         run: node scripts/test-server-local.js

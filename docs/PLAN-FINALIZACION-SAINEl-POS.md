@@ -7,7 +7,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 El desarrollo funcional principal de la versión local está implementado. La integración automática en CI ya verifica:
 
 - 14 módulos adicionales, sintaxis de la aplicación y del servidor.
-- Licencia RSA firmada, ID propio por instalación y persistencia después de reiniciar.
+- Instalación y operación sin licencia ni activación; acceso al sistema protegido por usuarios y PIN.
 - Alta de administrador, permisos de cajero y revocación inmediata de usuarios desactivados.
 - Ventas, movimientos de stock, rechazo de sobreventa y dos procesos independientes compartiendo la misma SQLite.
 - Devoluciones parciales y totales, rechazo de devoluciones excesivas y reposición de stock.
@@ -32,12 +32,12 @@ El desarrollo funcional principal de la versión local está implementado. La in
 - [x] Incorporar actualizador guiado desde carpeta extraída: detiene el servidor, guarda copia completa de los datos en `actualizaciones` y excluye datos, repositorio, dependencias y configuración local al copiar el programa. Falta que el usuario lo verifique en su PC.
 - [x] Verificar creación y restauración de una copia SQLite en una instalación temporal aislada mediante prueba automática.\n- [ ] Verificar físicamente la copia y restauración desde USB en Windows.
 
-**Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet. Cada comercio activa una licencia firmada independiente, guardada en su base SQLite local; no depende de Render ni de una validación en línea. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
+**Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet. No se requiere licencia ni activación para instalar u operar; el acceso se protege mediante usuarios y PIN. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
 
 ## Prioridad 1 — Operación local y respaldo de datos
 
 - [x] La prueba de integración verifica backup y restauración de SQLite en una instalación temporal. La guía de riesgos está en `docs/REVISION-SEGURIDAD-OPERACION.md` y el procedimiento para el administrador en `docs/PROCEDIMIENTO-RESPALDO-RESTAURACION.md`.\n- [ ] Verificar el ciclo completo de actualización y restauración en Windows.
-- [x] Mantener Render fuera del camino crítico de instalación, licencias y almacenamiento local en la modalidad local actual.
+- [x] Mantener Render fuera del camino crítico de instalación y almacenamiento local en la modalidad local actual.
 
 ## Prioridad 2 — Seguridad de conexión y acceso
 
@@ -208,11 +208,11 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 
 - [x] El instalador principal `1-INSTALAR.bat` delega al instalador guiado.
 - [x] El instalador valida Node.js 22.13+, intenta instalar Node.js LTS con winget, crea la carpeta permanente de datos, registra el inicio automático y genera el acceso directo del Escritorio.
-- [x] El inicio manual y el automático utilizan `%LOCALAPPDATA%\\SAINEI-POS\\datos` y mantienen obligatoria la validación de la licencia firmada.
+- [x] El inicio manual y el automático utilizan `%LOCALAPPDATA%\\SAINEI-POS\\datos` y no requieren licencia ni activación.
 - [x] Se actualizó la verificación estática del paquete para comprobar que los dos caminos de inicio usan la misma ruta y que el instalador no borra los datos.
 - [x] Pruebas automáticas de servidor, módulos, licencias, permisos, ventas, stock, devoluciones, compras, cobros, arqueos, respaldos y restauración ejecutadas en CI.\n- [ ] La instalación limpia/actualización, dispositivos y periféricos requieren validación física en Windows.
 - [ ] No hay un instalador MSI/EXE firmado; la distribución inicial es la carpeta completa del proyecto con sus archivos BAT/PowerShell.
-- [x] Existe un panel privado SAINEI para emitir licencias permanentes y mensuales con firma RSA. La clave privada se carga desde el entorno privado del panel y nunca se incluye en el POS del cliente. La PC principal muestra el ID y valida el código localmente.
+- [x] No existe activación de licencia: el cliente instala y crea su administrador directamente.
 
 
 ### Validación adicional — integridad de importes de devolución

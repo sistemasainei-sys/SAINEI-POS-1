@@ -2,7 +2,7 @@ SAINEI POS - MANUAL DE INSTALACIÓN Y USO (versión 1)
 =====================================================
 Sistema de punto de venta para comercios. La base SQLite de cada comercio se guarda
 localmente en la PC principal, en %LOCALAPPDATA%\\SAINEI-POS\\datos\\sainei.db.
-Los datos, usuarios, licencia y copias pertenecen a esa instalación. No se guardan en
+Los datos, usuarios y copias pertenecen a esa instalación. No se guardan en
 Render ni requieren alojamiento en la nube para vender.
 
 Cada comercio tiene su propia instalación, identificador y base de datos. Las demás
@@ -34,7 +34,7 @@ INSTALACIÓN EN LA PC PRINCIPAL
    El instalador: permite el acceso desde la red local, programa el inicio automático
    del servidor y crea el acceso directo "SAINEI POS" en el Escritorio.
 3. Al terminar crea el acceso directo "SAINEI POS" en el Escritorio.
-4. Abrí el acceso directo, activá la licencia emitida por SAINEI después del pago y luego completá la configuración del comercio.
+4. Abrí el acceso directo y completá la configuración del comercio.
 
 LICENCIA SAINEI
 ---------------
@@ -128,5 +128,5 @@ LO QUE ESTA VERSIÓN NO INCLUYE (honestidad)
 - Acceso remoto desde fuera del local: no incluido (futuro, con VPN o similar; los datos seguirían en el local).
 - La red del local usa HTTP sin cifrar: usá un Wi-Fi con clave y no dejes que extraños se conecten.
 - El principal o encargado puede revisar y cerrar una caja de otro cajero desde Finanzas > Caja, contando el efectivo y dejando la observación correspondiente.
-- Las pruebas automáticas de servidor, permisos, licencias y módulos pasan en CI. La instalación física,
+- Las pruebas automáticas de servidor, permisos, funcionamiento sin licencia y módulos pasan en CI. La instalación física,
   restauración USB y periféricos todavía deben validarse en una PC Windows real antes de vender la instalación.
