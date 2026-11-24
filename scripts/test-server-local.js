@@ -204,6 +204,103 @@ async function main() {
   const deniedUsers = await json(base, '/api/users', { headers: cashierHeaders });
   assert.equal(deniedUsers.status, 403, 'El cajero no debe administrar usuarios.');
 
+  // Conflictos de configuración: una segunda edición basada en una revisión vieja no pisa la primera.
+  const configFirst = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, sing: { shop: { name: 'Comercio de prueba' } } })
+  });
+  assert.deepEqual(configFirst.body.rejected || [], []);
+  const configStale = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, sing: { shop: { name: 'Configuración antigua' } } })
+  });
+  assert.ok(configStale.body.rejected.some(x => x.sing === 'shop' && x.conflict), 'Debe rechazar una configuración obsoleta.');
+  const configCashier = await json(base, '/api/sync', {
+    method: 'POST', headers: cashierHeaders,
+    body: JSON.stringify({ since: 0, sing: { shop: { name: 'Cambio no autorizado' } } })
+  });
+  assert.ok(configCashier.body.rejected.some(x => x.sing === 'shop'), 'Un cajero no puede modificar la configuración principal.');
+
+  // Compras a crédito y pagos parciales a proveedor, sin permitir sobrepagos.
+  const purchaseId = (await json(base, '/api/ids?kind=purch&n=1', { headers: adminHeaders })).body.start;
+  const supplierPayId = (await json(base, '/api/ids?kind=spay&n=1', { headers: adminHeaders })).body.start;
+  const purchaseAndPayment = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: {
+      purchases: { up: [{ id: purchaseId, supplier: 'Proveedor de prueba', date: now, cond: 'credito', due: new Date(Date.now() + 86400000).toISOString(), total: 1000, items: [{ pid: productId, qty: 1, cost: 1000 }] }] },
+      spay: { up: [{ id: supplierPayId, purchId: purchaseId, amount: 500, method: 'banco', date: now, shiftId: 0 }] }
+    } })
+  });
+  assert.deepEqual(purchaseAndPayment.body.rejected || [], [], 'Debe aceptar compra a crédito y primer pago parcial.');
+  const secondSupplierPayId = (await json(base, '/api/ids?kind=spay&n=1', { headers: adminHeaders })).body.start;
+  const secondSupplierPay = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: { spay: { up: [{ id: secondSupplierPayId, purchId: purchaseId, amount: 500, method: 'banco', date: now, shiftId: 0 }] } } })
+  });
+  assert.deepEqual(secondSupplierPay.body.rejected || [], [], 'Debe aceptar el saldo restante de la compra.');
+  const excessSupplierPayId = (await json(base, '/api/ids?kind=spay&n=1', { headers: adminHeaders })).body.start;
+  const excessSupplierPay = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: { spay: { up: [{ id: excessSupplierPayId, purchId: purchaseId, amount: 1, method: 'banco', date: now, shiftId: 0 }] } } })
+  });
+  assert.ok(excessSupplierPay.body.rejected.some(x => x.coll === 'spay' && x.id === excessSupplierPayId), 'No debe permitir pagar más que el total de la compra.');
+
+  // Caja propia de cajero, cobro, gasto, arqueo y revocación inmediata del usuario.
+  const cashierClientId = (await json(base, '/api/ids?kind=client&n=1', { headers: cashierHeaders })).body.start;
+  const clientCreate = await json(base, '/api/sync', {
+    method: 'POST', headers: cashierHeaders,
+    body: JSON.stringify({ since: 0, changes: { clients: { up: [{ id: cashierClientId, name: 'Cliente de prueba', phone: '0981000000' }] } } })
+  });
+  assert.deepEqual(clientCreate.body.rejected || [], []);
+  const shiftId = (await json(base, '/api/ids?kind=shift&n=1', { headers: cashierHeaders })).body.start;
+  const openShift = { id: shiftId, uid: cashierUser.id, by: cashierUser.name, openAt: now, openAmt: 100000, closedAt: '' };
+  const shiftOpen = await json(base, '/api/sync', {
+    method: 'POST', headers: cashierHeaders,
+    body: JSON.stringify({ since: 0, changes: { shifts: { up: [openShift] } } })
+  });
+  assert.deepEqual(shiftOpen.body.rejected || [], [], 'El cajero debe poder abrir su propia caja.');
+  const duplicateShiftId = (await json(base, '/api/ids?kind=shift&n=1', { headers: cashierHeaders })).body.start;
+  const duplicateShift = await json(base, '/api/sync', {
+    method: 'POST', headers: cashierHeaders,
+    body: JSON.stringify({ since: 0, changes: { shifts: { up: [{ ...openShift, id: duplicateShiftId }] } } })
+  });
+  assert.ok(duplicateShift.body.rejected.some(x => x.coll === 'shifts' && x.id === duplicateShiftId), 'No debe abrir dos cajas simultáneas para el mismo cajero.');
+
+  const clientPaymentId = (await json(base, '/api/ids?kind=pay&n=1', { headers: cashierHeaders })).body.start;
+  const clientPayment = await json(base, '/api/sync', {
+    method: 'POST', headers: cashierHeaders,
+    body: JSON.stringify({ since: 0, changes: { payments: { up: [{ id: clientPaymentId, clientId: cashierClientId, amount: 500, method: 'efectivo', date: now, shiftId }] } } })
+  });
+  assert.deepEqual(clientPayment.body.rejected || [], [], 'Debe aceptar un cobro en efectivo en la caja propia.');
+
+  const expenseId = (await json(base, '/api/ids?kind=exp&n=1', { headers: adminHeaders })).body.start;
+  const expense = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: { expenses: { up: [{ id: expenseId, concept: 'Gasto de prueba', amount: 100, method: 'caja', date: now, shiftId }] } } })
+  });
+  assert.deepEqual(expense.body.rejected || [], [], 'Debe aceptar un gasto válido asociado a una caja abierta.');
+
+  const closedAt = new Date(Date.now() + 1000).toISOString();
+  const closeShift = await json(base, '/api/sync', {
+    method: 'POST', headers: cashierHeaders,
+    body: JSON.stringify({ since: 0, changes: { shifts: { up: [{ ...openShift, closedAt, counted: 100400, expected: 100400, diff: 0, closedBy: cashierUser.name, closedByRole: 'cajero' }] } } })
+  });
+  assert.deepEqual(closeShift.body.rejected || [], [], 'Debe aceptar el arqueo coherente del cajero.');
+  const latePaymentId = (await json(base, '/api/ids?kind=pay&n=1', { headers: cashierHeaders })).body.start;
+  const latePayment = await json(base, '/api/sync', {
+    method: 'POST', headers: cashierHeaders,
+    body: JSON.stringify({ since: 0, changes: { payments: { up: [{ id: latePaymentId, clientId: cashierClientId, amount: 100, method: 'efectivo', date: now, shiftId }] } } })
+  });
+  assert.ok(latePayment.body.rejected.some(x => x.coll === 'payments' && x.id === latePaymentId), 'No debe aceptar cobros en una caja cerrada.');
+
+  const deactivated = await json(base, '/api/users', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ id: cashierUser.id, name: cashierUser.name, role: 'cajero', active: false })
+  });
+  assert.equal(deactivated.status, 200);
+  const revokedSession = await json(base, '/api/ids?kind=client&n=1', { headers: cashierHeaders });
+  assert.equal(revokedSession.status, 401, 'Desactivar un cajero debe revocar su sesión inmediatamente.');
+
   const backup = await json(base, '/api/backups/make', { method: 'POST', headers: adminHeaders, body: '{}' });
   assert.equal(backup.status, 200);
   assert.ok(fs.existsSync(path.join(dataDir, 'copias', backup.body.name)), 'Debe crear una copia SQLite real.');
@@ -246,7 +343,7 @@ async function main() {
   assert.equal(relogin.status, 200, 'El administrador debe poder volver a iniciar sesión tras reiniciar.');
 
   await stopServer();
-  console.log('OK: licencia obligatoria y firmada, ID independiente, alta de administrador, permisos de cajero, venta/stock, ventas concurrentes, devoluciones parciales, rechazo de sobreventa/devolución excesiva, copia/restauración SQLite y persistencia tras reinicio.');
+  console.log('OK: licencia firmada, permisos, ventas/stock concurrentes, devoluciones, compras/pagos, clientes/cobros, cajas/arqueos, gastos, conflictos de configuración, revocación, respaldos y persistencia.');
 }
 main().catch(async error => {
   console.error(error && error.stack || error);
