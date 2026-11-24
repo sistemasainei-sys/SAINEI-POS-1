@@ -326,6 +326,9 @@ td.r,th.r{text-align:right}
   html,body{background:#fff!important;color:#000!important;margin:0!important;padding:0!important}
   body::before{display:none!important}
 }
+body.printing>*:not(#printArea){display:none!important}
+body.printing #printArea{display:block!important;visibility:visible!important;position:static!important;width:auto!important;height:auto!important;max-height:none!important;overflow:visible!important;opacity:1!important;background:#fff!important;color:#000!important}
+body.printing{background:#fff!important;color:#000!important;margin:0!important;padding:0!important}
 @media (max-width:900px){
   .caja{grid-template-columns:minmax(0,1fr)}
   .cart{position:static;max-height:none}
@@ -2203,9 +2206,15 @@ function printBudget(id){
   var b=(state.budgets||[]).filter(function(x){return x.id===id;})[0];if(!b)return;
   var rows=b.items.map(function(i){return '<tr><td>'+esc(i.name)+'</td><td class="r">'+nf3.format(i.qty)+' '+esc(i.unit)+'</td><td class="r">'+gs(i.price)+'</td><td class="r">'+gs(i.amount)+'</td></tr>';}).join('');
   var pa=$('#printArea');
-  $('#pageStyle').textContent='@page{size:A4;margin:12mm}#printArea{padding:0}#printArea .pt{width:100%;font:14px Arial,sans-serif;line-height:1.45;color:#111;display:block}#printArea .pt h1{color:#1769aa;font-size:22px;margin:0 0 18px}#printArea .pt h2{font-size:19px;margin:14px 0}#printArea .pt table{width:100%;border-collapse:collapse;margin-top:20px}#printArea .pt td,#printArea .pt th{border-bottom:1px solid #ccc;padding:9px;text-align:left}#printArea .pt .r{text-align:right}';
+  $('#pageStyle').textContent='@page{size:A4;margin:12mm}#printArea{padding:0!important}#printArea .pt{width:100%;font:14px Arial,sans-serif;line-height:1.45;color:#111;display:block}#printArea .pt h1{color:#1769aa;font-size:22px;margin:0 0 18px}#printArea .pt h2{font-size:19px;margin:14px 0}#printArea .pt table{width:100%;border-collapse:collapse;margin-top:20px}#printArea .pt td,#printArea .pt th{border-bottom:1px solid #ccc;padding:9px;text-align:left}#printArea .pt .r{text-align:right}';
   pa.innerHTML='<div class="pt"><h1>SAINEI POS</h1><h2>Presupuesto '+esc(b.number)+'</h2><p>Fecha: '+fd(b.date)+' · Válido hasta: '+fd(b.expires)+'</p><p>Cliente: '+esc(b.customer||'Consumidor final')+'</p><table><thead><tr><th>Producto</th><th>Cantidad</th><th>Precio</th><th>Importe</th></tr></thead><tbody>'+rows+'</tbody></table><h2>Total: '+gs(b.total)+'</h2><p>'+esc(b.note||'')+'</p></div>';
+  document.body.classList.add('printing');
+  /* Forzar layout antes de invocar el diálogo: Safari iOS a veces captura la página antes de pintar el contenido recién insertado. */
+  void pa.offsetHeight;
   try{window.print();}catch(e){toast('No se pudo abrir la impresión en este dispositivo.');}
+  function restore(){document.body.classList.remove('printing');window.removeEventListener('afterprint',restore);}
+  window.addEventListener('afterprint',restore);
+  setTimeout(restore,1200);
 }
 
 /* ---------- Estructura general ---------- */
