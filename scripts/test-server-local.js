@@ -212,6 +212,19 @@ async function main() {
   assert.ok(invalidReturn.body.rejected.some(x => x.coll === 'sales' && x.id === saleId), 'No debe devolver más unidades de las vendidas.');
   assert.equal(invalidReturn.body.recs.products.find(p => p.id === productId).stock, 4, 'Una devolución inválida no debe aumentar el stock.');
 
+  const fullReturnMoveId = (await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start;
+  const fullReturnRecord = { id: 'return-test-2', date: now, amount: 1000, totalAmount: 1000, method: 'caja', cashAmount: 1000, bankAmount: 0, creditAmount: 0, items: [{ lineIndex: 0, id: productId, qty: 1 }] };
+  const fullReturn = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: {
+      sales: { up: [{ ...saleAfterReturn, returns: [...saleAfterReturn.returns, fullReturnRecord] }] },
+      moves: { up: [{ id: fullReturnMoveId, pid: productId, qty: 1, date: now, type: 'devolucion', note: 'Devolución ticket ' + saleId }] }
+    } })
+  });
+  assert.deepEqual(fullReturn.body.rejected || [], [], 'Debe aceptar la devolución total acumulada de la venta.');
+  assert.equal(fullReturn.body.recs.products.find(p => p.id === productId).stock, 5);
+  assert.equal(fullReturn.body.recs.sales.find(x => x.id === saleId).returns.length, 2);
+
   // Una venta que supera el stock disponible debe rechazarse completa.
   const excessiveSaleId = (await json(base, '/api/ids?kind=sale&n=1', { headers: adminHeaders })).body.start;
   const excessiveMoveId = (await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start;
@@ -224,7 +237,7 @@ async function main() {
   });
   assert.equal(excessive.status, 200);
   assert.ok(excessive.body.rejected.some(x => x.coll === 'sales' && x.id === excessiveSaleId), 'Debe rechazar el ticket que excede el stock.');
-  assert.equal(excessive.body.recs.products.find(p => p.id === productId).stock, 4, 'El stock no debe quedar negativo.');
+  assert.equal(excessive.body.recs.products.find(p => p.id === productId).stock, 5, 'El stock no debe quedar negativo.');
 
   const cashier = await json(base, '/api/users', {
     method: 'POST', headers: adminHeaders,
@@ -357,8 +370,8 @@ async function main() {
     body: JSON.stringify({ since: 0 })
   });
   assert.equal(stateAfterRestore.status, 200);
-  assert.equal(stateAfterRestore.body.recs.products.find(p => p.id === productId).stock, 4, 'La restauración debe recuperar el stock correcto.');
-  assert.ok(stateAfterRestore.body.recs.sales.some(x => x.id === saleId && (x.returns || []).length === 1), 'La restauración debe recuperar la venta y su devolución.');
+  assert.equal(stateAfterRestore.body.recs.products.find(p => p.id === productId).stock, 5, 'La restauración debe recuperar el stock correcto.');
+  assert.ok(stateAfterRestore.body.recs.sales.some(x => x.id === saleId && (x.returns || []).length === 2), 'La restauración debe recuperar la venta y su devolución.');
 
   const db = new DatabaseSync(path.join(dataDir, 'sainei.db'));
   const storedId = db.prepare("SELECT v FROM meta WHERE k='installId'").get().v;
