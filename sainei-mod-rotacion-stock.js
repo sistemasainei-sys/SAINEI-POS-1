@@ -16,8 +16,8 @@ window.SAINEI_POS_MODULES.push({
     (sale.items||[]).forEach(function(it){
      var id=String(it.id),entry=sold[id]||(sold[id]={qty:0,amount:0});
      var returned=(sale.returns||[]).reduce(function(n,r){return n+(r.items||[]).filter(function(z){return z.lineIndex!=null?Number(z.lineIndex)===(sale.items||[]).indexOf(it):Number(z.id)===Number(it.id);}).reduce(function(a,z){return a+Number(z.qty||0);},0);},0);
-     entry.qty+=Math.max(0,Number(it.qty||0)-returned);entry.amount+=Math.max(0,Number(it.amount||0));
-     if(!last[id]||dt>last[id])last[id]=dt;
+     var netQty=Math.max(0,Number(it.qty||0)-returned);entry.qty+=netQty;entry.amount+=Math.max(0,Number(it.amount!=null?it.amount:Number(it.price||0)*Number(it.qty||0)));
+     if(netQty>0&&(!last[id]||dt>last[id]))last[id]=dt;
     });
    });
    var rows=(s.products||[]).map(function(p){
