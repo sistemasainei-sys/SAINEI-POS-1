@@ -126,6 +126,57 @@ async function main() {
   assert.equal(sale.body.recs.products.find(p => p.id === productId).stock, 8);
   assert.equal(sale.body.recs.sales.find(x => x.id === saleId).total, 2000);
 
+  // Dos cajas venden simultáneamente las últimas unidades: solo una venta puede confirmar.
+  const concurrentSaleIds = [];
+  const concurrentMoveIds = [];
+  for (let i = 0; i < 2; i++) {
+    concurrentSaleIds.push((await json(base, '/api/ids?kind=sale&n=1', { headers: adminHeaders })).body.start);
+    concurrentMoveIds.push((await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start);
+  }
+  const concurrentRequests = concurrentSaleIds.map((id, i) => json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: {
+      sales: { up: [{ id, date: now, items: [{ id: productId, name: 'Producto de prueba', qty: 5, price: 1000, cost: 500, amount: 5000 }], total: 5000, iva5: 0, iva10: 0, cmv: 2500, method: 'efectivo', discPct: 0 }] },
+      moves: { up: [{ id: concurrentMoveIds[i], pid: productId, qty: -5, date: now, type: 'venta', note: 'Ticket ' + id }] }
+    } })
+  }));
+  const concurrentResults = await Promise.all(concurrentRequests);
+  assert.ok(concurrentResults.every(x => x.status === 200));
+  const acceptedConcurrent = concurrentResults.filter(x => !(x.body.rejected || []).some(r => r.coll === 'sales'));
+  const rejectedConcurrent = concurrentResults.filter(x => (x.body.rejected || []).some(r => r.coll === 'sales'));
+  assert.equal(acceptedConcurrent.length, 1, 'Solo una de las dos cajas debe vender las últimas cinco unidades.');
+  assert.equal(rejectedConcurrent.length, 1, 'La segunda caja debe recibir rechazo por stock insuficiente.');
+  const concurrentState = await json(base, '/api/sync', { method: 'POST', headers: adminHeaders, body: JSON.stringify({ since: 0 }) });
+  assert.equal(concurrentState.body.recs.products.find(p => p.id === productId).stock, 3);
+  const acceptedConcurrentId = concurrentSaleIds.find(id => concurrentState.body.recs.sales.some(x => x.id === id));
+  assert.ok(acceptedConcurrentId, 'La venta aceptada debe quedar registrada.');
+
+  // Una devolución parcial repone stock; una devolución que supera lo vendido se rechaza.
+  const originalSale = sale.body.recs.sales.find(x => x.id === saleId);
+  const returnId = (await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start;
+  const returnRecord = { id: 'return-test-1', date: now, amount: 1000, totalAmount: 1000, method: 'caja', cashAmount: 1000, bankAmount: 0, creditAmount: 0, items: [{ lineIndex: 0, id: productId, qty: 1 }] };
+  const returned = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: {
+      sales: { up: [{ ...originalSale, returns: [returnRecord] }] },
+      moves: { up: [{ id: returnId, pid: productId, qty: 1, date: now, type: 'devolucion', note: 'Devolución ticket ' + saleId }] }
+    } })
+  });
+  assert.equal(returned.status, 200);
+  assert.deepEqual(returned.body.rejected || [], [], 'Debe aceptar devolución parcial y reposición juntas.');
+  assert.equal(returned.body.recs.products.find(p => p.id === productId).stock, 4);
+  const saleAfterReturn = returned.body.recs.sales.find(x => x.id === saleId);
+  const invalidReturnMoveId = (await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start;
+  const invalidReturn = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: {
+      sales: { up: [{ ...saleAfterReturn, returns: [...saleAfterReturn.returns, { id: 'return-test-over', date: now, amount: 2000, totalAmount: 2000, method: 'caja', cashAmount: 2000, bankAmount: 0, creditAmount: 0, items: [{ lineIndex: 0, id: productId, qty: 2 }] }] }] },
+      moves: { up: [{ id: invalidReturnMoveId, pid: productId, qty: 2, date: now, type: 'devolucion', note: 'Devolución ticket ' + saleId }] }
+    } })
+  });
+  assert.ok(invalidReturn.body.rejected.some(x => x.coll === 'sales' && x.id === saleId), 'No debe devolver más unidades de las vendidas.');
+  assert.equal(invalidReturn.body.recs.products.find(p => p.id === productId).stock, 4, 'Una devolución inválida no debe aumentar el stock.');
+
   // Una venta que supera el stock disponible debe rechazarse completa.
   const excessiveSaleId = (await json(base, '/api/ids?kind=sale&n=1', { headers: adminHeaders })).body.start;
   const excessiveMoveId = (await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start;
@@ -138,7 +189,7 @@ async function main() {
   });
   assert.equal(excessive.status, 200);
   assert.ok(excessive.body.rejected.some(x => x.coll === 'sales' && x.id === excessiveSaleId), 'Debe rechazar el ticket que excede el stock.');
-  assert.equal(excessive.body.recs.products.find(p => p.id === productId).stock, 8, 'El stock no debe quedar negativo.');
+  assert.equal(excessive.body.recs.products.find(p => p.id === productId).stock, 4, 'El stock no debe quedar negativo.');
 
   const cashier = await json(base, '/api/users', {
     method: 'POST', headers: adminHeaders,
@@ -174,8 +225,8 @@ async function main() {
     body: JSON.stringify({ since: 0 })
   });
   assert.equal(stateAfterRestore.status, 200);
-  assert.equal(stateAfterRestore.body.recs.products.find(p => p.id === productId).stock, 8, 'La restauración debe recuperar el stock correcto.');
-  assert.ok(stateAfterRestore.body.recs.sales.some(x => x.id === saleId), 'La restauración debe recuperar la venta.');
+  assert.equal(stateAfterRestore.body.recs.products.find(p => p.id === productId).stock, 4, 'La restauración debe recuperar el stock correcto.');
+  assert.ok(stateAfterRestore.body.recs.sales.some(x => x.id === saleId && (x.returns || []).length === 1), 'La restauración debe recuperar la venta y su devolución.');
 
   const db = new DatabaseSync(path.join(dataDir, 'sainei.db'));
   const storedId = db.prepare("SELECT v FROM meta WHERE k='installId'").get().v;
@@ -195,7 +246,7 @@ async function main() {
   assert.equal(relogin.status, 200, 'El administrador debe poder volver a iniciar sesión tras reiniciar.');
 
   await stopServer();
-  console.log('OK: licencia obligatoria y firmada, ID independiente, alta de administrador, permisos de cajero, venta/stock, rechazo de sobreventa, copia/restauración SQLite y persistencia tras reinicio.');
+  console.log('OK: licencia obligatoria y firmada, ID independiente, alta de administrador, permisos de cajero, venta/stock, ventas concurrentes, devoluciones parciales, rechazo de sobreventa/devolución excesiva, copia/restauración SQLite y persistencia tras reinicio.');
 }
 main().catch(async error => {
   console.error(error && error.stack || error);
