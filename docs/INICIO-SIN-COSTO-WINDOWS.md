@@ -56,7 +56,7 @@ También se puede definir la variable `SAINEI_BACKUP_DEST` con la ruta de destin
 
 ## Alcance
 
-El iniciador no instala Node.js, no configura VPN, no configura impresoras y no publica el sistema en internet. Tampoco habilita modo sin conexión: las computadoras cliente necesitan conexión con la computadora servidor para confirmar operaciones.
+El instalador intenta instalar Node.js LTS si hace falta y detecta automáticamente servidor/caja cliente en la LAN. No configura VPN, no configura impresoras y no publica el sistema en internet. Tampoco habilita modo sin conexión: las computadoras cliente necesitan conexión con la computadora servidor para confirmar operaciones.
 
 
 ## Inicio automático al entrar a Windows
