@@ -80,6 +80,7 @@ const securityChecks = [
   ["autenticación antes de sincronizar", /const me = auth\(req\);[\s\S]*?if \(!me\) return fail\(res, 401/],
   ["transacción SQLite para sincronización", /function processSync\(user, body\)[\s\S]*?tx\(\(\) => \{/],
   ["validación de stock no negativo", /nextStock < 0/],
+  ["un solo turno abierto por cajero", /anotherOpenShift[\s\S]*?\|\| anotherOpenShift/],
   ["ventas inmutables", /Las ventas existentes son inmutables/],
   ["importe y medio de devolución validados por servidor", /expectedAmount[\s\S]*?ret\.method/],
 ];
