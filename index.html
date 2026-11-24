@@ -1216,7 +1216,7 @@ function nid(kind){if(SERVER)return srvId(kind);state.n[kind]=(state.n[kind]||0)
 
 var ui={salesCarts:[],activeSale:1,salesSeq:1,pendingBudget:0,editUser:null,cust:{mode:'idle',pay:null,timer:null,lines:[]},custOverlay:false,grid:false,lastK:0,tab:'caja',sub:{productos:'lista',stock:'exist',finanzas:'caja'},q:'',cat:'Todas',cart:[],kseq:1,disc:0,clientId:0,pq:'',sq:'',cq:'',onlyLow:false,mvProd:'',range:'hoy',finRange:'hoy',
   pay:{method:'efectivo',recv:''},editId:null,editClient:null,confirmDel:false,confirmReset:false,confirmClear:false,pu:null,weigh:null,sticky:false,afterShift:null,openSale:null,acctClient:null};
-var toastTimer=null;
+var toastTimer=null,openSalesSaveTimer=null,openSalesLoading=false;
 
 function getP(id){for(var i=0;i<state.products.length;i++){if(state.products[i].id===id)return state.products[i];}return null;}
 function getC(id){for(var i=0;i<state.clients.length;i++){if(state.clients[i].id===id)return state.clients[i];}return null;}
@@ -1303,10 +1303,18 @@ function persistSalesCarts(){
       salesSeq:Number(ui.salesSeq)||1
     }));
   }catch(e){}
+  if(SERVER&&cur&&!openSalesLoading){
+    clearTimeout(openSalesSaveTimer);
+    openSalesSaveTimer=setTimeout(function(){
+      if(!cur||!TOKEN)return;
+      var payload={salesCarts:(ui.salesCarts||[]).slice(0,20),activeSale:Number(ui.activeSale)||1,salesSeq:Number(ui.salesSeq)||1};
+      api('PUT','/api/open-sales',payload).catch(function(){});
+    },180);
+  }
 }
-function restoreSalesCarts(u){
-  var saved=null;
-  try{saved=JSON.parse(localStorage.getItem('sainei-pos-open-sales-v1-'+String(u.id))||'null');}catch(e){}
+function restoreSalesCarts(u,remote){
+  var saved=remote||null;
+  if(!saved)try{saved=JSON.parse(localStorage.getItem('sainei-pos-open-sales-v1-'+String(u.id))||'null');}catch(e){}
   var carts=saved&&Array.isArray(saved.salesCarts)?saved.salesCarts:[];
   carts=carts.filter(function(s){return s&&Number.isInteger(Number(s.id))&&Number(s.id)>0&&Array.isArray(s.cart);}).slice(0,20).map(function(s){
     return {id:Number(s.id),cart:s.cart.filter(function(l){return l&&getP(Number(l.id))&&Number(l.qty)>0;}).map(function(l){return Object.assign({},l,{id:Number(l.id),qty:Number(l.qty)});}),disc:Math.max(0,Math.min(100,Number(s.disc)||0)),clientId:Number(s.clientId)||0,pendingBudget:Number(s.pendingBudget)||0};
@@ -2798,6 +2806,14 @@ function enterApp(u){
   if(!SERVER){log('Ingresó al sistema');save();}
   $('#lockScr').hidden=true;$('#lockBox').innerHTML='';
   restoreSalesCarts(u);ui.tab='caja';lastAct=Date.now();startIdle();setTab('caja');renderCurrent();
+  if(SERVER){
+    openSalesLoading=true;
+    api('GET','/api/open-sales').then(function(saved){
+      if(!cur||cur.id!==u.id)return;
+      if(saved&&Array.isArray(saved.salesCarts)&&saved.salesCarts.length){restoreSalesCarts(u,saved);renderCurrent();}
+      else persistSalesCarts();
+    }).catch(function(){toast('No se pudieron recuperar las ventas pendientes del servidor.');}).then(function(){openSalesLoading=false;});
+  }
 }
 function doRecover(){
   if(SERVER){var rc=$('#rcCode').value,rp=$('#rcPin').value;if(weakPin(rp)){lockMsg('La clave nueva es muy fácil.');return;}api('POST','/api/recover',{userId:parseInt($('#rcUser').value,10),code:rc,pin:rp}).then(function(){showLock('login');lockMsg('Clave cambiada. Ya podés ingresar.');}).catch(function(e){lockMsg(e.message||'No se pudo conectar con el servidor.');});return;}
@@ -2810,7 +2826,7 @@ function doRecover(){
 }
 function lockNow(reason){
   if(!cur)return;log(reason||'Bloqueó el sistema');
-  if(SERVER){save().then(function(){return api('POST','/api/logout',{});}).catch(function(){}).then(function(){TOKEN='';});showLock('login');return;}
+  if(SERVER){saveActiveSale();clearTimeout(openSalesSaveTimer);var pending={salesCarts:(ui.salesCarts||[]).slice(0,20),activeSale:Number(ui.activeSale)||1,salesSeq:Number(ui.salesSeq)||1};api('PUT','/api/open-sales',pending).catch(function(){}).then(function(){return save();}).then(function(){return api('POST','/api/logout',{});}).catch(function(){}).then(function(){TOKEN='';});showLock('login');return;}
   save();showLock('login');
 }
 function restoredState(label){
