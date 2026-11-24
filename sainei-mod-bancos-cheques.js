@@ -19,7 +19,7 @@ window.SAINEI_POS_MODULES.push({init:function(api){
  function table(a,isCheck){
   if(!a.length)return '<p class="muted">Todavía no hay registros.</p>';
   return '<div style="overflow:auto"><table class="table"><thead><tr><th>Fecha</th><th>Banco / cuenta</th><th>Detalle</th><th>Referencia</th><th class="r">Importe</th><th>Estado</th>'+(isCheck?'<th>Acción</th>':'')+'</tr></thead><tbody>'+a.map(function(x){
-   var actions=isCheck&&x.status!=='anulado'?'<td><select class="input" data-bank-status="'+esc(x.status)+'" data-id="'+x.id+'"><option value="emitido" '+(x.status==='emitido'?'selected':'')+'>Emitido</option><option value="depositado" '+(x.status==='depositado'?'selected':'')+'>Depositado</option><option value="cobrado" '+(x.status==='cobrado'?'selected':'')+'>Cobrado</option><option value="rechazado" '+(x.status==='rechazado'?'selected':'')+'>Rechazado</option><option value="anulado" '+(x.status==='anulado'?'selected':'')+'>Anulado</option></select></td>':'';
+   var opts=isCheck?['emitido','depositado','cobrado','rechazado','anulado']:['pendiente','conciliado','anulado'];var actions=x.status!=='anulado'?'<td><select class="input" data-bank-status="'+esc(x.status)+'" data-id="'+x.id+'">'+opts.map(function(v){return '<option value="'+v+'" '+(x.status===v?'selected':'')+'>'+v.charAt(0).toUpperCase()+v.slice(1)+'</option>';}).join('')+'</select></td>':'';
    return '<tr><td>'+esc(date(x.date))+'</td><td>'+esc(x.account)+'</td><td>'+esc(x.description)+'</td><td>'+esc(x.reference||x.checkNo||'—')+'</td><td class="r">'+(x.direction==='salida'?'− ':'')+money(x.amount)+'</td><td>'+esc(x.status|| (x.reconciled?'Conciliado':'Pendiente'))+'</td>'+actions+'</tr>';
   }).join('')+'</tbody></table></div>';
  }
@@ -37,8 +37,8 @@ window.SAINEI_POS_MODULES.push({init:function(api){
  }
  function status(id,next){
   var s=api.state(),x=(s.bankEntries||[]).filter(function(z){return Number(z.id)===id&&z.kind==='cheque';})[0];if(!x)return;
-  var prev=x.status;if(['emitido','depositado','cobrado','rechazado','anulado'].indexOf(next)<0)return;
-  x.status=next;x.reconciled=next==='cobrado';
+  var prev=x.status;var allowed=x.kind==='cheque'?['emitido','depositado','cobrado','rechazado','anulado']:['pendiente','conciliado','anulado'];if(allowed.indexOf(next)<0)return;
+  x.status=next;x.reconciled=next==='conciliado'||next==='cobrado';
   Promise.resolve(api.save()).then(function(ok){if(ok===false){x.status=prev;return;}api.refresh();api.toast('Estado del cheque actualizado.');}).catch(function(){x.status=prev;});
  }
  function date(v){var d=new Date(v);return isNaN(d)?'—':d.toLocaleDateString('es-PY');}
