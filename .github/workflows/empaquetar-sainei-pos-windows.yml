@@ -1,0 +1,39 @@
+name: Empaquetar SAINEI POS para Windows
+
+on:
+  push:
+    branches:
+      - sainei-pos-release-candidate
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: windows-latest
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validar sistema
+        run: npm test
+      - name: Preparar paquete de instalación
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'SAINEI-POS-Windows'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          Get-ChildItem -Force | Where-Object { $_.Name -notin @('.git','node_modules','.github') } | Copy-Item -Destination $out -Recurse -Force
+          if (!(Test-Path (Join-Path $out '1-INSTALAR.bat'))) { throw 'Falta 1-INSTALAR.bat' }
+          if (!(Test-Path (Join-Path $out 'server.js'))) { throw 'Falta server.js' }
+          Compress-Archive -Path (Join-Path $out '*') -DestinationPath (Join-Path $env:RUNNER_TEMP 'SAINEI-POS-Instalacion-Windows.zip') -Force
+      - name: Publicar paquete descargable
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAINEI-POS-Instalacion-Windows
+          path: ${{ runner.temp }}/SAINEI-POS-Instalacion-Windows.zip
+          if-no-files-found: error
+          retention-days: 30
