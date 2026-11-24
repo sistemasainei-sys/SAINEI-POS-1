@@ -686,11 +686,25 @@ function info() {
   const sh = prep("SELECT j FROM sing WHERE k='shop'").get();
   return { server: true, demo: DEMO, version: 1, hasAdmin: hasAdmin(), shopName: sh ? (JSON.parse(sh.j).name || '') : '', users: allUsers().filter(u => u.active).map(pubUser), lastBackup: lastBackup() };
 }
+const networkClients = new Map();
+function localAddresses() {
+  const out=[]; for (const list of Object.values(os.networkInterfaces())) for (const a of (list||[])) if (a.family==='IPv4'&&!a.internal) out.push(a.address);
+  return [...new Set(out)];
+}
+function trackClient(req, ip) {
+  if (!ip || ip==='127.0.0.1' || ip==='::1') return;
+  const token=String(req.headers.authorization||'').replace(/^Bearer\\s+/,'');
+  const session=sessions.get(token), ua=String(req.headers['user-agent']||'');
+  const key=ip+'|'+ua.slice(0,100);
+  networkClients.set(key,{ip,ua:ua.slice(0,180),name:session?session.name:'Dispositivo sin identificar',role:session?session.role:'visitante',lastSeen:Date.now(),authenticated:!!session});
+  const cutoff=Date.now()-30*60*1000;
+  for(const [k,v] of networkClients) if(v.lastSeen<cutoff) networkClients.delete(k);
+}
 const CT = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.css': 'text/css', '.png': 'image/png', '.ico': 'image/x-icon', '.svg': 'image/svg+xml' };
 
 async function handle(req, res) {
   const url = new URL(req.url, 'http://x'), p = url.pathname, m = req.method;
-  const ip = (req.socket.remoteAddress || '').replace('::ffff:', '');
+  const ip = (req.socket.remoteAddress || '').replace('::ffff:', '');\n  trackClient(req, ip);
   // Rechazar peticiones mutables iniciadas desde otro sitio web.
   if (p.startsWith('/api/') && !['GET','HEAD','OPTIONS'].includes(m)) {
     const origin = req.headers.origin;
@@ -794,6 +808,11 @@ async function handle(req, res) {
   const me = auth(req);
   if (!me) return fail(res, 401, 'Sesion vencida');
   const admin = me.role === 'admin';
+  if (p === '/api/network/status' && m === 'GET') {
+    if (!admin) return fail(res,403,'Solo el usuario principal puede consultar la red.');
+    const now=Date.now(), clients=[...networkClients.values()].filter(x=>now-x.lastSeen<120000).sort((a,b)=>b.lastSeen-a.lastSeen);
+    return send(res,200,{server:true,port:PORT,addresses:localAddresses(),clients,activeSessions:sessions.size,database:fs.existsSync(path.join(DATA,'sainei.db')),lastBackup:lastBackup(),updatedAt:nowIso()});
+  }
 
   if (p === '/api/logout' && m === 'POST') { sessions.delete(me.token); return send(res, 200, { ok: true }); }
   if (p === '/api/me' && m === 'GET') return send(res, 200, { user: { id: me.uid, name: me.name, role: me.role } });
