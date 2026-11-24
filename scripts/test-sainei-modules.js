@@ -89,11 +89,11 @@ const securityChecks = [
   ["importe y medio de devolución validados por servidor", /ret\.method[\s\S]*?expectedAmount/],
   ["distribución contable de devoluciones", /cashPart \+ bankPart \+ creditPart !== Number\(ret\.amount\)/],
   ["límite de saldo a favor por crédito original", /creditedTotal > originalCredit/],
-  ["cuentas por cobrar solo descuentan crédito aplicado", /Number\(r\.creditAmount\)\|\|0/],
 ];
 for (const [label, pattern] of securityChecks) {
   if (!pattern.test(serverSource)) throw new Error("Falta protección del servidor: " + label);
 }
+if (!indexSource.includes('Number(r.creditAmount)||0')) throw new Error('Cuentas por cobrar deben descontar solo el importe aplicado al crédito.');
 
 if (!indexSource.includes("'suspendedSales'") || !serverSource.includes("suspendedSales: 'move'") || !serverSource.includes("coll === 'suspendedSales' && user.role === 'cajero'")) {
   throw new Error('Las ventas pausadas no están incluidas en la sincronización por usuario y sus permisos.');
