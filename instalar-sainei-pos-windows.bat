@@ -38,7 +38,28 @@ if errorlevel 1 (
   pause
   exit /b 4
 )
+rem Detectar primero si ya existe un servidor SAINEI POS en la red.
 if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
+set "SAINEI_DISCOVERY=%TEMP%\sainei-servidor-url.txt"
+if exist "%~dp0descubrir-servidor-sainei.ps1" (
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0descubrir-servidor-sainei.ps1" > "%SAINEI_DISCOVERY%"
+  if not errorlevel 1 (
+    set /p SAINEI_SERVER_URL=<"%SAINEI_DISCOVERY%"
+    if not defined SAINEI_SERVER_URL goto configurar_servidor
+    if not exist "%LOCALAPPDATA%\SAINEI-POS" mkdir "%LOCALAPPDATA%\SAINEI-POS"
+    >"%LOCALAPPDATA%\SAINEI-POS\cliente.url" echo %SAINEI_SERVER_URL%
+    powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$target='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$target;$s.WorkingDirectory='%~dp0';$s.Save()"
+    echo.
+    echo SERVIDOR SAINEI POS DETECTADO: %SAINEI_SERVER_URL%
+    echo Esta computadora quedo configurada como CAJA CLIENTE.
+    echo Los datos se guardan unicamente en la computadora principal.
+    del "%SAINEI_DISCOVERY%" >nul 2>nul
+    endlocal
+    exit /b 0
+  )
+)
+:configurar_servidor
+if exist "%SAINEI_DISCOVERY%" del "%SAINEI_DISCOVERY%" >nul 2>nul
 set "SAINEI_DATA=%LOCALAPPDATA%\SAINEI-POS\datos"
 if not exist "%SAINEI_DATA%" mkdir "%SAINEI_DATA%"
 if not exist "%SAINEI_DATA%\copias" mkdir "%SAINEI_DATA%\copias"
