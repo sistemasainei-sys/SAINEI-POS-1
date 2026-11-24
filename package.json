@@ -3,6 +3,11 @@
   "version": "1.0.1",
   "private": true,
   "description": "SAINEI POS - aplicacion web instalable",
-  "engines": { "node": ">=22.13.0" },
-  "scripts": { "start": "node server.js" }
+  "engines": {
+    "node": ">=22.13.0"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "test": "node scripts/check-index-scripts.js && node scripts/test-sainei-modules.js && node scripts/test-windows-launchers.js && node scripts/test-license-data-safety.js && node scripts/test-server-local.js"
+  }
 }
