@@ -59,6 +59,7 @@ if exist "%~dp0descubrir-servidor-sainei.ps1" (
     exit /b 0
   )
 )
+goto configurar_servidor
 :mantener_cliente
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$target='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$target;$s.WorkingDirectory='%~dp0';$s.Save()"
 echo.
