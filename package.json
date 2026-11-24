@@ -8,6 +8,6 @@
   },
   "scripts": {
     "start": "node server.js",
-    "test": "node scripts/check-index-scripts.js && node scripts/test-sainei-modules.js && node scripts/test-windows-launchers.js && node scripts/test-license-data-safety.js && node scripts/test-server-local.js"
+    "test": "node scripts/check-index-scripts.js && node scripts/test-sainei-modules.js && node scripts/test-finance-budget.js && node scripts/test-windows-launchers.js && node scripts/test-license-data-safety.js && node scripts/test-server-local.js"
   }
 }
