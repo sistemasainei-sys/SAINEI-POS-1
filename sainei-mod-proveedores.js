@@ -13,11 +13,11 @@ window.SAINEI_POS_MODULES.push({
   api.addAction('proveedor-pagar',function(el){
    var id=Number(el&&el.dataset&&el.dataset.id)||0,s=state(),pu=(s.purchases||[]).filter(function(x){return Number(x.id)===id;})[0];if(!pu)return;
    payId=id;var due=balance(pu,s);
-   api.openModal('<h2>Pagar a '+esc(pu.supplier)+'</h2><p class="muted">Saldo: '+gs(due)+'</p><div class="form"><label>Monto (Gs.)<input id="proveedor-pago-monto" class="input" inputmode="numeric" value="'+due+'"></label><label>Pagado con<select id="proveedor-pago-medio" class="input"><option value="banco">Transferencia u otro medio</option><option value="caja">Efectivo de la caja</option></select></label></div><p id="proveedor-pago-error" class="err"></p><div class="actions"><button class="btn primary" data-a="proveedor-confirmar-pago">Registrar pago</button></div>');
+   api.openModal('<h2>Pagar a '+esc(pu.supplier)+'</h2><p class="muted">Saldo: '+gs(due)+'</p><div class="form"><label>Monto (Gs.)<input id="proveedor-pago-monto" class="input" inputmode="numeric" value="'+due+'"></label><label>Pagado con<select id="proveedor-pago-medio" class="input"><option value="banco">Transferencia u otro medio</option></select></label></div><p id="proveedor-pago-error" class="err"></p><div class="actions"><button class="btn primary" data-a="proveedor-confirmar-pago">Registrar pago</button></div>');
   });
   api.addAction('proveedor-confirmar-pago',function(){
    var s=state(),pu=(s.purchases||[]).filter(function(x){return Number(x.id)===payId;})[0];if(!pu)return;
-   var amount=Math.round(api.number((document.querySelector('#proveedor-pago-monto')||{}).value)),method=(document.querySelector('#proveedor-pago-medio')||{}).value||'banco',due=balance(pu,s);
+   var amount=Math.round(api.number((document.querySelector('#proveedor-pago-monto')||{}).value)),method='banco',due=balance(pu,s);
    if(!(amount>0)||amount>due){var er=document.querySelector('#proveedor-pago-error');if(er)er.textContent='Ingresá un monto válido que no supere el saldo.';return;}
    s.spay=s.spay||[];s.spay.push({id:api.newId('spay'),date:new Date().toISOString(),purchId:pu.id,amount:amount,method:method,shiftId:0});
    api.save();api.toast('Pago a proveedor registrado');api.refresh();
@@ -25,7 +25,7 @@ window.SAINEI_POS_MODULES.push({
   api.addTab({id:'proveedores-hist',label:'Proveedores',canView:function(u){return !!u&&u.role==='admin';},render:render});
   function render(sec){
    var s=state();if(!s)return;
-   var all=directory(),known=(s.purchases||[]).map(function(p){return String(p.supplier||'').trim();}).filter(Boolean);
+   var registered=directory(),all=registered.slice(),known=(s.purchases||[]).map(function(p){return String(p.supplier||'').trim();}).filter(Boolean);
    known.forEach(function(n){if(!all.some(function(x){return String(x.name||'').toLowerCase()===n.toLowerCase();}))all.push({id:'hist-'+n,name:n,active:true,historyOnly:true});});
    var q=query.toLowerCase(),visible=all.filter(function(x){return !q||[x.name,x.ruc,x.phone,x.email].join(' ').toLowerCase().indexOf(q)>=0;});
    var total=0,debt=0,rows='';
@@ -54,7 +54,7 @@ window.SAINEI_POS_MODULES.push({
     if(!name||dup){var er=sec.querySelector('#sup-error');if(er)er.textContent=!name?'Ingresá el nombre del proveedor.':'Ya existe un proveedor con ese nombre.';return;}
     if(editing&&name.toLowerCase()!==String(editing.name).toLowerCase()&&purchasesFor(editing.name,s).length){sec.querySelector('#sup-error').textContent='No se puede cambiar el nombre porque tiene compras registradas.';return;}
     var data={name:name,ruc:String(fd.get('ruc')||'').trim(),phone:String(fd.get('phone')||'').trim(),email:String(fd.get('email')||'').trim(),address:String(fd.get('address')||'').trim(),note:String(fd.get('note')||'').trim()};
-    if(editing)Object.assign(editing,data);else all.push(Object.assign({id:api.newId('sup'),active:true,createdAt:new Date().toISOString()},data));
+    if(editing)Object.assign(editing,data);else registered.push(Object.assign({id:api.newId('sup'),active:true,createdAt:new Date().toISOString()},data));
     editingId=null;api.save();api.toast('Proveedor guardado');render(sec);
    });
    if(sec.dataset&&!sec.dataset.supBound){sec.dataset.supBound='1';sec.addEventListener('click',function(e){var b=e.target.closest('[data-sup-edit],[data-sup-cancel]');if(!b)return;if(b.hasAttribute('data-sup-cancel'))editingId=null;else editingId=b.getAttribute('data-sup-edit');render(sec);});}
