@@ -33,6 +33,7 @@ CREATE TABLE IF NOT EXISTS counters(kind TEXT PRIMARY KEY, n INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL, salt TEXT, hash TEXT);
 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT, u TEXT, a TEXT);
 CREATE TABLE IF NOT EXISTS login_attempts(k TEXT PRIMARY KEY, n INTEGER NOT NULL, blocked_until INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL);
+CREATE TABLE IF NOT EXISTS open_sales(uid INTEGER PRIMARY KEY, j TEXT NOT NULL, updated INTEGER NOT NULL);
 `);
 const P = {}; const prep = s => P[s] || (P[s] = db.prepare(s));
 const getMeta = k => { const r = prep('SELECT v FROM meta WHERE k=?').get(k); return r ? r.v : null; };
@@ -850,6 +851,28 @@ async function handle(req, res) {
     }
     const r = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get(kind), cur = c ? c.n : 0; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run(kind, cur + n); return { start: cur + 1, end: cur + n }; });
     return send(res, 200, r);
+  }
+  if (p === '/api/open-sales' && m === 'GET') {
+    const row = prep('SELECT j FROM open_sales WHERE uid=?').get(me.uid);
+    if (!row) return send(res, 200, { salesCarts: [], activeSale: 1, salesSeq: 1 });
+    try { return send(res, 200, JSON.parse(row.j)); } catch (_) { return send(res, 200, { salesCarts: [], activeSale: 1, salesSeq: 1 }); }
+  }
+  if (p === '/api/open-sales' && m === 'PUT') {
+    const b = await readBody(req);
+    if (!b || !Array.isArray(b.salesCarts) || b.salesCarts.length > 20) return fail(res, 400, 'Lista de ventas abiertas inválida.');
+    const carts = b.salesCarts.map(s => {
+      if (!s || !Number.isSafeInteger(Number(s.id)) || Number(s.id) < 1 || !Array.isArray(s.cart) || s.cart.length > 500) throw Object.assign(new Error('Venta abierta inválida.'), { code: 400 });
+      return { id: Number(s.id), cart: s.cart.map(l => {
+        if (!l || !Number.isSafeInteger(Number(l.id)) || !Number.isFinite(Number(l.qty)) || Number(l.qty) <= 0 || Number(l.qty) > 1000000) throw Object.assign(new Error('Artículo de venta inválido.'), { code: 400 });
+        return { id: Number(l.id), qty: Number(l.qty), price: Number.isFinite(Number(l.price)) ? Number(l.price) : undefined, k: Number.isFinite(Number(l.k)) ? Number(l.k) : undefined };
+      }), disc: Math.max(0, Math.min(100, Number(s.disc) || 0)), clientId: Math.max(0, Number(s.clientId) || 0), pendingBudget: Math.max(0, Number(s.pendingBudget) || 0) };
+    });
+    const data = { salesCarts: carts, activeSale: Number(b.activeSale) || carts[0]?.id || 1, salesSeq: Math.max(1, Number(b.salesSeq) || 1) };
+    const active = carts.some(s => s.id === data.activeSale);
+    if (!active) data.activeSale = carts[0]?.id || 1;
+    if (Buffer.byteLength(JSON.stringify(data), 'utf8') > 200000) return fail(res, 413, 'Las ventas abiertas superan el tamaño permitido.');
+    prep('INSERT OR REPLACE INTO open_sales(uid,j,updated) VALUES(?,?,?)').run(me.uid, JSON.stringify(data), Date.now());
+    return send(res, 200, { ok: true, updated: data.salesCarts.length });
   }
   if (p === '/api/sync' && m === 'POST') {
     const b = await readBody(req);
