@@ -34,6 +34,16 @@ El iniciador guarda la base SQLite en `%LOCALAPPDATA%\SAINEI-POS\datos`, separad
 
 Configurar el firewall de Windows con `configurar-firewall-sainei.ps1`, ejecutándolo como administrador y solo después de confirmar que la red está marcada como Privada. No abrir el puerto 8080 en el router ni exponerlo directamente a internet.
 
+## Actualizar el programa sin borrar datos
+
+1. Descarga y extrae la carpeta completa de la nueva versión en una ubicación temporal.
+2. En la PC principal, cierra las cajas abiertas y ejecuta `ACTUALIZAR-SAINEl-POS.bat` desde la instalación actual.
+3. Indica la ruta de la carpeta extraída. El actualizador detiene el servidor, copia la carpeta de datos a `%LOCALAPPDATA%\\SAINEI-POS\\actualizaciones` y reemplaza solo los archivos del programa.
+4. La carpeta `datos`, la base `sainei.db`, las copias, `.env` y `.env.local` quedan excluidos de la copia de archivos.
+5. Si la copia previa no contiene `sainei.db`, el actualizador cancela antes de copiar la nueva versión.
+
+No actualices mientras haya cajas registrando operaciones. Conserva la copia previa hasta confirmar manualmente que la nueva versión abre y muestra los datos. El actualizador no ejecuta pruebas funcionales ni restaura automáticamente una copia.
+
 ## Copias de seguridad
 
 - El servidor crea copias automáticas locales en la carpeta `copias` de los datos.
