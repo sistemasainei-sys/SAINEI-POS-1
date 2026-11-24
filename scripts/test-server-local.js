@@ -27,7 +27,7 @@ async function freePort() {
 async function startServer(port) {
   child = spawn(process.execPath, [path.join(root, 'server.js'), '--port=' + port, '--data=' + dataDir], {
     cwd: root,
-    env: { ...process.env, SAINEI_LOCAL_MODE: '1', SAINEI_INSTALL_ID: 'AAAAAAAAAAAAAAAAAAAAAAAA' },
+    env: { ...process.env },
     stdio: ['ignore', 'pipe', 'pipe']
   });
   child.stdout.on('data', b => { output += b.toString(); });
@@ -89,36 +89,13 @@ async function main() {
   fs.mkdirSync(dataDir, { recursive: true });
   let serverSource = fs.readFileSync(path.join(sourceRoot, 'server.js'), 'utf8');
   fs.copyFileSync(path.join(sourceRoot, 'index.html'), path.join(root, 'index.html'));
-  const keys = crypto.generateKeyPairSync('rsa', {
-    modulusLength: 2048,
-    publicKeyEncoding: { type: 'spki', format: 'pem' },
-    privateKeyEncoding: { type: 'pkcs8', format: 'pem' }
-  });
-  const tick = String.fromCharCode(96);
-  const replacement = 'const LICENSE_PUBLIC_KEY = ' + tick + keys.publicKey.trim() + tick + ';';
-  serverSource = serverSource.replace(/const LICENSE_PUBLIC_KEY = \x60[\s\S]*?\x60;/, replacement);
-  assert.ok(serverSource.includes(replacement), 'El servidor debe aceptar la clave pública de prueba.');
   fs.writeFileSync(path.join(root, 'server.js'), serverSource, 'utf8');
-
   const port = await freePort();
   let base = await startServer(port);
   const status0 = await json(base, '/api/license/status');
   assert.equal(status0.status, 200);
-  assert.equal(status0.body.active, false, 'El modo local no debe saltarse la licencia.');
-  assert.match(status0.body.installId, /^[A-F0-9]{24}$/);
-  assert.notEqual(status0.body.installId, 'AAAAAAAAAAAAAAAAAAAAAAAA', 'El ID no debe poder imponerse desde el entorno.');
-  const installId = status0.body.installId;
-
-  const blockedSetup = await json(base, '/api/setup', { method: 'POST', body: JSON.stringify({ name: 'Administrador', pin: '5729' }) });
-  assert.equal(blockedSetup.status, 403, 'No se debe crear el administrador sin licencia.');
-
-  const payload = Buffer.from(JSON.stringify({ installId, type: 'permanent', customer: 'Comercio de prueba' })).toString('base64url');
-  const signature = crypto.sign('RSA-SHA256', Buffer.from(payload), keys.privateKey).toString('base64url');
-  const token = payload + '.' + signature;
-  const activated = await json(base, '/api/license/activate', { method: 'POST', body: JSON.stringify({ code: token }) });
-  assert.equal(activated.status, 200, 'Debe aceptar una licencia válida para esa instalación.');
-  assert.equal(activated.body.license.active, true);
-
+  assert.equal(status0.body.active, true, 'El sistema debe estar habilitado sin licencia.');
+  assert.equal(status0.body.required, false, 'No debe requerir activación.');
   const setup = await json(base, '/api/setup', { method: 'POST', body: JSON.stringify({ name: 'Administrador', pin: '5729' }) });
   assert.equal(setup.status, 200, 'Debe permitir crear el administrador después de activar la licencia.');
   const adminLogin = await json(base, '/api/login', { method: 'POST', body: JSON.stringify({ userId: setup.body.userId, pin: '5729' }) });
@@ -374,24 +351,20 @@ async function main() {
   assert.ok(stateAfterRestore.body.recs.sales.some(x => x.id === saleId && (x.returns || []).length === 2), 'La restauración debe recuperar la venta y su devolución.');
 
   const db = new DatabaseSync(path.join(dataDir, 'sainei.db'));
-  const storedId = db.prepare("SELECT v FROM meta WHERE k='installId'").get().v;
-  const storedLicense = db.prepare("SELECT v FROM meta WHERE k='licenseToken'").get().v;
   db.close();
-  assert.equal(storedId, installId, 'El ID debe guardarse en la base local.');
-  assert.equal(storedLicense, token, 'La licencia debe guardarse en la base local.');
 
   await stopServer();
   base = await startServer(port);
   const statusAfterRestart = await json(base, '/api/license/status');
-  assert.equal(statusAfterRestart.body.active, true, 'La licencia debe sobrevivir al reinicio.');
-  assert.equal(statusAfterRestart.body.installId, installId, 'El ID debe permanecer estable tras reiniciar.');
+  assert.equal(statusAfterRestart.body.active, true, 'El sistema debe seguir habilitado tras reiniciar sin licencia.');
+  assert.equal(statusAfterRestart.body.required, false);
   const info = await json(base, '/api/info');
   assert.equal(info.body.hasAdmin, true, 'El usuario administrador debe persistir tras reiniciar.');
   const relogin = await json(base, '/api/login', { method: 'POST', body: JSON.stringify({ userId: setup.body.userId, pin: '5729' }) });
   assert.equal(relogin.status, 200, 'El administrador debe poder volver a iniciar sesión tras reiniciar.');
 
   await stopServer();
-  console.log('OK: licencia firmada, permisos, ventas/stock concurrentes, devoluciones, compras/pagos, clientes/cobros, cajas/arqueos, gastos, conflictos de configuración, revocación, respaldos y persistencia.');
+  console.log('OK: operación sin licencia, permisos, ventas/stock concurrentes, devoluciones, compras/pagos, clientes/cobros, cajas/arqueos, gastos, conflictos de configuración, revocación, respaldos y persistencia.');
 }
 main().catch(async error => {
   console.error(error && error.stack || error);
