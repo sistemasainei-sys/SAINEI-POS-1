@@ -50,7 +50,7 @@ assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\)/);
 assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\);\s*else \{ s\.role = role; s\.name = name; \}/);
 
 // El cambio de PIN propio conserva la sesión actual y revoca las sesiones hermanas.
-const mypin = server.slice(server.indexOf("if (p === '/api/mypin'"), server.indexOf("if (!admin)"));
+const mypin = server.slice(server.indexOf("if (p === '/api/mypin'"), server.indexOf("if (p === '/api/users'"));
 assert.match(mypin, /session\.uid === me\.uid && token !== me\.token\) sessions\.delete\(token\)/);
 
 // Una venta nueva debe incluir sus salidas de inventario completas; si no, se rechaza el ticket y sus movimientos.
