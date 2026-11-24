@@ -11,13 +11,14 @@ const installer = read('instalar-sainei-pos-windows.bat');
 const manual = read('iniciar-sainei-pos-windows.bat');
 const hidden = read('ejecutar-servidor-sainei.ps1');
 const scheduled = read('configurar-inicio-automatico-sainei.ps1');
+const firewallElevated = read('configurar-firewall-elevado.ps1');
 const vbs = read('servidor-oculto.vbs');
 const server = read('server.js');
 
 if (!mainLauncher.includes('instalar-sainei-pos-windows.bat')) {
   throw new Error('1-INSTALAR.bat debe delegar al instalador principal.');
 }
-if (!installer.includes('configurar-inicio-automatico-sainei.ps1')) {
+if (!installer.includes('configurar-inicio-automatico-sainei.ps1') || !installer.includes('configurar-firewall-elevado.ps1')) {
   throw new Error('El instalador debe configurar el inicio automatico.');
 }
 if (!installer.includes('SAINEI-POS') || /rmdir\s+\/s\s+\/q\s+.*datos|del\s+\/q\s+.*sainei\.db/i.test(installer)) {
@@ -28,6 +29,9 @@ if (!manual.includes('SAINEI_LOCAL_MODE=1') || !manual.includes('SAINEI-POS\\dat
 }
 if (!hidden.includes("SAINEI_LOCAL_MODE = '1'") || !hidden.includes('SAINEI-POS\\datos')) {
   throw new Error('El inicio automatico debe usar la misma modalidad y ruta de datos.');
+}
+if (!firewallElevated.includes('configurar-firewall-sainei.ps1') || !firewallElevated.includes('RunAs')) {
+  throw new Error('El instalador debe solicitar elevacion para configurar el firewall privado.');
 }
 if (!scheduled.includes('ejecutar-servidor-sainei.ps1') || !scheduled.includes('AtLogOn')) {
   throw new Error('La tarea programada debe ejecutar el servidor al iniciar sesion.');
