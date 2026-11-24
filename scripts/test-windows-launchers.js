@@ -65,7 +65,7 @@ if (!server.includes("process.env.SAINEI_LOCAL_MODE === '1'")) {
 if (!server.includes("dgram = require('dgram')") || !server.includes('SAINEI_POS_DISCOVER_V1') || !server.includes('discovery.bind(45808')) {
   throw new Error('El servidor debe anunciarse para la deteccion automatica en LAN.');
 }
-if (!installer.includes('descubrir-servidor-sainei.ps1') || !installer.includes('cliente.url') || !installer.includes(':mantener_cliente')) {
+if (!installer.includes('descubrir-servidor-sainei.ps1') || !installer.includes('cliente.url') || !installer.includes(':mantener_cliente') || !installer.includes('goto configurar_servidor')) {
   throw new Error('El instalador debe detectar y conservar el rol de caja cliente.');
 }
 if (!discovery.includes('SAINEI_POS_DISCOVER_V1') || !discovery.includes('IPAddress]::Broadcast')) {
