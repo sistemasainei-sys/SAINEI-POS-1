@@ -76,7 +76,7 @@ let EPOCH = getMeta('epoch'); if (!EPOCH) { EPOCH = crypto.randomBytes(6).toStri
 function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (_) {} throw e; } }
 
 const COLLS = { products: 'prod', sales: 'sale', clients: 'client', purchases: 'purch', payments: 'pay', expenses: 'exp', shifts: 'shift', moves: 'move', spay: 'spay', budgets: 'budget', bankEntries: 'bank', suspendedSales: 'move' };
-const ORDER = ['products', 'clients', 'budgets', 'purchases', 'expenses', 'spay', 'shifts', 'sales', 'payments', 'moves', 'suspendedSales'];
+const ORDER = ['products', 'clients', 'budgets', 'purchases', 'expenses', 'spay', 'bankEntries', 'shifts', 'sales', 'payments', 'moves', 'suspendedSales'];
 const SING = ['shop', 'scale', 'print', 'scan', 'sec', 'check', 'loyaltyRedemptions', 'promotions'];
 const DELETABLE = { products: 1, clients: 1 };
 const PERM = {
