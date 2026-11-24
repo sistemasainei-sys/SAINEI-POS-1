@@ -25,6 +25,16 @@ Para limitar el acceso entrante en Windows:
 
 El script permite TCP 8080 solo desde la subred local y el perfil Privado. No crea reglas públicas ni reenvía puertos del router. Si la red no es Privada, la regla no habilitará el acceso.
 
+## Actualizar SAINEI POS conservando los datos
+
+1. Descarga y extrae la nueva versión completa en otra carpeta.
+2. En la computadora principal, cierra las cajas y ejecuta `ACTUALIZAR-SAINEl-POS.bat` desde la instalación actual.
+3. Escribe la ruta de la carpeta extraída cuando el programa la solicite.
+4. El actualizador detiene el servidor, guarda una copia de `%LOCALAPPDATA%\\SAINEI-POS\\datos` en `%LOCALAPPDATA%\\SAINEI-POS\\actualizaciones` y copia los archivos del programa.
+5. No reemplaza `datos`, `datos-prueba`, `.git`, `node_modules`, `.env` ni `.env.local`.
+
+La copia previa se conserva aunque falle la copia de archivos. No ejecutar actualizaciones con cajas en uso. Después de actualizar, el administrador debe comprobar manualmente que el sistema inicia y que aparecen sus datos. No se hace restauración automática ni se garantiza la actualización hasta completar esa comprobación.
+
 ## Copias externas
 
 El servidor crea copias automáticas locales en `%LOCALAPPDATA%\\SAINEI-POS\\datos\\copias`. Para llevarlas a una memoria USB o disco externo:
