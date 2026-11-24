@@ -1,7 +1,7 @@
 'use strict';
 /* SAINEI POS - servidor local (sin dependencias). Requiere Node.js 22.13 o superior.
    Datos: base SQLite en la carpeta "datos". Todo queda dentro del establecimiento. */
-const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto'), os = require('os'), childProcess = require('child_process');
+const http = require('http'), fs = require('fs'), path = require('path'), crypto = require('crypto'), os = require('os'), childProcess = require('child_process'), dgram = require('dgram');
 let DatabaseSync;
 try { ({ DatabaseSync } = require('node:sqlite')); } catch (e) {
   console.error('Este programa necesita Node.js 22.13 o superior (incluye SQLite). Version actual: ' + process.version);
@@ -881,5 +881,16 @@ server.listen(PORT, '0.0.0.0', () => {
   const lines = ['SAINEI POS - servidor ' + (DEMO ? 'DE PRUEBA ' : '') + 'en marcha', 'Datos: ' + DATA, 'En esta PC:      http://localhost:' + PORT, ...ips.map(i => 'Desde otras PC:   http://' + i + ':' + PORT)];
   lines.forEach(l => log(l)); try { fs.writeFileSync(path.join(DATA, 'direcciones.txt'), lines.join('\r\n') + '\r\n'); } catch (e) {}
 });
+
+/* Descubrimiento automático de servidor para cajas Windows en la misma LAN. */
+const discovery = dgram.createSocket({ type: 'udp4', reuseAddr: true });
+discovery.on('error', e => log('Aviso descubrimiento LAN: ' + e.message));
+discovery.on('message', (msg, remote) => {
+  if (msg.toString('utf8').trim() !== 'SAINEI_POS_DISCOVER_V1') return;
+  const response = Buffer.from(JSON.stringify({ service: 'SAINEI_POS', version: 1, port: PORT, installId: INSTALL_ID }));
+  discovery.send(response, remote.port, remote.address, e => { if (e) log('No se pudo responder al descubrimiento LAN: ' + e.message); });
+});
+discovery.bind(45808, '0.0.0.0', () => log('Detección automática de cajas activa en UDP 45808'));
+
 function shutdown(sig) { log('Cerrando servidor (' + sig + ')'); try { autoBackup(); db.exec('PRAGMA wal_checkpoint(TRUNCATE)'); db.close(); } catch (e) {} process.exit(0); }
 process.on('SIGINT', () => shutdown('SIGINT')); process.on('SIGTERM', () => shutdown('SIGTERM'));
