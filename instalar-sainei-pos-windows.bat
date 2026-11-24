@@ -2,6 +2,15 @@
 setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
 title Instalador SAINEI POS
+rem Compatibilidad oficial: Windows 10 (build 17763 o superior) y Windows 11.
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$os=Get-CimInstance Win32_OperatingSystem; $b=[int]$os.BuildNumber; if (($os.Caption -notmatch 'Windows 10|Windows 11') -or $b -lt 17763) { Write-Host 'SAINEI POS requiere Windows 10 actualizado o Windows 11.' -ForegroundColor Red; exit 1 }"
+if errorlevel 1 (
+  echo.
+  echo Este instalador principal requiere Windows 10 actualizado o Windows 11.
+  echo Los celulares, tablets y equipos Apple se conectan mediante navegador como cajas cliente.
+  pause
+  exit /b 10
+)
 echo ==========================================
 echo          INSTALADOR SAINEI POS
 echo ==========================================
