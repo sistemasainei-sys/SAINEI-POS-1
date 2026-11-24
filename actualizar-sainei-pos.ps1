@@ -7,6 +7,7 @@ $ErrorActionPreference = 'Stop'
 $taskName = 'SAINEI POS - Servidor automatico'
 $sourcePath = [IO.Path]::GetFullPath($Source.Trim('"'))
 $targetPath = [IO.Path]::GetFullPath($Target)
+if (-not $env:LOCALAPPDATA) { throw 'No se encontro LOCALAPPDATA.' }
 $dataPath = Join-Path $env:LOCALAPPDATA 'SAINEI-POS\datos'
 $backupRoot = Join-Path $env:LOCALAPPDATA 'SAINEI-POS\actualizaciones'
 if (-not (Test-Path (Join-Path $sourcePath 'server.js'))) { throw 'La carpeta nueva no contiene server.js.' }
@@ -38,7 +39,7 @@ Start-Sleep -Seconds 2
 
 if (Test-Path $dataPath) {
   Write-Host 'Creando copia completa de los datos antes de actualizar...'
-  Copy-Item -Path (Join-Path $dataPath '*') -Destination $backupPath -Recurse -Force
+  Get-ChildItem -LiteralPath $dataPath -Force | Copy-Item -Destination $backupPath -Recurse -Force
   if (-not (Test-Path (Join-Path $backupPath 'sainei.db'))) { throw 'No se encontro sainei.db en la copia previa. Actualizacion cancelada.' }
   Write-Host ('Copia previa: ' + $backupPath) -ForegroundColor Green
 } else {
