@@ -189,3 +189,10 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [ ] No se ejecutaron pruebas funcionales ni de instalación. La validación real queda para el usuario.
 - [ ] No hay un instalador MSI/EXE firmado; la distribución inicial es la carpeta completa del proyecto con sus archivos BAT/PowerShell.
 - [ ] No existe emisión comercial offline de claves por cliente. El modo local está diseñado actualmente sin activación. No se incluye una clave privada en el repositorio.
+
+
+### Validación adicional — integridad de importes de devolución
+
+- [x] El servidor valida que cada devolución nueva tenga identificador, fecha, medio permitido e importe coherente con las líneas devueltas y el descuento de la venta.
+- [x] El importe enviado por el navegador ya no se acepta como dato confiable: se recalcula en el servidor antes de sincronizar la devolución.
+- [ ] Falta prueba funcional aislada de devoluciones parciales/totales y conciliación contable. No se ejecutaron pruebas.
