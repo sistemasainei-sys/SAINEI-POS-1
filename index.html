@@ -2175,8 +2175,8 @@ function renderFinance(){
       return '<tr><td>'+fdt(x.openAt)+'</td><td>'+fdt(x.closedAt)+'</td><td class="r num">'+gs(x.openAmt)+'</td><td class="r num">'+gs(x.expected)+'</td><td class="r num">'+gs(x.counted)+'</td><td class="r num" style="color:'+(x.diff===0?'var(--ok)':'var(--bad)')+'">'+(x.diff>0?'+':'')+fmt(x.diff)+'</td></tr>';
     }).join(''):emptyRow(6,'Todavía no cerraste ninguna caja.');
   }else if(sub==='gastos'){
-    var ex=state.expenses.slice().reverse().slice(0,200);
-    var mes=state.expenses.filter(function(e){return inRange(e.date,'mes');});
+    var ex=state.expenses.filter(function(e){return e.cat!=='Devolución';}).slice().reverse().slice(0,200);
+    var mes=state.expenses.filter(function(e){return e.cat!=='Devolución'&&inRange(e.date,'mes');});
     $('#expTiles').innerHTML=tile('Gastos de hoy',gs(sum(state.expenses.filter(function(e){return inRange(e.date,'hoy');}),'amount')))+tile('Gastos del mes',gs(sum(mes,'amount')));
     $('#expBody').innerHTML=ex.length?ex.map(function(e){return '<tr><td>'+fdt(e.date)+'</td><td>'+esc(e.concept)+'</td><td>'+esc(e.cat)+'</td><td>'+(e.method==='caja'?'Efectivo de la caja':'Otro medio')+'</td><td class="r num">'+gs(e.amount)+'</td></tr>';}).join(''):emptyRow(5,'Todavía no registraste gastos.');
   }else if(sub==='devoluciones'){
