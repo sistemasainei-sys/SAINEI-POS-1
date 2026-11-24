@@ -11,13 +11,13 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [x] La carpeta de datos se mantiene separada de los archivos del programa para protegerla durante actualizaciones.
 - [x] Unificar el instalador Windows (`1-INSTALAR.bat`), inicio manual y automático, acceso directo y carpeta de datos separada. La actualización conserva los datos si no se reemplaza `%LOCALAPPDATA%\\SAINEI-POS\\datos`.
 - [x] Incorporar actualizador guiado desde carpeta extraída: detiene el servidor, guarda copia completa de los datos en `actualizaciones` y excluye datos, repositorio, dependencias y configuración local al copiar el programa. Falta que el usuario lo verifique en su PC.
-- [ ] Verificar copia externa y restauración cuando el usuario autorice sus pruebas.
+- [x] Verificar creación y restauración de una copia SQLite en una instalación temporal aislada mediante prueba automática.\n- [ ] Verificar físicamente la copia y restauración desde USB en Windows.
 
 **Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet. Cada comercio activa una licencia firmada independiente, guardada en su base SQLite local; no depende de Render ni de una validación en línea. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
 
 ## Prioridad 1 — Operación local y respaldo de datos
 
-- [ ] Verificar restauración y copias antes/después de cada actualización. La guía de riesgos está en `docs/REVISION-SEGURIDAD-OPERACION.md` y el procedimiento para el administrador en `docs/PROCEDIMIENTO-RESPALDO-RESTAURACION.md`.
+- [x] La prueba de integración verifica backup y restauración de SQLite en una instalación temporal. La guía de riesgos está en `docs/REVISION-SEGURIDAD-OPERACION.md` y el procedimiento para el administrador en `docs/PROCEDIMIENTO-RESPALDO-RESTAURACION.md`.\n- [ ] Verificar el ciclo completo de actualización y restauración en Windows.
 - [x] Mantener Render fuera del camino crítico de instalación, licencias y almacenamiento local en la modalidad local actual.
 
 ## Prioridad 2 — Seguridad de conexión y acceso
@@ -26,7 +26,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [ ] Definir acceso remoto mediante VPN o túnel autenticado y documentar instalación/rotación de certificados.
 - [x] Documentar controles existentes y brechas de sesiones, permisos, intentos fallidos y Origin/CSRF en `docs/REVISION-SEGURIDAD-OPERACION.md`.
 - [x] Reforzar autorización del lado del servidor: exportar/restaurar datos, vaciar datos, consultar/crear/restaurar respaldos y generar códigos de recuperación requiere rol administrador; no depende solo de ocultar botones en la interfaz.
-- [ ] Pruebas de sesiones vencidas, revocación de usuarios, permisos por rol y protección CSRF/origen.
+- [x] Pruebas automáticas de permisos por rol y revocación inmediata de sesiones al desactivar un usuario.\n- [ ] Completar pruebas de expiración de sesión y protección CSRF/origen.
 - [x] Persistir en SQLite el contador de intentos fallidos de acceso para que sobreviva reinicios; falta verificarlo en ejecución.
 - [ ] Revisar almacenamiento de fotos y logos para evitar bases de datos excesivamente grandes.
 
@@ -35,8 +35,8 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 ## Prioridad 3 — Caja y operación multiusuario
 
 - [x] Cierre supervisado de turnos olvidados por principal/encargado, con efectivo contado y observación.
-- [ ] Pruebas reales de varias cajas simultáneas, números de ticket, caja por usuario y arqueos.
-- [ ] Control de concurrencia para apertura/cierre y movimientos de efectivo.
+- [x] Prueba automatizada con dos procesos de servidor y una misma SQLite: dos ventas simultáneas no pueden consumir el mismo stock. También se verifican caja propia, cobros y arqueo.\n- [ ] Validar descubrimiento LAN y operación desde dos PCs Windows reales.
+- [x] Pruebas automáticas de apertura duplicada, caja propia, cobro, gasto y cierre de turno.\n- [ ] Validar apertura/cierre simultáneos y movimientos de efectivo en equipos reales.
 
 ## Prioridad 4 — Catálogo y herramientas comerciales
 
@@ -56,7 +56,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [ ] Prueba de instalación limpia y actualización en Windows 10/11 (la realizará el usuario en su computadora).
 - [ ] Pruebas de navegador en PC, tablet, Android y Safari iPhone.
 - [ ] Pruebas de impresión y exportación en los dispositivos admitidos.
-- [ ] Ensayo de backup/restore en una copia de prueba; nunca sobre datos de clientes (lo realizará el usuario en su computadora).
+- [x] Prueba automática de backup/restore SQLite en una base temporal aislada; recupera productos, stock, ventas y devoluciones.\n- [ ] Validar restauración desde USB en Windows.
 - [ ] Publicación solo después de aprobación explícita del usuario.
 
 ## Fuera del alcance actual (no implementar sin nueva decisión)
@@ -111,7 +111,7 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 
 - [x] El servidor rechaza devoluciones que traen IDs de movimientos de reposición inválidos, repetidos o ya utilizados, evitando aceptar la devolución con solo una parte de sus movimientos de stock.
 - [x] La regla contable de reembolsos mixtos quedó implementada con distribución explícita entre caja, banco y crédito.
-- [ ] Ejecutar pruebas funcionales aisladas de devoluciones parciales/totales y conciliación contable.
+- [x] Pruebas automáticas de devolución parcial y total, distribución de reembolso, reposición de stock y rechazo de devolución superior a lo vendido.
 
 No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalización.
 
@@ -122,7 +122,7 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] Los cobros inválidos se rechazan en el servidor aunque se intente enviar la solicitud sin utilizar la interfaz.
 
 - [x] Un cobro en efectivo solo puede asociarse a una caja existente; si lo registra un cajero, el servidor exige que esa caja pertenezca a su propio usuario. Los medios transferencia y tarjeta no pueden alterar el arqueo de efectivo mediante un `shiftId` enviado manualmente.
-- [ ] Falta verificar en ejecución el flujo de cobros, arqueo de caja y sincronización multiusuario. No se ejecutaron pruebas.
+- [x] Pruebas de integración: cobro en efectivo asociado a caja propia, rechazo de cobro con caja cerrada, cierre de turno y acceso desde dos procesos.
 
 
 ### Validación estática — pagos a proveedores
@@ -130,7 +130,7 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] El servidor exige una compra existente, fecha válida, importe entero positivo y medio permitido para registrar un pago a proveedor.
 - [x] La suma de pagos anteriores y nuevos no puede superar el total de la compra; se calcula dentro de la transacción para impedir sobrepagos concurrentes.
 - [x] Los pagos en efectivo deben referenciar una caja existente; los pagos bancarios no pueden alterar el arqueo mediante un identificador de caja.
-- [ ] Falta verificar en ejecución compras de contado, pagos parciales, arqueo y sincronización. No se ejecutaron pruebas.
+- [x] Pruebas de integración: compra a crédito, dos pagos parciales y rechazo de sobrepago al proveedor. La compra de contado queda para validación funcional en Windows.
 
 
 ### Validación estática — gastos y caja
@@ -138,7 +138,7 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] El servidor exige concepto no vacío (máximo 80 caracteres), monto entero positivo, fecha válida y medio de pago permitido al registrar o modificar gastos.
 - [x] Un gasto en efectivo debe referenciar una caja vigente; un gasto bancario no puede asociarse a la caja para alterar el arqueo.
 - [x] Encargados y cajeros solo pueden imputar el gasto a una caja de su propio usuario; el administrador conserva acceso general.
-- [ ] Falta verificar en ejecución el arqueo con gastos, pagos a proveedores y cierres simultáneos. No se ejecutaron pruebas.
+- [x] Pruebas de integración: gasto de caja asociado a turno abierto y cierre con valores coherentes; pagos bancarios parciales a proveedor.\n- [ ] Validar pagos de proveedor en efectivo y cierres simultáneos en Windows.
 
 
 ### Protección adicional — turnos y arqueos de caja
@@ -147,7 +147,7 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] Al abrir una caja, el servidor valida propietario, fecha y fondo inicial no negativo.
 - [x] Al cerrar, el servidor impide cambiar el propietario, la fecha/fondo de apertura o volver a modificar una caja ya cerrada.
 - [x] El cierre exige fecha válida, efectivo contado entero no negativo, valores de arqueo numéricos coherentes y el usuario autenticado como responsable del cierre.
-- [ ] Falta verificar en ejecución apertura/cierre concurrente y arqueos con varios medios de pago. No se ejecutaron pruebas.
+- [x] Pruebas automáticas de apertura duplicada y cierre de turno por el cajero propietario.\n- [ ] Completar pruebas de cierres concurrentes y arqueos con varios medios de pago.
 
 
 ### Integridad del arqueo — movimientos posteriores al cierre
@@ -191,19 +191,19 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] El instalador valida Node.js 22.13+, intenta instalar Node.js LTS con winget, crea la carpeta permanente de datos, registra el inicio automático y genera el acceso directo del Escritorio.
 - [x] El inicio manual y el automático utilizan `%LOCALAPPDATA%\\SAINEI-POS\\datos` y mantienen obligatoria la validación de la licencia firmada.
 - [x] Se actualizó la verificación estática del paquete para comprobar que los dos caminos de inicio usan la misma ruta y que el instalador no borra los datos.
-- [ ] No se ejecutaron pruebas funcionales ni de instalación. La validación real queda para el usuario.
+- [x] Pruebas automáticas de servidor, módulos, licencias, permisos, ventas, stock, devoluciones, compras, cobros, arqueos, respaldos y restauración ejecutadas en CI.\n- [ ] La instalación limpia/actualización, dispositivos y periféricos requieren validación física en Windows.
 - [ ] No hay un instalador MSI/EXE firmado; la distribución inicial es la carpeta completa del proyecto con sus archivos BAT/PowerShell.
-- [ ] La licencia comercial firmada se emite con la herramienta privada de SAINEI, separada del paquete del cliente. La PC principal muestra el ID de instalación y valida el código sin conexión a Render. La clave privada nunca se incluye en el repositorio ni en el ZIP del cliente.
+- [x] Existe un panel privado SAINEI para emitir licencias permanentes y mensuales con firma RSA. La clave privada se carga desde el entorno privado del panel y nunca se incluye en el POS del cliente. La PC principal muestra el ID y valida el código localmente.
 
 
 ### Validación adicional — integridad de importes de devolución
 
 - [x] El servidor valida que cada devolución nueva tenga identificador, fecha, medio permitido e importe coherente con las líneas devueltas y el descuento de la venta.
 - [x] El importe enviado por el navegador ya no se acepta como dato confiable: se recalcula en el servidor antes de sincronizar la devolución.
-- [ ] Falta prueba funcional aislada de devoluciones parciales/totales y conciliación contable. No se ejecutaron pruebas.
+- [x] Pruebas automáticas de devolución parcial y total, sumatoria de importes de reembolso y reposición de stock.
 
 
 ### Control de apertura de caja por usuario
 
 - [x] En la sincronización del servidor, un usuario no administrador no puede abrir un segundo turno mientras ya tenga otro turno abierto. La comprobación ocurre dentro de la transacción de sincronización, para reducir aperturas duplicadas por solicitudes simultáneas.
-- [ ] Falta validar con dos cajas y dos sesiones reales; no se ejecutaron pruebas funcionales.
+- [x] Prueba automatizada con dos procesos de servidor, dos sesiones y la misma base SQLite; la segunda venta se rechaza cuando ya no queda stock.\n- [ ] Validar el mismo escenario con dos PCs Windows conectadas por LAN.
