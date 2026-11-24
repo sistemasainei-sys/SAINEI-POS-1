@@ -33,11 +33,11 @@ if (!installer.includes('configurar-inicio-automatico-sainei.ps1') || !installer
 if (!installer.includes('SAINEI-POS') || /rmdir\s+\/s\s+\/q\s+.*datos|del\s+\/q\s+.*sainei\.db/i.test(installer)) {
   throw new Error('El instalador debe conservar los datos comerciales.');
 }
-if (!manual.includes('SAINEI_LOCAL_MODE=1') || !manual.includes('SAINEI-POS\\datos')) {
-  throw new Error('El inicio manual debe usar modo local y datos permanentes.');
+if (manual.includes('SAINEI_LOCAL_MODE') || !manual.includes('SAINEI-POS\\datos')) {
+  throw new Error('El inicio manual debe usar datos permanentes y conservar la validación de licencia.');
 }
-if (!hidden.includes("SAINEI_LOCAL_MODE = '1'") || !hidden.includes('SAINEI-POS\\datos')) {
-  throw new Error('El inicio automatico debe usar la misma modalidad y ruta de datos.');
+if (hidden.includes('SAINEI_LOCAL_MODE') || !hidden.includes('SAINEI-POS\\datos')) {
+  throw new Error('El inicio automatico debe usar la ruta permanente y conservar la validación de licencia.');
 }
 if (!firewallElevated.includes('configurar-firewall-sainei.ps1') || !firewallElevated.includes('RunAs')) {
   throw new Error('El instalador debe solicitar elevacion para configurar el firewall privado.');
@@ -63,8 +63,8 @@ if (!updater.includes('Start-ScheduledTask') || !updater.includes('Stop-Schedule
 if (!updater.includes('sourceFull.StartsWith($targetFull') || !updater.includes('targetFull.StartsWith($sourceFull')) {
   throw new Error('El actualizador debe impedir carpetas de origen y destino anidadas.');
 }
-if (!server.includes("process.env.SAINEI_LOCAL_MODE === '1'")) {
-  throw new Error('El servidor debe reconocer la modalidad local configurada por los lanzadores.');
+if (server.includes('SAINEI_LOCAL_MODE') || server.includes('SAINEI_INSTALL_ID')) {
+  throw new Error('La instalación local no debe omitir la licencia ni permitir IDs compartidos por variables de entorno.');
 }
 if (!server.includes("dgram = require('dgram')") || !server.includes('SAINEI_POS_DISCOVER_V1') || !server.includes('discovery.bind(45808')) {
   throw new Error('El servidor debe anunciarse para la deteccion automatica en LAN.');
