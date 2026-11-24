@@ -119,6 +119,27 @@ if (!loyaltySec.innerHTML.includes('Cliente prueba') || !loyaltySec.innerHTML.in
 if (typeof actions['fidelizacion-configurar'] !== 'function' || typeof actions['fidelizacion-guardar'] !== 'function' || typeof actions['fidelizacion-csv'] !== 'function') {
   throw new Error('Faltan acciones del módulo Fidelización.');
 }
+// La rotación debe respetar devoluciones completas y parciales al calcular la última venta.
+state.products = [
+  { id: 44, name: 'Producto devuelto', code: 'DEV-44', cat: 'Prueba', stock: 3, min: 1, cost: 1000 },
+  { id: 45, name: 'Producto con movimiento', code: 'MOV-45', cat: 'Prueba', stock: 2, min: 1, cost: 1500 },
+];
+const today = new Date().toISOString();
+state.sales = [
+  { id: 90, date: today, void: false, items: [{ id: 44, name: 'Producto devuelto', qty: 2, price: 1000, amount: 2000 }, { id: 45, name: 'Producto con movimiento', qty: 3, price: 1500, amount: 4500 }], returns: [{ items: [{ lineIndex: 0, qty: 2 }, { lineIndex: 1, qty: 1 }] }] },
+];
+const rotationTab = registered.find((x) => x.id === 'rotacion-stock');
+if (!rotationTab || !rotationTab.canView({ role: 'admin' }) || !rotationTab.canView({ role: 'encargado' }) || rotationTab.canView({ role: 'cajero' })) {
+  throw new Error('Rotación de stock no tiene permisos correctos.');
+}
+const rotationSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; }, querySelector() { return { value: '', addEventListener() {} }; } };
+rotationTab.render(rotationSec);
+if (!rotationSec.innerHTML.includes('Rotación de inventario') || !rotationSec.innerHTML.includes('Sin venta registrada')) {
+  throw new Error('Rotación de stock no genera su informe.');
+}
+if (!rotationSec.innerHTML.includes('Nunca vendidos')) {
+  throw new Error('Rotación de stock no ofrece el filtro de productos nunca vendidos.');
+}
 const bankTab = registered.find((x) => x.id === 'bancos-cheques');
 if (!bankTab || !bankTab.canView({ role: 'admin' }) || bankTab.canView({ role: 'cajero' })) {
   throw new Error('El módulo Bancos y cheques no tiene permisos de acceso correctos.');
