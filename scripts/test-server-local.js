@@ -163,6 +163,7 @@ async function main() {
     } })
   });
   assert.equal(returned.status, 200);
+  if ((returned.body.rejected || []).length) console.log('RETURN_DEBUG', JSON.stringify({ rejected: returned.body.rejected, originalSale, returnRecord, returnId, returnedSales: returned.body.recs && returned.body.recs.sales }));
   assert.deepEqual(returned.body.rejected || [], [], 'Debe aceptar devolución parcial y reposición juntas.');
   assert.equal(returned.body.recs.products.find(p => p.id === productId).stock, 4);
   const saleAfterReturn = returned.body.recs.sales.find(x => x.id === saleId);
