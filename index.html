@@ -1127,7 +1127,7 @@ function shiftSummary(sh){
 function clientAccount(cid){
    var cs=state.sales.filter(function(s){return s.clientId===cid&&saleCredit(s)>0&&!s.void;}).sort(function(a,b){return a.id-b.id;});
    var pays=state.payments.filter(function(p){return p.clientId===cid;}).sort(function(a,b){return new Date(a.date)-new Date(b.date);});
-   var netCredits=cs.map(function(s){var returned=(s.returns||[]).reduce(function(n,r){return n+Math.max(0,Number(r.amount)||0);},0);return {sale:s,credit:Math.max(0,saleCredit(s)-returned)};});
+   var netCredits=cs.map(function(s){var returned=(s.returns||[]).reduce(function(n,r){return n+Math.max(0,Number(r.creditAmount)||0);},0);return {sale:s,credit:Math.max(0,saleCredit(s)-returned)};});
    var total=netCredits.reduce(function(a,x){return a+x.credit;},0),paid=sum(pays,'amount'),rem=paid,overdue=0,rows=[],now=Date.now();
    netCredits.forEach(function(x){var out;if(rem>=x.credit){out=0;rem-=x.credit;}else{out=x.credit-rem;rem=0;}var late=out>0&&!!x.sale.due&&new Date(x.sale.due).getTime()<now;if(late)overdue+=out;rows.push({sale:x.sale,out:out,late:late,credit:x.credit});});
    return {rows:rows,pays:pays,total:total,paid:paid,balance:total-paid,overdue:overdue};
