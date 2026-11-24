@@ -430,7 +430,7 @@ main{padding-top:20px}
  }
 }
 html,body{background:#fff}
-body{padding:0 0 calc(94px + env(safe-area-inset-bottom,0px));background:#fff;color:var(--fg)}
+body{padding:0 0 24px;background:#fff;color:var(--fg)}
 .top{
  position:sticky;top:env(safe-area-inset-top,0px);z-index:30;
  margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
@@ -447,16 +447,17 @@ body{padding:0 0 calc(94px + env(safe-area-inset-bottom,0px));background:#fff;co
 .userbox{padding:0;margin:0;align-items:center;color:#fff}
 .userbox .btn{background:rgba(255,255,255,.12);border-color:rgba(255,255,255,.28);color:#fff}
 .tabs{
- position:fixed;left:0;right:0;bottom:0;z-index:50;
- width:100%;max-width:none;margin:0;padding:9px max(12px,env(safe-area-inset-right,0px)) calc(9px + env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));
- display:flex;justify-content:space-around;align-items:stretch;gap:4px;overflow-x:auto;overscroll-behavior-x:contain;
- background:#f28c28;box-shadow:0 -5px 22px rgba(110,62,12,.16);scrollbar-width:none;
+ position:sticky;top:0;z-index:29;
+ width:auto;max-width:none;margin:0 calc(-1 * max(16px,env(safe-area-inset-left,0px)));
+ padding:12px max(12px,env(safe-area-inset-right,0px)) 12px max(12px,env(safe-area-inset-left,0px));
+ display:flex;justify-content:space-around;align-items:stretch;gap:6px;overflow-x:auto;overscroll-behavior-x:contain;
+ background:#f28c28;box-shadow:0 5px 18px rgba(110,62,12,.16);scrollbar-width:none;
 }
 .tabs::-webkit-scrollbar{display:none}
 .tab{
  flex:1 0 auto;min-width:68px;justify-content:center;flex-direction:column;gap:3px;
  padding:8px 10px;border:0;border-radius:12px;background:transparent;color:#fff;
- font-size:12px;font-weight:750;line-height:1.15;white-space:nowrap;
+ font-size:15px;font-weight:800;line-height:1.2;white-space:nowrap;
 }
 .tab[aria-selected="true"]{background:#fff;color:#e87912;border:0;box-shadow:0 2px 8px rgba(91,49,7,.12)}
 .tab .badge{background:#fff;color:#a94e00}
@@ -488,13 +489,13 @@ main{max-width:1500px;margin:0 auto;padding:24px 22px 28px;background:#fff;min-h
  .shift{margin-left:0}
  .tabs{justify-content:flex-start}
  .tab{min-width:72px;padding:8px 9px}
- body{padding-bottom:calc(88px + env(safe-area-inset-bottom,0px))}
+ body{padding-bottom:24px}
 }
 @media(max-width:480px){
  .brand h1{font-size:21px}
  .brand span{font-size:11px}
  .userbox{width:100%;justify-content:flex-start}
- .tab{min-width:66px;font-size:11px}
+ .tab{min-width:82px;font-size:14px;padding:11px 12px}
 }
 
 </style>
@@ -504,9 +505,10 @@ main{max-width:1500px;margin:0 auto;padding:24px 22px 28px;background:#fff;min-h
 <header class="top">
   <div class="brand"><img id="brandLogo" class="brandlogo" alt="" hidden><h1 id="shopTitle">Mini Súper</h1><span id="today"></span></div>
   <button class="shift" id="shiftPill" data-a="shiftpill"></button>
-  <nav class="tabs" id="tabs" role="tablist" aria-label="Secciones"></nav>
+  
   <div class="userbox" id="userBox" hidden><span class="un" id="userName"></span><button class="btn" data-a="mypin">Mi clave</button><button class="btn" data-a="lock">Bloquear</button></div>
 </header>
+<nav class="tabs" id="tabs" role="tablist" aria-label="Secciones"></nav>
 <div id="banner" class="banner" hidden></div>
 
 <main>
