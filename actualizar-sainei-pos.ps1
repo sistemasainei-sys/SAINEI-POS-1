@@ -12,7 +12,13 @@ $dataPath = Join-Path $env:LOCALAPPDATA 'SAINEI-POS\datos'
 $backupRoot = Join-Path $env:LOCALAPPDATA 'SAINEI-POS\actualizaciones'
 if (-not (Test-Path (Join-Path $sourcePath 'server.js'))) { throw 'La carpeta nueva no contiene server.js.' }
 if (-not (Test-Path (Join-Path $sourcePath 'index.html')) -and -not (Test-Path (Join-Path $sourcePath 'app\index.html'))) { throw 'La carpeta nueva no contiene index.html ni app\index.html.' }
-if ($sourcePath.TrimEnd('\') -eq $targetPath.TrimEnd('\')) { throw 'La carpeta de origen debe ser distinta de la instalacion actual.' }
+$sourceFull = $sourcePath.TrimEnd('\') + '\'
+$targetFull = $targetPath.TrimEnd('\') + '\'
+if ($sourcePath.TrimEnd('\') -eq $targetPath.TrimEnd('\') -or
+    $sourceFull.StartsWith($targetFull, [StringComparison]::OrdinalIgnoreCase) -or
+    $targetFull.StartsWith($sourceFull, [StringComparison]::OrdinalIgnoreCase)) {
+  throw 'Las carpetas de origen y destino deben ser independientes; no pueden estar una dentro de la otra.'
+}
 if (-not (Test-Path (Join-Path $targetPath 'server.js'))) { throw 'No se encontro una instalacion SAINEI POS en la carpeta de destino.' }
 if (-not $env:LOCALAPPDATA) { throw 'No se encontro LOCALAPPDATA.' }
 
@@ -26,6 +32,13 @@ if (Test-Path $dataPath) {
 $updateSucceeded = $false
 try {
   
+  # Evitar que el inicio automatico vuelva a levantar el servidor mientras se copian archivos.
+  $scheduledTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+  if ($scheduledTask) {
+    Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+    Start-Sleep -Seconds 2
+  }
+
   # Detener solo procesos Node que ejecuten el server.js de esta instalacion.
   $escapedTarget = [regex]::Escape($targetPath.TrimEnd('\'))
   $nodeProcesses = Get-CimInstance Win32_Process -Filter "Name = 'node.exe'" | Where-Object {
@@ -67,11 +80,12 @@ try {
   $updateSucceeded = $true
   Write-Host 'Actualizacion de archivos finalizada. No se realizaron pruebas funcionales.' -ForegroundColor Green
 } finally {
-  if (-not $updateSucceeded) {
-    Write-Warning 'La actualizacion no termino. Intentando reactivar el inicio automatico anterior...'
+  if ($scheduledTask) {
     try {
-      $task = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-      if ($task) { Start-ScheduledTask -TaskName $taskName }
+      Start-ScheduledTask -TaskName $taskName
+      if (-not $updateSucceeded) {
+        Write-Warning 'La actualizacion no termino. Se intento reactivar el servidor con los archivos que quedaron en destino.'
+      }
     } catch { Write-Warning ('No se pudo reactivar la tarea: ' + $_.Exception.Message) }
   }
 }
