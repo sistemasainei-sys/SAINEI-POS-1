@@ -244,13 +244,21 @@ function processSync(user, body) {
     // Sumar devoluciones anteriores y nuevas por línea de venta: nunca permitir
     // que la cantidad acumulada devuelta supere lo que realmente se vendió.
     for (const ret of after) {
-      if (!ret || !Array.isArray(ret.items)) { valid = false; break; }
+      if (!ret || !ret.id || !Array.isArray(ret.items) || !ret.items.length ||
+          !Number.isFinite(Number(ret.amount)) || Number(ret.amount) < 0 ||
+          !['caja', 'banco'].includes(ret.method) || !Number.isFinite(Date.parse(ret.date || ''))) { valid = false; break; }
+      let expectedAmount = 0;
+      const discount = Math.max(0, Math.min(100, Number(previous.discPct) || 0));
       for (const item of ret.items) {
         const ix = Number(item.lineIndex), qty = Number(item.qty), src = sold[ix];
         if (!Number.isInteger(ix) || ix < 0 || ix >= sold.length || !src || !Number.isFinite(qty) || qty <= 0 || Number(item.id) !== Number(src.id)) { valid = false; break; }
+        const lineAmount = Number(src.amount != null ? src.amount : Number(src.price || 0) * Number(src.qty || 0));
+        const soldQty = Number(src.qty || 0);
+        if (!Number.isFinite(lineAmount) || lineAmount < 0 || !Number.isFinite(soldQty) || soldQty <= 0 || qty > soldQty) { valid = false; break; }
+        expectedAmount += Math.round((lineAmount / soldQty) * qty * (1 - discount / 100));
         cumulative.set(ix, round3((cumulative.get(ix) || 0) + qty));
       }
-      if (!valid) break;
+      if (!valid || Math.round(Number(ret.amount)) !== expectedAmount) { valid = false; break; }
     }
     for (const [ix, qty] of cumulative) if (qty > Number(sold[ix].qty || 0) + 0.001) valid = false;
     for (const ret of after.slice(before.length)) {
