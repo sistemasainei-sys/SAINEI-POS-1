@@ -110,6 +110,49 @@ async function main() {
   const deniedUsers = await json(base, '/api/users', { headers: cashierHeaders });
   assert.equal(deniedUsers.status, 403, 'El cajero no debe administrar usuarios.');
 
+  const bankIds = await json(base, '/api/ids?kind=bank&n=2', { headers: adminHeaders });
+  assert.equal(bankIds.status, 200, 'El administrador debe poder reservar IDs bancarios.');
+  const bankEntry = {
+    id: bankIds.body.start, kind: 'movimiento', date: new Date().toISOString(),
+    account: 'Banco de prueba', description: 'Ingreso de prueba', amount: 150000,
+    direction: 'entrada', reference: 'DEP-TEST-01', checkNo: '', payee: '',
+    status: 'pendiente', reconciled: false
+  };
+  const bankWrite = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: { bankEntries: { up: [bankEntry] } } })
+  });
+  assert.equal(bankWrite.status, 200, 'El servidor debe aceptar el movimiento bancario válido.');
+  assert.ok((bankWrite.body.recs.bankEntries || []).some(x => x.id === bankEntry.id), 'El movimiento bancario debe volver desde el servidor.');
+
+  const cheque = {
+    id: bankIds.body.start + 1, kind: 'cheque', date: new Date().toISOString(),
+    account: 'Banco de prueba', description: 'Cheque de prueba', amount: 90000,
+    direction: 'salida', reference: '', checkNo: 'CH-TEST-01', payee: 'Beneficiario prueba',
+    status: 'emitido', reconciled: false
+  };
+  const chequeWrite = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: bankWrite.body.rev, changes: { bankEntries: { up: [cheque] } } })
+  });
+  assert.equal(chequeWrite.status, 200);
+  assert.ok((chequeWrite.body.recs.bankEntries || []).some(x => x.id === cheque.id), 'El cheque debe quedar registrado.');
+
+  const chequeUpdated = { ...cheque, status: 'cobrado', reconciled: true };
+  const chequeStatus = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: chequeWrite.body.rev, changes: { bankEntries: { up: [chequeUpdated] } } })
+  });
+  assert.equal(chequeStatus.status, 200);
+  assert.ok((chequeStatus.body.recs.bankEntries || []).some(x => x.id === cheque.id && x.status === 'cobrado'), 'Debe permitir actualizar el estado del cheque sin alterar sus datos contables.');
+
+  const cashierBank = await json(base, '/api/sync', {
+    method: 'POST', headers: cashierHeaders,
+    body: JSON.stringify({ since: chequeStatus.body.rev, changes: { bankEntries: { up: [{ ...bankEntry, id: bankEntry.id + 100 }] } } })
+  });
+  assert.equal(cashierBank.status, 200);
+  assert.ok((cashierBank.body.rejected || []).some(x => x.coll === 'bankEntries'), 'El cajero no debe poder registrar movimientos bancarios.');
+
   const backup = await json(base, '/api/backups/make', { method: 'POST', headers: adminHeaders, body: '{}' });
   assert.equal(backup.status, 200);
   assert.ok(fs.existsSync(path.join(dataDir, 'copias', backup.body.name)), 'Debe crear una copia SQLite real.');
