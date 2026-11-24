@@ -81,6 +81,7 @@ const securityChecks = [
   ["transacción SQLite para sincronización", /function processSync\(user, body\)[\s\S]*?tx\(\(\) => \{/],
   ["validación de stock no negativo", /nextStock < 0/],
   ["ventas inmutables", /Las ventas existentes son inmutables/],
+  ["importe y medio de devolución validados por servidor", /expectedAmount[\s\S]*?ret\.method/],
 ];
 for (const [label, pattern] of securityChecks) {
   if (!pattern.test(serverSource)) throw new Error("Falta protección del servidor: " + label);
