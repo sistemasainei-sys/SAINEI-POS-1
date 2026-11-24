@@ -46,17 +46,23 @@ echo.
 echo Datos permanentes: %SAINEI_DATA%
 echo Configurando inicio automatico del servidor...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0configurar-inicio-automatico-sainei.ps1"
-echo Configurando firewall para permitir cajas en la red privada local...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0configurar-firewall-elevado.ps1"
-if errorlevel 1 echo AVISO: No se pudo configurar el firewall. Ejecuta configurar-firewall-sainei.ps1 como administrador para habilitar las cajas.
-
-if errorlevel 1 (
+set "STARTUP_RESULT=%ERRORLEVEL%"
+if not "%STARTUP_RESULT%"=="0" (
   echo No se pudo configurar el inicio automatico.
   echo Puedes iniciar manualmente con iniciar-sainei-pos-windows.bat.
   pause
   exit /b 5
 )
+echo Configurando firewall para permitir cajas en la red privada local...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0configurar-firewall-elevado.ps1"
+if errorlevel 1 echo AVISO: No se pudo configurar el firewall. Ejecuta configurar-firewall-sainei.ps1 como administrador para habilitar las cajas.
+
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$p;$s.WorkingDirectory='%~dp0';$s.Save()"
+if errorlevel 1 (
+  echo No se pudo crear el acceso directo del Escritorio.
+  pause
+  exit /b 6
+)
 echo.
 echo Instalacion preparada. Se creo el acceso directo SAINEI POS en el Escritorio.
 echo Los datos quedan fuera de la carpeta del programa y no se borran al actualizar.
