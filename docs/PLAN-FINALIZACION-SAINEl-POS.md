@@ -13,7 +13,7 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [x] Incorporar actualizador guiado desde carpeta extraída: detiene el servidor, guarda copia completa de los datos en `actualizaciones` y excluye datos, repositorio, dependencias y configuración local al copiar el programa. Falta que el usuario lo verifique en su PC.
 - [ ] Verificar copia externa y restauración cuando el usuario autorice sus pruebas.
 
-**Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet. El modo local actual no solicita activación. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
+**Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet. Cada comercio activa una licencia firmada independiente, guardada en su base SQLite local; no depende de Render ni de una validación en línea. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
 
 ## Prioridad 1 — Operación local y respaldo de datos
 
@@ -189,11 +189,11 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 
 - [x] El instalador principal `1-INSTALAR.bat` delega al instalador guiado.
 - [x] El instalador valida Node.js 22.13+, intenta instalar Node.js LTS con winget, crea la carpeta permanente de datos, registra el inicio automático y genera el acceso directo del Escritorio.
-- [x] El inicio manual y el automático configuran `SAINEI_LOCAL_MODE=1` y utilizan `%LOCALAPPDATA%\\SAINEI-POS\\datos`.
+- [x] El inicio manual y el automático utilizan `%LOCALAPPDATA%\\SAINEI-POS\\datos` y mantienen obligatoria la validación de la licencia firmada.
 - [x] Se actualizó la verificación estática del paquete para comprobar que los dos caminos de inicio usan la misma ruta y que el instalador no borra los datos.
 - [ ] No se ejecutaron pruebas funcionales ni de instalación. La validación real queda para el usuario.
 - [ ] No hay un instalador MSI/EXE firmado; la distribución inicial es la carpeta completa del proyecto con sus archivos BAT/PowerShell.
-- [ ] No existe emisión comercial offline de claves por cliente. El modo local está diseñado actualmente sin activación. No se incluye una clave privada en el repositorio.
+- [ ] La licencia comercial firmada se emite con la herramienta privada de SAINEI, separada del paquete del cliente. La PC principal muestra el ID de instalación y valida el código sin conexión a Render. La clave privada nunca se incluye en el repositorio ni en el ZIP del cliente.
 
 
 ### Validación adicional — integridad de importes de devolución
