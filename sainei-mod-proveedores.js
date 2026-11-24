@@ -22,7 +22,7 @@ window.SAINEI_POS_MODULES.push({
    s.spay=s.spay||[];s.spay.push({id:api.newId('spay'),date:new Date().toISOString(),purchId:pu.id,amount:amount,method:method,shiftId:0});
    api.save();api.toast('Pago a proveedor registrado');api.refresh();
   });
-  api.addTab({id:'proveedores-hist',label:'Proveedores',canView:function(u){return !!u&&['admin','encargado'].indexOf(u.role)>=0;},render:render});
+  api.addTab({id:'proveedores-hist',label:'Proveedores',canView:function(u){return !!u&&u.role==='admin';},render:render});
   function render(sec){
    var s=state();if(!s)return;
    var all=directory(),known=(s.purchases||[]).map(function(p){return String(p.supplier||'').trim();}).filter(Boolean);
