@@ -10,6 +10,8 @@ try {
     -Profile Private -RemoteAddress LocalSubnet `
     -Description 'Permite SAINEI POS solo desde equipos de la red privada local.' | Out-Null
   Write-Host 'Regla creada: TCP 8080 solo desde la subred local y perfil Privado.' -ForegroundColor Green
+  $discoveryRule = Get-NetFirewallRule -DisplayName 'SAINEI POS - Descubrimiento LAN' -ErrorAction SilentlyContinue
+  if ($discoveryRule) { Remove-NetFirewallRule -DisplayName 'SAINEI POS - Descubrimiento LAN' }
   New-NetFirewallRule -DisplayName 'SAINEI POS - Descubrimiento LAN' `
     -Direction Inbound -Action Allow -Protocol UDP -LocalPort 45808 `
     -Profile Private -RemoteAddress LocalSubnet `
