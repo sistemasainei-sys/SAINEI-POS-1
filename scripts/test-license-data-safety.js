@@ -5,6 +5,12 @@ const assert = require('node:assert/strict');
 const server = fs.readFileSync('server.js', 'utf8');
 const index = fs.readFileSync('index.html', 'utf8');
 
+// Cada comercio debe activar su propia licencia firmada; el modo local no puede saltarse el control.
+assert.doesNotMatch(server, /SAINEI_LOCAL_MODE/);
+assert.doesNotMatch(server, /SAINEI_INSTALL_ID/);
+assert.match(server, /let INSTALL_ID = getMeta\('installId'\)/);
+assert.match(server, /crypto\.randomBytes\(12\)\.toString\('hex'\)\.toUpperCase\(\)/);
+
 // Activar una licencia solo guarda el token; no debe recrear, borrar ni resetear usuarios/datos.
 const activation = server.slice(server.indexOf("if (p === '/api/license/activate'"), server.indexOf("if (p === '/api/info'"));
 assert.match(activation, /setMeta\('licenseToken', token\)/);
