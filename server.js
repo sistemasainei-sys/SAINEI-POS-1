@@ -218,7 +218,7 @@ function processSync(user, body) {
   const returnMoveIds = new Set();
   const duplicateReturnMoveTickets = new Set();
   for (const move of incomingMoves) {
-    const match = /^Devolución ticket (\\d+)$/.exec(String(move && move.note || ''));
+    const match = /^Devolución ticket (\d+)$/.exec(String(move && move.note || ''));
     if (!match) continue;
     const ticket = Number(match[1]);
     if (!returnMoves.has(ticket)) returnMoves.set(ticket, []);
@@ -384,7 +384,7 @@ function processSync(user, body) {
           if (coll === 'sales' && !row && rejectedTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
           if (coll === 'sales' && rejectedReturnTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
           if (coll === 'moves' && !row) {
-            const returnTicket = /^Devolución ticket (\\d+)$/.exec(String(rec.note || ''));
+            const returnTicket = /^Devolución ticket (\d+)$/.exec(String(rec.note || ''));
             if (returnTicket && (!validReturnTickets.has(Number(returnTicket[1])) || rejectedReturnTickets.has(Number(returnTicket[1])))) { res.rejected.push({ coll, id }); continue; }
           }
           if (coll === 'moves' && !row) {
