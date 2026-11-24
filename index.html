@@ -2805,14 +2805,15 @@ function enterApp(u){
   cur=u;try{localStorage.setItem('minisuper-lastuser',String(u.id));}catch(e){}
   if(!SERVER){log('Ingresó al sistema');save();}
   $('#lockScr').hidden=true;$('#lockBox').innerHTML='';
+  if(SERVER)openSalesLoading=true;
   restoreSalesCarts(u);ui.tab='caja';lastAct=Date.now();startIdle();setTab('caja');renderCurrent();
   if(SERVER){
-    openSalesLoading=true;
     api('GET','/api/open-sales').then(function(saved){
       if(!cur||cur.id!==u.id)return;
+      openSalesLoading=false;
       if(saved&&Array.isArray(saved.salesCarts)&&saved.salesCarts.length){restoreSalesCarts(u,saved);renderCurrent();}
       else persistSalesCarts();
-    }).catch(function(){toast('No se pudieron recuperar las ventas pendientes del servidor.');}).then(function(){openSalesLoading=false;});
+    }).catch(function(){openSalesLoading=false;toast('No se pudieron recuperar las ventas pendientes del servidor.');});
   }
 }
 function doRecover(){
