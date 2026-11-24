@@ -64,6 +64,7 @@ if errorlevel 1 (
   exit /b 4
 )
 if not exist "%LOCALAPPDATA%\SAINEI-POS" mkdir "%LOCALAPPDATA%\SAINEI-POS"
+if exist "%LOCALAPPDATA%\SAINEI-POS\cliente.url" del "%LOCALAPPDATA%\SAINEI-POS\cliente.url" >nul 2>nul
 >"%LOCALAPPDATA%\SAINEI-POS\servidor.local" echo SAINEI_POS_SERVER
 set "SAINEI_DATA=%LOCALAPPDATA%\SAINEI-POS\datos"
 if not exist "%SAINEI_DATA%" mkdir "%SAINEI_DATA%"
