@@ -2175,20 +2175,54 @@ function renderPanel(){
   var today=dayKey(nowIso()),mk=monthKey(nowIso()),ok=state.sales.filter(function(x){return !x.void;});
   function by(f){return ok.filter(f);}
   var hoy=by(function(x){return dayKey(x.date)===today;}),mes=by(function(x){return monthKey(x.date)===mk;});
-  var g=function(a){return sum(a,'total')-sum(a,'iva5')-sum(a,'iva10')-sum(a,'cmv');};
-  var gastosHoy=sum(state.expenses.filter(function(e){return dayKey(e.date)===today;}),'amount'),gastosMes=sum(state.expenses.filter(function(e){return monthKey(e.date)===mk;}),'amount');
+  function returnStats(from,to){
+    var amount=0,cost=0,tax=0,count=0;
+    ok.forEach(function(s){
+      (s.returns||[]).forEach(function(r){
+        var k=dayKey(r.date||s.date);if(k<from||k>to)return;
+        amount+=Number(r.totalAmount!=null?r.totalAmount:r.amount)||0;count++;
+        var returnedItems=r.items||[],returnedValue=0,returnedCost=0;
+        returnedItems.forEach(function(it){
+          var idx=it.lineIndex!=null?Number(it.lineIndex):(s.items||[]).findIndex(function(x){return Number(x.id)===Number(it.id);});
+          var src=(s.items||[])[idx];if(!src)return;
+          returnedValue+=Number(src.price||0)*Number(it.qty||0);
+          returnedCost+=Number(src.cost||0)*Number(it.qty||0);
+        });
+        cost+=returnedCost;
+        var saleValue=Math.max(1,Number(s.total)||0);
+        tax+=(Number(s.iva5||0)+Number(s.iva10||0))*Math.min(1,returnedValue/saleValue);
+      });
+    });
+    return {amount:amount,cost:cost,tax:tax,count:count};
+  }
+  var rh=returnStats(today,today),rm=returnStats(mk+'-01',today);
+  function gross(a,ret){
+    return sum(a,'total')-ret.amount-(sum(a,'iva5')+sum(a,'iva10')-ret.tax)-(sum(a,'cmv')-ret.cost);
+  }
+  var gHoy=gross(hoy,rh),gMes=gross(mes,rm);
+  var regularExpenses=state.expenses.filter(function(e){return e.cat!=='Devolución';});
+  var gastosHoy=sum(regularExpenses.filter(function(e){return dayKey(e.date)===today;}),'amount');
+  var gastosMes=sum(regularExpenses.filter(function(e){return monthKey(e.date)===mk;}),'amount');
   var low=state.products.filter(function(p){return p.stock<=p.min;}).sort(function(a,c){return a.stock-c.stock;});
   var deb=state.clients.map(function(c){return clientAccount(c.id);}),porCobrar=deb.reduce(function(a,x){return a+x.balance;},0),venc=deb.filter(function(x){return x.overdue>0;}).length;
-  var days=[],i;for(i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var k=dayKey(d.toISOString());days.push({k:k,l:d.toLocaleDateString('es-PY',{weekday:'short'}),v:sum(by(function(x){return dayKey(x.date)===k;}),'total')});}
-  var mx=Math.max.apply(null,days.map(function(x){return x.v;}).concat([1]));
+  var days=[],i;for(i=6;i>=0;i--){var d=new Date();d.setDate(d.getDate()-i);var k=dayKey(d.toISOString());var r=returnStats(k,k);days.push({k:k,l:d.toLocaleDateString('es-PY',{weekday:'short'}),v:sum(by(function(x){return dayKey(x.date)===k;}),'total')-r.amount});}
+  var mx=Math.max.apply(null,days.map(function(x){return Math.abs(x.v);}).concat([1]));
   var open=state.shifts.filter(function(x){return !x.closedAt;});
-  b.innerHTML='<div class="tiles">'+tile('Ventas de hoy',gs(sum(hoy,'total')))+tile('Cantidad de ventas hoy',hoy.length)+tile('Ganancia bruta de hoy',gs(g(hoy)),g(hoy)<0?'bad':'ok')+tile('Gastos de hoy',gs(gastosHoy))+
-    tile('Ventas del mes',gs(sum(mes,'total')))+tile('Ganancia bruta del mes',gs(g(mes)),g(mes)<0?'bad':'ok')+tile('Gastos del mes',gs(gastosMes))+tile('Resultado estimado del mes',gs(g(mes)-gastosMes),(g(mes)-gastosMes)<0?'bad':'ok')+'</div>'+
-    '<div class="panel" style="padding:14px"><h3 style="margin:0 0 10px">Ventas de los últimos 7 días</h3><div style="display:flex;gap:8px;align-items:flex-end;height:150px">'+days.map(function(x){return '<div style="flex:1;display:grid;gap:4px;justify-items:center;align-content:end;height:100%"><small class="muted num">'+(x.v?fmt(x.v):'')+'</small><div style="width:100%;max-width:60px;border-radius:6px 6px 0 0;background:var(--accent);height:'+Math.max(2,Math.round(x.v/mx*100))+'px"></div><small class="muted">'+esc(x.l)+'</small></div>';}).join('')+'</div></div>'+
+  var recent=[];
+  ok.forEach(function(s){(s.returns||[]).forEach(function(r){recent.push({sale:s,ret:r});});});
+  recent.sort(function(a,c){return new Date(c.ret.date||c.sale.date)-new Date(a.ret.date||a.sale.date);});
+  var returnRows=recent.slice(0,12).map(function(x){
+    var r=x.ret,method=r.method==='mixto'?'Mixto':r.method==='banco'?'Banco':r.method==='credito'?'Saldo a favor':'Efectivo';
+    var names=(r.items||[]).map(function(it){var idx=it.lineIndex!=null?Number(it.lineIndex):(x.sale.items||[]).findIndex(function(z){return Number(z.id)===Number(it.id);});var src=(x.sale.items||[])[idx];return src?esc(src.name)+' × '+nf3.format(it.qty):'Artículo devuelto';}).join(', ');
+    return '<tr><td>'+fdt(r.date||x.sale.date)+'</td><td>#'+String(x.sale.id).padStart(6,'0')+'</td><td>'+names+'</td><td>'+method+'</td><td class="r num">'+gs(r.totalAmount!=null?r.totalAmount:r.amount)+'</td></tr>';
+  }).join('');
+  b.innerHTML='<div class="tiles">'+tile('Ventas netas de hoy',gs(sum(hoy,'total')-rh.amount))+tile('Cantidad de ventas hoy',hoy.length)+tile('Devoluciones de hoy',gs(rh.amount))+tile('Ganancia bruta de hoy',gs(gHoy),gHoy<0?'bad':'ok')+tile('Gastos de hoy',gs(gastosHoy))+
+    tile('Ventas netas del mes',gs(sum(mes,'total')-rm.amount))+tile('Devoluciones del mes',gs(rm.amount))+tile('Ganancia bruta del mes',gs(gMes),gMes<0?'bad':'ok')+tile('Gastos del mes',gs(gastosMes))+tile('Resultado estimado del mes',gs(gMes-gastosMes),(gMes-gastosMes)<0?'bad':'ok')+'</div>'+
+    '<div class="panel scroll" style="padding:14px"><h3 style="margin:0 0 10px">Devoluciones recientes</h3><table><thead><tr><th>Fecha</th><th>Ticket</th><th>Productos</th><th>Reembolso</th><th class="r">Importe</th></tr></thead><tbody>'+(returnRows||emptyRow(5,'Todavía no hay devoluciones registradas.'))+'</tbody></table></div>'+
+    '<div class="panel" style="padding:14px"><h3 style="margin:0 0 10px">Ventas netas de los últimos 7 días</h3><div style="display:flex;gap:8px;align-items:flex-end;height:150px">'+days.map(function(x){return '<div style="flex:1;display:grid;gap:4px;justify-items:center;align-content:end;height:100%"><small class="muted num">'+(x.v?fmt(x.v):'')+'</small><div style="width:100%;max-width:60px;border-radius:6px 6px 0 0;background:var(--accent);height:'+Math.max(2,Math.round(Math.abs(x.v)/mx*100))+'px"></div><small class="muted">'+esc(x.l)+'</small></div>';}).join('')+'</div></div>'+
     '<div class="tiles">'+tile('Productos con poco stock',low.length,low.length?'bad':'ok')+tile('Por cobrar a clientes',gs(porCobrar))+tile('Clientes con deuda vencida',venc,venc?'bad':'ok')+tile('Cajas abiertas ahora',open.length)+'</div>'+
     '<div class="panel scroll" style="padding:14px"><h3 style="margin:0 0 10px">Reponer pronto</h3><table><thead><tr><th>Producto</th><th class="r">Stock</th><th class="r">Mínimo</th></tr></thead><tbody>'+(low.length?low.slice(0,10).map(function(p){return '<tr><td>'+esc(p.name)+'</td><td class="r num">'+(p.type==='peso'?nf3.format(p.stock)+' kg':nf.format(p.stock))+'</td><td class="r num">'+p.min+'</td></tr>';}).join(''):emptyRow(3,'No hay productos con poco stock.'))+'</tbody></table></div>';
 }
-
 
 /* ---------- Presupuestos: no afectan caja, ventas ni existencias ---------- */
 function renderBudgets(){
