@@ -704,7 +704,8 @@ const CT = { '.html': 'text/html; charset=utf-8', '.js': 'text/javascript', '.cs
 
 async function handle(req, res) {
   const url = new URL(req.url, 'http://x'), p = url.pathname, m = req.method;
-  const ip = (req.socket.remoteAddress || '').replace('::ffff:', '');\n  trackClient(req, ip);
+  const ip = (req.socket.remoteAddress || '').replace('::ffff:', '');
+  trackClient(req, ip);
   // Rechazar peticiones mutables iniciadas desde otro sitio web.
   if (p.startsWith('/api/') && !['GET','HEAD','OPTIONS'].includes(m)) {
     const origin = req.headers.origin;
