@@ -86,7 +86,7 @@ const securityChecks = [
   ["validación de stock no negativo", /nextStock < 0/],
   ["un solo turno abierto por cajero", /anotherOpenShift[\s\S]*?\|\| anotherOpenShift/],
   ["ventas inmutables", /Las ventas existentes son inmutables/],
-  ["importe y medio de devolución validados por servidor", /expectedAmount[\s\S]*?ret\.method/],
+  ["importe y medio de devolución validados por servidor", /ret\.method[\s\S]*?expectedAmount/],
 ];
 for (const [label, pattern] of securityChecks) {
   if (!pattern.test(serverSource)) throw new Error("Falta protección del servidor: " + label);
