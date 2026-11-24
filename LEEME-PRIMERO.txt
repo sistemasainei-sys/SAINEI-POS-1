@@ -1,8 +1,8 @@
 ﻿SAINEI POS
 ==========
-1) Doble clic en 1-INSTALAR.bat (en la PC principal).
+1) En la PC principal con Windows 10 actualizado o Windows 11, doble clic en 1-INSTALAR.bat.
 2) Abrí "SAINEI POS" del Escritorio.
-3) Leé MANUAL.txt (es corto).
+3) Leé MANUAL.txt para la configuración y el uso.
 
-Otras PC / celular: Conectar-desde-otra-PC.bat o el navegador con la dirección que muestra el instalador.
-Datos de prueba: Iniciar-Servidor-PRUEBA.bat y 2b-Abrir-Caja-PRUEBA.bat
+Otras PC, tablets y celulares: conectate a la misma red y abrí en el navegador la dirección local que muestra el instalador.
+La PC principal debe permanecer encendida para que las demás cajas puedan vender.
