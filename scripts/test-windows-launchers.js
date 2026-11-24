@@ -14,6 +14,9 @@ const scheduled = read('configurar-inicio-automatico-sainei.ps1');
 const firewallElevated = read('configurar-firewall-elevado.ps1');
 const vbs = read('servidor-oculto.vbs');
 const server = read('server.js');
+const discovery = read('descubrir-servidor-sainei.ps1');
+const clientLauncher = read('2-Abrir-Caja.bat');
+const firewall = read('configurar-firewall-sainei.ps1');
 const updaterBat = read('ACTUALIZAR-SAINEl-POS.bat');
 const updater = read('actualizar-sainei-pos.ps1');
 
@@ -58,6 +61,21 @@ if (!updater.includes('sourceFull.StartsWith($targetFull') || !updater.includes(
 }
 if (!server.includes("process.env.SAINEI_LOCAL_MODE === '1'")) {
   throw new Error('El servidor debe reconocer la modalidad local configurada por los lanzadores.');
+}
+if (!server.includes("dgram = require('dgram')") || !server.includes('SAINEI_POS_DISCOVER_V1') || !server.includes('discovery.bind(45808')) {
+  throw new Error('El servidor debe anunciarse para la deteccion automatica en LAN.');
+}
+if (!installer.includes('descubrir-servidor-sainei.ps1') || !installer.includes('cliente.url') || !installer.includes(':mantener_cliente')) {
+  throw new Error('El instalador debe detectar y conservar el rol de caja cliente.');
+}
+if (!discovery.includes('SAINEI_POS_DISCOVER_V1') || !discovery.includes('IPAddress]::Broadcast')) {
+  throw new Error('El detector de LAN debe emitir la solicitud de descubrimiento.');
+}
+if (!clientLauncher.includes('cliente.url') || !clientLauncher.includes('descubrir-servidor-sainei.ps1')) {
+  throw new Error('La caja cliente debe reconectar al servidor detectado.');
+}
+if (!firewall.includes('UDP -LocalPort 45808') || !firewall.includes('TCP -LocalPort')) {
+  throw new Error('El firewall debe permitir el servicio y el descubrimiento solo en LAN privada.');
 }
 for (const file of ['2-Abrir-Caja.bat', 'Conectar-desde-otra-PC.bat', 'respaldar-sainei-pos-windows.bat']) read(file);
 
