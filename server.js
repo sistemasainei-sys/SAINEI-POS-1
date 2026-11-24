@@ -243,10 +243,20 @@ function processSync(user, body) {
     const sold = Array.isArray(previous.items) ? previous.items : [];
     // Sumar devoluciones anteriores y nuevas por línea de venta: nunca permitir
     // que la cantidad acumulada devuelta supere lo que realmente se vendió.
+    let creditedTotal = 0;
+    const originalCredit = previous.creditAmount != null ? Math.max(0, Number(previous.creditAmount) || 0) : (previous.method === 'credito' ? Math.max(0, Number(previous.total) || 0) : 0);
     for (const ret of after) {
       if (!ret || !ret.id || !Array.isArray(ret.items) || !ret.items.length ||
-          !Number.isFinite(Number(ret.amount)) || Number(ret.amount) < 0 ||
-          !['caja', 'banco'].includes(ret.method) || !Number.isFinite(Date.parse(ret.date || ''))) { valid = false; break; }
+          !Number.isSafeInteger(Number(ret.amount)) || Number(ret.amount) < 0 ||
+          !['caja', 'banco', 'credito', 'mixto'].includes(ret.method) || !Number.isFinite(Date.parse(ret.date || ''))) { valid = false; break; }
+      const hasAllocation = ['cashAmount','bankAmount','creditAmount'].some(k => Object.prototype.hasOwnProperty.call(ret, k));
+      const cashPart = hasAllocation ? Number(ret.cashAmount || 0) : (ret.method === 'caja' ? Number(ret.amount) : 0);
+      const bankPart = hasAllocation ? Number(ret.bankAmount || 0) : (ret.method === 'banco' ? Number(ret.amount) : 0);
+      const creditPart = hasAllocation ? Number(ret.creditAmount || 0) : 0;
+      if (![cashPart, bankPart, creditPart].every(v => Number.isSafeInteger(v) && v >= 0) ||
+          cashPart + bankPart + creditPart !== Number(ret.amount) ||
+          (ret.totalAmount != null && Number(ret.totalAmount) !== Number(ret.amount))) { valid = false; break; }
+      creditedTotal += creditPart;
       let expectedAmount = 0;
       const discount = Math.max(0, Math.min(100, Number(previous.discPct) || 0));
       for (const item of ret.items) {
@@ -261,6 +271,7 @@ function processSync(user, body) {
       if (!valid || Math.round(Number(ret.amount)) !== expectedAmount) { valid = false; break; }
     }
     for (const [ix, qty] of cumulative) if (qty > Number(sold[ix].qty || 0) + 0.001) valid = false;
+    if (creditedTotal > originalCredit + 0.001) valid = false;
     for (const ret of after.slice(before.length)) {
       if (!ret || !ret.id || !Array.isArray(ret.items) || !ret.items.length) { valid = false; break; }
       for (const item of ret.items) {
