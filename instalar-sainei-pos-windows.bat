@@ -30,6 +30,7 @@ if exist "%~dp0descubrir-servidor-sainei.ps1" (
 )
 if exist "%SAINEI_DISCOVERY%" del "%SAINEI_DISCOVERY%" >nul 2>nul
 
+:configurar_servidor
 rem Si no se encontro servidor, esta computadora sera el servidor principal.
 where node >nul 2>nul
 if errorlevel 1 (
