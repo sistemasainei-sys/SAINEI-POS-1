@@ -331,6 +331,48 @@ function processSync(user, body) {
   }
   try {
     tx(() => {
+      // Revalidar ventas bajo el bloqueo de escritura SQLite. Dos cajas pueden
+      // haber leído el mismo stock antes de la transacción; solo la primera
+      // venta que confirma debe consumir las unidades disponibles.
+      const lockedStock = new Map(), lockedMoveIds = new Set();
+      for (const sale of incomingSales) {
+        const saleId = Number(sale && sale.id);
+        if (!Number.isSafeInteger(saleId) || saleId <= 0 || rejectedTickets.has(saleId) || getRec('sales', saleId)) continue;
+        const required = new Map(), delivered = new Map(), nextStock = new Map();
+        let valid = true;
+        const items = Array.isArray(sale.items) ? sale.items : [];
+        if (!items.length) valid = false;
+        for (const item of items) {
+          const pid = Number(item && item.id), qty = Number(item && item.qty);
+          if (!Number.isSafeInteger(pid) || pid <= 0 || !Number.isFinite(qty) || qty <= 0) { valid = false; break; }
+          required.set(pid, round3((required.get(pid) || 0) + qty));
+        }
+        const moves = ticketMoves.get(saleId) || [];
+        if (!moves.length) valid = false;
+        for (const move of moves) {
+          const moveId = Number(move && move.id), pid = Number(move && move.pid), qty = Number(move && move.qty);
+          if (!Number.isSafeInteger(moveId) || moveId <= 0 || lockedMoveIds.has(moveId) || getRec('moves', moveId) ||
+              !Number.isSafeInteger(pid) || pid <= 0 || !Number.isFinite(qty) || qty >= 0 || move.type !== 'venta') {
+            valid = false; continue;
+          }
+          lockedMoveIds.add(moveId);
+          delivered.set(pid, round3((delivered.get(pid) || 0) - qty));
+        }
+        if (required.size !== delivered.size) valid = false;
+        for (const [pid, qty] of required) if (Math.abs((delivered.get(pid) || 0) - qty) > 0.001) valid = false;
+        for (const pid of delivered.keys()) if (!required.has(pid)) valid = false;
+        if (valid) {
+          for (const [pid, qty] of required) {
+            const productRow = getRec('products', pid);
+            const current = lockedStock.has(pid) ? lockedStock.get(pid) :
+              (productRow && !productRow.del ? Number(JSON.parse(productRow.j).stock || 0) : NaN);
+            if (!Number.isFinite(current) || round3(current - qty) < 0) { valid = false; break; }
+            nextStock.set(pid, round3(current - qty));
+          }
+        }
+        if (!valid) { rejectedTickets.add(saleId); continue; }
+        for (const [pid, stock] of nextStock) lockedStock.set(pid, stock);
+      }
       for (const coll of ORDER) {
         const c = changes[coll]; if (!c) continue;
         const kind = COLLS[coll];
@@ -343,7 +385,7 @@ function processSync(user, body) {
           if (coll === 'sales' && rejectedReturnTickets.has(id)) { res.rejected.push({ coll, id }); continue; }
           if (coll === 'moves' && !row) {
             const returnTicket = /^Devolución ticket (\\d+)$/.exec(String(rec.note || ''));
-            if (returnTicket && !validReturnTickets.has(Number(returnTicket[1]))) { res.rejected.push({ coll, id }); continue; }
+            if (returnTicket && (!validReturnTickets.has(Number(returnTicket[1])) || rejectedReturnTickets.has(Number(returnTicket[1])))) { res.rejected.push({ coll, id }); continue; }
           }
           if (coll === 'moves' && !row) {
             const ticket = /^Ticket (\d+)$/.exec(String(rec.note || ''));
@@ -510,10 +552,10 @@ function processSync(user, body) {
               // Las ventas existentes son inmutables, salvo agregar devoluciones verificadas.
               const before = Object.assign({}, ex), after = Object.assign({}, rec);
               delete before.returns; delete after.returns;
-              if (JSON.stringify(before) !== JSON.stringify(after)) { res.rejected.push({ coll, id }); continue; }
+              if (JSON.stringify(before) !== JSON.stringify(after)) { rejectedReturnTickets.add(id); res.rejected.push({ coll, id }); continue; }
               const oldReturns = Array.isArray(ex.returns) ? ex.returns : [];
               const newReturns = Array.isArray(rec.returns) ? rec.returns : [];
-              if (newReturns.length < oldReturns.length || oldReturns.some((r, i) => JSON.stringify(r) !== JSON.stringify(newReturns[i]))) { res.rejected.push({ coll, id }); continue; }
+              if (newReturns.length < oldReturns.length || oldReturns.some((r, i) => JSON.stringify(r) !== JSON.stringify(newReturns[i]))) { rejectedReturnTickets.add(id); res.rejected.push({ coll, id }); continue; }
               const known = new Set(oldReturns.map(r => String(r.id)));
               const sold = Array.isArray(ex.items) ? ex.items : [];
               const used = sold.map((_, i) => oldReturns.reduce((n, r) => n + (r.items || []).filter(x => Number(x.lineIndex) === i).reduce((a, x) => a + Number(x.qty || 0), 0), 0));
@@ -528,7 +570,7 @@ function processSync(user, body) {
                 }
                 if (!valid) break;
               }
-              if (!valid) { res.rejected.push({ coll, id }); continue; }
+              if (!valid) { rejectedReturnTickets.add(id); res.rejected.push({ coll, id }); continue; }
               out = Object.assign({}, ex, { returns: newReturns });
             }
           }
