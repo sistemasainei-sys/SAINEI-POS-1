@@ -1,7 +1,29 @@
 @echo off
-setlocal
+setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
 set "PORT=8080"
+set "CLIENT_CONFIG=%LOCALAPPDATA%\SAINEI-POS\cliente.url"
+if exist "%CLIENT_CONFIG%" (
+  set /p CLIENT_URL=<"%CLIENT_CONFIG%"
+  if not defined CLIENT_URL (
+    del "%CLIENT_CONFIG%" >nul 2>nul
+  ) else (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "try{(Invoke-WebRequest -UseBasicParsing '!CLIENT_URL!/api/ping' -TimeoutSec 3).StatusCode}catch{exit 1}" >nul 2>&1
+    if errorlevel 1 (
+      echo Buscando nuevamente el servidor SAINEI POS en la red...
+      powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0descubrir-servidor-sainei.ps1" > "%TEMP%\sainei-servidor-url.txt"
+      if errorlevel 1 (
+        echo No se encontro el servidor. Verifica que la PC principal este encendida y en la misma red.
+        pause
+        exit /b 1
+      )
+      set /p CLIENT_URL=<"%TEMP%\sainei-servidor-url.txt"
+      >"%CLIENT_CONFIG%" echo !CLIENT_URL!
+    )
+    start "" "!CLIENT_URL!"
+    exit /b 0
+  )
+)
 powershell -NoProfile -Command "try{(Invoke-WebRequest -UseBasicParsing http://localhost:%PORT%/api/ping -TimeoutSec 2).StatusCode}catch{exit 1}" >nul 2>&1
 if errorlevel 1 (
   echo Iniciando el servidor...

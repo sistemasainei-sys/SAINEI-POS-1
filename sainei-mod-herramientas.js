@@ -20,6 +20,7 @@ window.SAINEI_POS_MODULES.push({
    var paid=(st.spay||[]).filter(function(x){return Number(x.purchId)===payingPurchaseId;}).reduce(function(a,x){return a+Number(x.amount||0);},0),out=Math.max(0,Number(pu.total||0)-paid),amount=Math.round(Number(document.getElementById('ph-pay-amount').value)||0);
    if(!(amount>0)||amount>out){err.textContent='Ingresá un monto mayor a cero y no superior al saldo pendiente.';return;}
    var method=document.getElementById('ph-pay-method').value,record={id:api.newId('spay'),date:new Date().toISOString(),purchId:payingPurchaseId,amount:amount,method:method==='banco'?'banco':'otro',shiftId:0};
+   st.spay=Array.isArray(st.spay)?st.spay:[];
    st.spay.push(record);
    Promise.resolve(api.save()).then(function(ok){
     if(ok===false){st.spay=st.spay.filter(function(x){return x!==record;});err.textContent='El servidor no confirmó el pago. Revisá la conexión y volvé a intentar.';return;}
