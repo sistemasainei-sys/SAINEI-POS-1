@@ -29,6 +29,8 @@ jobs:
         run: node --check server.js
       - name: Smoke-test module registration
         run: node scripts/test-sainei-modules.js
+      - name: Verify budgets, payments and finance workflows
+        run: node scripts/test-finance-budget.js
       - name: Verify Windows launchers and data safety
         run: node scripts/test-windows-launchers.js
       - name: Verify license and user data safety
