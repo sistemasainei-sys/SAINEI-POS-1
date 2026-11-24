@@ -5,6 +5,7 @@ const read = (name) => fs.readFileSync(path.join(process.cwd(), name), 'utf8');
 const src = read('index.html');
 const server = read('server.js');
 const tools = read('sainei-mod-herramientas.js');
+const bankModule = read('sainei-mod-bancos-cheques.js');
 function need(label, pattern, text = src) {
   if (!pattern.test(text)) throw new Error('Falta validación de ' + label);
 }
@@ -20,4 +21,11 @@ need('presupuestos incluidos en sincronización', /'budgets'/);
 need('opción de transferencia bancaria para pagos a proveedores', /value="banco"[\s\S]*?Transferencia \/ banco/, tools);
 need('pagos a proveedores registrados por colección', /spay/, server);
 need('rechazo de sobrepagos a proveedores', /paidBefore \+ amount > Number\(purchase\.total\)/, server);
-console.log('OK: presupuestos, conversión controlada, impresión, sincronización y pagos bancarios a proveedores tienen verificaciones estáticas.');
+need('colección de bancos y cheques en el cliente', /'bankEntries'/, src);
+need('contador de identificadores bancarios', /bank:'bankEntries'/, src);
+need('colección bancaria sincronizada en servidor', /bankEntries: 'bank'/, server);
+need('permisos restringidos de bancos y cheques', /bankEntries: \{ ins: 1, upd: 1 \}/, server);
+need('validación de movimientos y cheques', /if \(coll === 'bankEntries'\)[\s\S]*?Number\.isSafeInteger\(amount\)/, server);
+need('protección de datos financieros inmutables', /delete before\.status; delete before\.reconciled; delete after\.status; delete after\.reconciled/, server);
+need('registro de cheques y conciliación', /Registrar cheque[\s\S]*?conciliado[\s\S]*?cobrado/, bankModule);
+console.log('OK: presupuestos, pagos a proveedores, libro bancario, cheques, conciliación, sincronización y permisos tienen verificaciones estáticas.');
