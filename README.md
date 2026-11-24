@@ -6,8 +6,10 @@ Sistema de punto de venta web para operar con un servidor central y varias cajas
 
 SAINEI POS está preparado para guardar los datos comerciales en la computadora principal de cada comercio, usando una base SQLite local (`sainei.db`). **No necesita Render ni una base de datos en la nube para registrar ventas.** Cada comercio instala su propia copia y mantiene sus propios datos.
 
-- La computadora principal ejecuta el servidor y guarda la base de datos.
-- Las demás cajas se conectan a esa computadora por la red local (Wi-Fi o cable).
+- La primera computadora instalada, si no encuentra otro servidor SAINEI POS activo en la red, queda configurada automáticamente como servidor y guarda la base de datos del comercio.
+- Al instalar en otra computadora con el servidor encendido y en la misma red privada, el instalador detecta el servidor por LAN y la configura como caja cliente, sin crear otra base de datos comercial.
+- Las cajas cliente guardan la dirección detectada y vuelven a buscar el servidor si cambia su IP. Si el servidor está apagado durante la instalación inicial, la computadora se configura como servidor; por eso instalar las cajas con la PC principal encendida.
+- El servidor anuncia su presencia por UDP 45808 y el firewall privado permite TCP 8080 y UDP 45808 únicamente desde la subred local.
 - Para operar dentro del local, basta con que la computadora principal y la red local estén funcionando; no se necesita internet para las operaciones locales.
 - Si la computadora principal se apaga, las otras cajas no pueden operar hasta que vuelva a encenderse.
 - Node.js 22.13 o superior es requisito. La instalación local no exige código de activación ni conexión a Render.
@@ -62,7 +64,8 @@ Una copia no se considera recuperable hasta que se haya comprobado una restaurac
 
 ## Archivos y documentación
 
-- `1-INSTALAR.bat`: instalador principal de Windows; configura Node.js si hace falta, el inicio automático y el acceso directo.
+- `1-INSTALAR.bat`: instalador principal de Windows; configura Node.js si hace falta, detecta automáticamente servidor/caja cliente y prepara inicio automático o acceso al servidor según corresponda.
+- `descubrir-servidor-sainei.ps1`: detección automática del servidor SAINEI POS en la red local.
 - `ACTUALIZAR-SAINEl-POS.bat`: actualizador guiado que respalda los datos y reemplaza solo los archivos del programa.
 - `iniciar-sainei-pos-windows.bat`: inicio manual del servidor con datos separados del programa.
 - `respaldar-sainei-pos-windows.bat`: copia respaldos SQLite a otra unidad.
