@@ -29,7 +29,7 @@ assert.match(sync, /if\(e&&e\.status===401\)\{sessionLost\(\)/);
 
 // El principal y encargado pueden cerrar turnos ajenos; el cajero sigue limitado a su propio turno.
 assert.match(server, /encargado:\s*\{[^\n]*shifts:\s*\{[^}]*upd:\s*1/);
-assert.match(server, /if \(coll === 'shifts' && user\.role === 'cajero'\)/);
+assert.match(server, /if \(coll === 'shifts' && user\.role !== 'admin'\)/);
 assert.match(index, /function closeShiftModal\(id\)/);
 assert.match(index, /function doCloseShift\(\)\s*\{\s*var sh=closingShiftTarget\?/);
 assert.match(index, /closeothershift:function\(el,id\)\{closeShiftModal\(id\);\}/);
