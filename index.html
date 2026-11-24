@@ -990,7 +990,7 @@ function normalize(s){
   s.v=2;
   s.shop=s.shop||{};s.shop.name=s.shop.name||'Mini Súper';s.shop.ruc=s.shop.ruc||'';s.shop.addr=s.shop.addr||'';s.shop.phone=s.shop.phone||'';
   s.scale=s.scale||{};s.scale.plu=(s.scale.plu===4?4:5);s.scale.val=s.scale.plu===4?6:5;s.scale.mode=s.scale.mode==='peso'?'peso':'precio';
-  ['products','sales','clients','purchases','payments','expenses','shifts','moves','spay','budgets','suspendedSales'].forEach(function(k){s[k]=Array.isArray(s[k])?s[k]:[];});
+  ['products','sales','clients','purchases','payments','expenses','shifts','moves','spay','budgets','bankEntries','suspendedSales'].forEach(function(k){s[k]=Array.isArray(s[k])?s[k]:[];});
   s.check=s.check||{};s.n=s.n||{};
   s.shop.logo=s.shop.logo||'';s.shop.logoBW=s.shop.logoBW||'';
   var pr=s.print=s.print||{};pr.on=!!pr.on;pr.width=(pr.width==='58'||pr.width==='a4')?pr.width:'80';pr.copies=[1,2,3].indexOf(pr.copies)>=0?pr.copies:1;pr.font=[11,12,14].indexOf(pr.font)>=0?pr.font:12;pr.footer=pr.footer==null?'¡Gracias por su compra!':pr.footer;pr.logo=pr.logo!==false;pr.bw=pr.bw!==false;
@@ -1008,8 +1008,9 @@ function normalize(s){
     x.items=x.items||[];x.items.forEach(function(i){i.iva=i.iva==null?10:i.iva;i.cost=i.cost||0;});
     if(x.g10===undefined){x.g10=x.total;x.g5=0;x.ex=0;x.iva10=x.iva||Math.round(x.total/11);x.iva5=0;}
   });
-  var map={prod:'products',sale:'sales',client:'clients',purch:'purchases',pay:'payments',exp:'expenses',shift:'shifts',move:'moves',spay:'spay',budget:'budgets',user:'users'};
+  var map={prod:'products',sale:'sales',client:'clients',purch:'purchases',pay:'payments',exp:'expenses',shift:'shifts',move:'moves',spay:'spay',budget:'budgets',bank:'bankEntries',user:'users'};
   Object.keys(map).forEach(function(k){s.n[k]=Math.max(s.n[k]||0,s[map[k]].reduce(function(m,o){return Math.max(m,o.id||0);},0));});
+  s.n.bank=Math.max(s.n.bank||0,s.bankEntries.reduce(function(m,o){return Math.max(m,Number(o.id)||0);},0));
   s.n.move=Math.max(s.n.move||0,['suspendedSales','loyaltyRedemptions','promotions'].reduce(function(mx,k){return Math.max(mx,(s[k]||[]).reduce(function(m,o){return Math.max(m,Number(o.id)||0);},0));},0));
   return s;
 }
