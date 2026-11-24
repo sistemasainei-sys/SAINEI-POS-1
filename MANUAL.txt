@@ -1,7 +1,13 @@
 SAINEI POS - MANUAL DE INSTALACIÓN Y USO (versión 1)
 =====================================================
-Sistema de punto de venta para comercios. Funciona SIN internet. Todos los datos
-quedan en la computadora principal del comercio. No se envía nada a servidores externos.
+Sistema de punto de venta para comercios. La base SQLite de cada cliente se guarda
+LOCALMENTE en su PC principal, dentro de la carpeta datos\sainei.db. Los datos, ventas,
+usuarios, licencia y copias pertenecen a esa instalacion. No se guardan en Render ni
+requieren una cuenta de nube para vender.
+
+Cada comercio/cliente tiene su propia instalacion, su propio identificador y su propia
+base de datos. Las demas PC, tablets y celulares de ESE comercio se conectan por la red
+local a la PC principal; no crean bases separadas que se desincronicen.
 
 CÓMO FUNCIONA
 -------------
