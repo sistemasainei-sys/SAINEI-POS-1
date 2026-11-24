@@ -2128,6 +2128,8 @@ function saveAdjust(){
 }
 function supplierNames(){
   var s={};state.purchases.forEach(function(p){if(p.supplier)s[p.supplier]=1;});state.products.forEach(function(p){if(p.supplier)s[p.supplier]=1;});
+  var directory=state.shop&&Array.isArray(state.shop.suppliers)?state.shop.suppliers:[];
+  directory.forEach(function(p){if(p&&p.active!==false&&p.name)s[p.name]=1;});
   return Object.keys(s).sort();
 }
 function puSync(){
