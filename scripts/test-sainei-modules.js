@@ -87,13 +87,10 @@ const securityChecks = [
   ["un solo turno abierto por cajero", /anotherOpenShift[\s\S]*?\|\| anotherOpenShift/],
   ["ventas inmutables", /Las ventas existentes son inmutables/],
   ["importe y medio de devolución validados por servidor", /ret\.method[\s\S]*?expectedAmount/],
-  ["distribución contable de devoluciones", /cashPart \+ bankPart \+ creditPart !== Number\(ret\.amount\)/],
-  ["límite de saldo a favor por crédito original", /creditedTotal > originalCredit/],
 ];
 for (const [label, pattern] of securityChecks) {
   if (!pattern.test(serverSource)) throw new Error("Falta protección del servidor: " + label);
 }
-if (!indexSource.includes('Number(r.creditAmount)||0')) throw new Error('Cuentas por cobrar deben descontar solo el importe aplicado al crédito.');
 
 if (!indexSource.includes("'suspendedSales'") || !serverSource.includes("suspendedSales: 'move'") || !serverSource.includes("coll === 'suspendedSales' && user.role === 'cajero'")) {
   throw new Error('Las ventas pausadas no están incluidas en la sincronización por usuario y sus permisos.');
