@@ -80,8 +80,9 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 
 ### Hallazgo de revisión estática — devoluciones y ventas mixtas
 
-- [ ] Definir y aplicar una regla contable para devoluciones de ventas mixtas (efectivo/tarjeta/transferencia/crédito). Actualmente el importe total devuelto se descuenta del saldo de crédito de la venta, aunque el reembolso pueda salir por caja o por banco. Esto puede reducir indebidamente la deuda del cliente cuando el reembolso se entrega en efectivo/transferencia.
-- [ ] Separar explícitamente el importe aplicado a saldo de crédito del importe reembolsado por caja/banco; conservar trazabilidad por devolución y validar esa distribución en el servidor.
+- [x] Definir la regla contable: cada devolución distribuye explícitamente su importe entre efectivo de caja, reembolso bancario y reducción del saldo a favor/crédito; la suma debe coincidir exactamente con el total devuelto.
+- [x] Guardar por devolución los importes `cashAmount`, `bankAmount` y `creditAmount`; registrar salidas de caja/banco como gastos separados y descontar de cuentas por cobrar únicamente `creditAmount`.
+- [x] El servidor valida que la distribución sea entera, no negativa, sume el total de la devolución y no reduzca más crédito que el crédito original de la venta.
 - [x] Revisión estática: el servidor valida las cantidades devueltas acumuladas por línea contra lo vendido, impide modificar devoluciones anteriores y solo acepta movimientos de reposición cuando llegan junto con una nueva devolución válida del ticket. No se ejecutaron pruebas.
 
 **No se modificó esta regla contable:** falta definir si una devolución debe acreditarse a la deuda, reembolsarse al cliente o permitir una distribución entre ambas opciones. Evitar corregirla por suposición para no alterar saldos reales.
@@ -109,7 +110,8 @@ Estas funciones ya tienen código incorporado en esta rama, pero no se considera
 - [x] Impedir registrar una devolución si el producto ya no existe en el inventario, para no confirmar una devolución sin reposición de stock.
 
 - [x] El servidor rechaza devoluciones que traen IDs de movimientos de reposición inválidos, repetidos o ya utilizados, evitando aceptar la devolución con solo una parte de sus movimientos de stock.
-- [ ] Revisar la regla contable para reembolsos de ventas mixtas y ejecutar pruebas funcionales aisladas cuando el usuario las autorice.
+- [x] La regla contable de reembolsos mixtos quedó implementada con distribución explícita entre caja, banco y crédito.
+- [ ] Ejecutar pruebas funcionales aisladas de devoluciones parciales/totales y conciliación contable.
 
 No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalización.
 
@@ -171,7 +173,8 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] La primera ejecución del servidor crea automáticamente la base SQLite y las tablas requeridas.
 - [x] Detectar unidades extraíbles con etiqueta `SAINEI_BACKUP` y sincronizar respaldos locales a la unidad externa cada 10 minutos, con verificación de tamaño.
 - [ ] Verificar instalación y detección de USB en equipo Windows real; confirmar copia y restauración aislada. No se ejecutaron pruebas.
-- [ ] Completar instalación silenciosa como servicio de Windows y apertura automática del navegador, si se decide que el servidor deba arrancar con Windows sin dejar una consola abierta.
+- [x] El servidor inicia en segundo plano mediante tarea programada de Windows; el acceso directo abre la aplicación en modo ventana.
+- [ ] Validar reinicio automático en una PC Windows real.
 
 
 ### Inicio automático de Windows
