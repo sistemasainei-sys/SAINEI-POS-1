@@ -40,10 +40,11 @@ LICENCIA SAINEI
 ---------------
 - Antes de crear el usuario principal, el cliente debe activar SAINEI POS con un código emitido por SAINEI.
 - La pantalla muestra un código de instalación. El cliente debe enviarlo a SAINEI después de pagar.
-- SAINEI verifica el pago y genera un código permanente o mensual con la herramienta privada de licencias.
-- El cliente pega el código para habilitar el sistema. La licencia queda guardada en la base local del servidor.
-- El generador privado se entrega en un ZIP separado. NUNCA incluirlo en la carpeta del cliente: contiene la clave privada de SAINEI.
-- La activación requiere que el dispositivo pueda comunicarse con el servidor local; no requiere nube para ventas diarias.
+- SAINEI verifica el pago y emite un código permanente o mensual desde su panel privado de licencias.
+- El cliente pega el código para habilitar el sistema. La licencia queda guardada en la base SQLite local de la PC principal.
+- El panel y la clave privada son exclusivos de SAINEI y NUNCA se entregan ni se incluyen en el paquete del cliente.
+- Cada comercio activa una licencia para su PC principal; las cajas, tablets y celulares de ese mismo comercio comparten esa instalación.
+- La activación se realiza con el código firmado y no requiere que el POS se conecte a Render; las ventas diarias funcionan en la red local.
 
 PRIMER USO
 ----------
