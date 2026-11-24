@@ -63,6 +63,7 @@ Una copia no se considera recuperable hasta que se haya comprobado una restaurac
 ## Archivos y documentación
 
 - `1-INSTALAR.bat`: instalador principal de Windows; configura Node.js si hace falta, el inicio automático y el acceso directo.
+- `ACTUALIZAR-SAINEl-POS.bat`: actualizador guiado que respalda los datos y reemplaza solo los archivos del programa.
 - `iniciar-sainei-pos-windows.bat`: inicio manual del servidor con datos separados del programa.
 - `respaldar-sainei-pos-windows.bat`: copia respaldos SQLite a otra unidad.
 - `configurar-firewall-sainei.ps1`: limita el acceso al puerto local desde la subred privada.
