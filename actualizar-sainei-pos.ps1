@@ -30,11 +30,12 @@ if (Test-Path $dataPath) {
 }
 
 $updateSucceeded = $false
+$scheduledTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
+$taskWasRunning = $scheduledTask -and $scheduledTask.State -eq 'Running'
 try {
   
   # Evitar que el inicio automatico vuelva a levantar el servidor mientras se copian archivos.
-  $scheduledTask = Get-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
-  if ($scheduledTask) {
+  if ($taskWasRunning) {
     Stop-ScheduledTask -TaskName $taskName -ErrorAction SilentlyContinue
     Start-Sleep -Seconds 2
   }
@@ -80,7 +81,7 @@ try {
   $updateSucceeded = $true
   Write-Host 'Actualizacion de archivos finalizada. No se realizaron pruebas funcionales.' -ForegroundColor Green
 } finally {
-  if ($scheduledTask) {
+  if ($taskWasRunning) {
     try {
       Start-ScheduledTask -TaskName $taskName
       if (-not $updateSucceeded) {
