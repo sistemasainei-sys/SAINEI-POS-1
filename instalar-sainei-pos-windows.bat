@@ -1,5 +1,5 @@
 @echo off
-setlocal
+setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
 title Instalador SAINEI POS
 echo ==========================================
@@ -47,10 +47,10 @@ if exist "%~dp0descubrir-servidor-sainei.ps1" (
     set /p SAINEI_SERVER_URL=<"%SAINEI_DISCOVERY%"
     if not defined SAINEI_SERVER_URL goto configurar_servidor
     if not exist "%LOCALAPPDATA%\SAINEI-POS" mkdir "%LOCALAPPDATA%\SAINEI-POS"
-    >"%LOCALAPPDATA%\SAINEI-POS\cliente.url" echo %SAINEI_SERVER_URL%
+    >"%LOCALAPPDATA%\SAINEI-POS\cliente.url" echo !SAINEI_SERVER_URL!
     powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$target='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$target;$s.WorkingDirectory='%~dp0';$s.Save()"
     echo.
-    echo SERVIDOR SAINEI POS DETECTADO: %SAINEI_SERVER_URL%
+    echo SERVIDOR SAINEI POS DETECTADO: !SAINEI_SERVER_URL!
     echo Esta computadora quedo configurada como CAJA CLIENTE.
     echo Los datos se guardan unicamente en la computadora principal.
     del "%SAINEI_DISCOVERY%" >nul 2>nul
