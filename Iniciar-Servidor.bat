@@ -3,7 +3,6 @@ setlocal
 cd /d "%~dp0"
 title SAINEI POS - Servidor local
 if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
-set "SAINEI_LOCAL_MODE=1"
 set "SAINEI_DATA=%LOCALAPPDATA%\SAINEI-POS\datos"
 if not exist "%SAINEI_DATA%" mkdir "%SAINEI_DATA%"
 where node >nul 2>&1
