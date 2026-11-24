@@ -97,6 +97,49 @@ async function main() {
   assert.equal(adminLogin.status, 200);
   const adminHeaders = { Authorization: 'Bearer ' + adminLogin.body.token };
 
+  // Alta de producto, ingreso de stock y venta real mediante la API de sincronización.
+  const productId = (await json(base, '/api/ids?kind=prod&n=1', { headers: adminHeaders })).body.start;
+  const stockMoveId = (await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start;
+  const now = new Date().toISOString();
+  const stockIn = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: {
+      products: { up: [{ id: productId, name: 'Producto de prueba', price: 1000, cost: 500, min: 0, type: 'u', stock: 0 }] },
+      moves: { up: [{ id: stockMoveId, pid: productId, qty: 10, date: now, type: 'ingreso', note: 'Carga inicial de prueba' }] }
+    } })
+  });
+  assert.equal(stockIn.status, 200);
+  assert.deepEqual(stockIn.body.rejected || [], [], 'Debe aceptar producto y entrada de stock.');
+  assert.equal(stockIn.body.recs.products.find(p => p.id === productId).stock, 10);
+
+  const saleId = (await json(base, '/api/ids?kind=sale&n=1', { headers: adminHeaders })).body.start;
+  const saleMoveId = (await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start;
+  const sale = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: {
+      sales: { up: [{ id: saleId, date: now, items: [{ id: productId, name: 'Producto de prueba', qty: 2, price: 1000, cost: 500, amount: 2000 }], total: 2000, iva5: 0, iva10: 0, cmv: 1000, method: 'efectivo', discPct: 0 }] },
+      moves: { up: [{ id: saleMoveId, pid: productId, qty: -2, date: now, type: 'venta', note: 'Ticket ' + saleId }] }
+    } })
+  });
+  assert.equal(sale.status, 200);
+  assert.deepEqual(sale.body.rejected || [], [], 'Debe aceptar la venta y su salida de stock como una sola operación.');
+  assert.equal(sale.body.recs.products.find(p => p.id === productId).stock, 8);
+  assert.equal(sale.body.recs.sales.find(x => x.id === saleId).total, 2000);
+
+  // Una venta que supera el stock disponible debe rechazarse completa.
+  const excessiveSaleId = (await json(base, '/api/ids?kind=sale&n=1', { headers: adminHeaders })).body.start;
+  const excessiveMoveId = (await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start;
+  const excessive = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: {
+      sales: { up: [{ id: excessiveSaleId, date: now, items: [{ id: productId, name: 'Producto de prueba', qty: 9, price: 1000, cost: 500, amount: 9000 }], total: 9000, iva5: 0, iva10: 0, cmv: 4500, method: 'efectivo', discPct: 0 }] },
+      moves: { up: [{ id: excessiveMoveId, pid: productId, qty: -9, date: now, type: 'venta', note: 'Ticket ' + excessiveSaleId }] }
+    } })
+  });
+  assert.equal(excessive.status, 200);
+  assert.ok(excessive.body.rejected.some(x => x.coll === 'sales' && x.id === excessiveSaleId), 'Debe rechazar el ticket que excede el stock.');
+  assert.equal(excessive.body.recs.products.find(p => p.id === productId).stock, 8, 'El stock no debe quedar negativo.');
+
   const cashier = await json(base, '/api/users', {
     method: 'POST', headers: adminHeaders,
     body: JSON.stringify({ name: 'Caja prueba', role: 'cajero', pin: '8372' })
@@ -113,6 +156,26 @@ async function main() {
   const backup = await json(base, '/api/backups/make', { method: 'POST', headers: adminHeaders, body: '{}' });
   assert.equal(backup.status, 200);
   assert.ok(fs.existsSync(path.join(dataDir, 'copias', backup.body.name)), 'Debe crear una copia SQLite real.');
+
+  // Borrar el producto y recuperarlo desde la copia para probar restauración real.
+  const deleted = await json(base, '/api/sync', {
+    method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ since: 0, changes: { products: { del: [productId] } } })
+  });
+  assert.equal(deleted.status, 200);
+  const restored = await json(base, '/api/backups/restore', {
+    method: 'POST', headers: adminHeaders, body: JSON.stringify({ name: backup.body.name })
+  });
+  assert.equal(restored.status, 200, 'Debe restaurar la copia SQLite seleccionada.');
+  const adminAfterRestore = await json(base, '/api/login', { method: 'POST', body: JSON.stringify({ userId: setup.body.userId, pin: '5729' }) });
+  assert.equal(adminAfterRestore.status, 200, 'Debe conservar el administrador al restaurar.');
+  const stateAfterRestore = await json(base, '/api/sync', {
+    method: 'POST', headers: { Authorization: 'Bearer ' + adminAfterRestore.body.token },
+    body: JSON.stringify({ since: 0 })
+  });
+  assert.equal(stateAfterRestore.status, 200);
+  assert.equal(stateAfterRestore.body.recs.products.find(p => p.id === productId).stock, 8, 'La restauración debe recuperar el stock correcto.');
+  assert.ok(stateAfterRestore.body.recs.sales.some(x => x.id === saleId), 'La restauración debe recuperar la venta.');
 
   const db = new DatabaseSync(path.join(dataDir, 'sainei.db'));
   const storedId = db.prepare("SELECT v FROM meta WHERE k='installId'").get().v;
@@ -132,7 +195,7 @@ async function main() {
   assert.equal(relogin.status, 200, 'El administrador debe poder volver a iniciar sesión tras reiniciar.');
 
   await stopServer();
-  console.log('OK: licencia obligatoria y firmada, ID independiente persistente, alta de administrador, permisos de cajero, copia SQLite y persistencia tras reinicio.');
+  console.log('OK: licencia obligatoria y firmada, ID independiente, alta de administrador, permisos de cajero, venta/stock, rechazo de sobreventa, copia/restauración SQLite y persistencia tras reinicio.');
 }
 main().catch(async error => {
   console.error(error && error.stack || error);
