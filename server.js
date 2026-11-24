@@ -48,16 +48,13 @@ G27FPmXlmXdyiQdOm+hj4kT11gNIyHCkZ/RklF+EGTPR5jTCnnoR5WegMM6Wh56M
 Vj1lHKEcgIdrkMFwGfI1RbmLYIH2X9JBD59IZicO5x13ywqKC8LTUKMC/JpyjNwM
 hwIDAQAB
 -----END PUBLIC KEY-----`;
-const ENV_INSTALL_ID = String(process.env.SAINEI_INSTALL_ID || '').trim().toUpperCase();
 // ID anterior de SAINEI POS: se acepta su licencia firmada durante la migración.
 const LEGACY_INSTALL_IDS = ['7D217B560F4A5093C640751E'];
-let INSTALL_ID = /^[A-F0-9]{24}$/.test(ENV_INSTALL_ID) ? ENV_INSTALL_ID : getMeta('installId');
+let INSTALL_ID = getMeta('installId');
 if (!INSTALL_ID) INSTALL_ID = crypto.randomBytes(12).toString('hex').toUpperCase();
-// El identificador configurado en Render prevalece sobre SQLite para que no cambie al redeplegar.
+// Cada instalación conserva su propio identificador dentro de su base SQLite local.
 if (getMeta('installId') !== INSTALL_ID) setMeta('installId', INSTALL_ID);
 function licenseState() {
-  // Modo local: la operación no depende de Render ni de activación en línea.
-  if (process.env.SAINEI_LOCAL_MODE === '1') return { active: true, local: true, installId: INSTALL_ID, type: 'local' };
   const raw = getMeta('licenseToken');
   if (!raw) return { active: false, installId: INSTALL_ID };
   try {
