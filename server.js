@@ -75,13 +75,13 @@ let REV = parseInt(getMeta('rev') || '0', 10);
 let EPOCH = getMeta('epoch'); if (!EPOCH) { EPOCH = crypto.randomBytes(6).toString('hex'); setMeta('epoch', EPOCH); }
 function tx(fn) { db.exec('BEGIN IMMEDIATE'); try { const r = fn(); db.exec('COMMIT'); return r; } catch (e) { try { db.exec('ROLLBACK'); } catch (_) {} throw e; } }
 
-const COLLS = { products: 'prod', sales: 'sale', clients: 'client', purchases: 'purch', payments: 'pay', expenses: 'exp', shifts: 'shift', moves: 'move', spay: 'spay', budgets: 'budget', suspendedSales: 'move' };
+const COLLS = { products: 'prod', sales: 'sale', clients: 'client', purchases: 'purch', payments: 'pay', expenses: 'exp', shifts: 'shift', moves: 'move', spay: 'spay', budgets: 'budget', bankEntries: 'bank', suspendedSales: 'move' };
 const ORDER = ['products', 'clients', 'budgets', 'purchases', 'expenses', 'spay', 'shifts', 'sales', 'payments', 'moves', 'suspendedSales'];
 const SING = ['shop', 'scale', 'print', 'scan', 'sec', 'check', 'loyaltyRedemptions', 'promotions'];
 const DELETABLE = { products: 1, clients: 1 };
 const PERM = {
   cajero: { sales: { ins: 1 }, moves: { ins: 1 }, clients: { ins: 1, upd: 1 }, budgets: { ins: 1, upd: 1 }, payments: { ins: 1 }, shifts: { ins: 1, upd: 1 }, suspendedSales: { ins: 1, upd: 1 } },
-  encargado: { products: { ins: 1, upd: 1, del: 1 }, sales: { ins: 1, upd: 1 }, clients: { ins: 1, upd: 1, del: 1 }, budgets: { ins: 1, upd: 1 }, purchases: { ins: 1, upd: 1 }, payments: { ins: 1 }, expenses: { ins: 1, upd: 1 }, shifts: { ins: 1, upd: 1 }, moves: { ins: 1 }, spay: { ins: 1, upd: 1 }, suspendedSales: { ins: 1, upd: 1 } }
+  encargado: { products: { ins: 1, upd: 1, del: 1 }, sales: { ins: 1, upd: 1 }, clients: { ins: 1, upd: 1, del: 1 }, budgets: { ins: 1, upd: 1 }, purchases: { ins: 1, upd: 1 }, payments: { ins: 1 }, expenses: { ins: 1, upd: 1 }, shifts: { ins: 1, upd: 1 }, moves: { ins: 1 }, spay: { ins: 1, upd: 1 }, bankEntries: { ins: 1, upd: 1 }, suspendedSales: { ins: 1, upd: 1 } }
 };
 const round3 = n => Math.round(n * 1000) / 1000;
 const nowIso = () => new Date().toISOString();
@@ -429,6 +429,27 @@ function processSync(user, body) {
                 (shiftId > 0 && user.role !== 'admin' && Number(JSON.parse(shiftRow.j).uid) !== Number(user.uid))) {
               res.rejected.push({ coll, id });
               continue;
+            }
+          }
+          if (coll === 'bankEntries') {
+            const kind = String(rec.kind || ''), dateValue = Date.parse(rec.date), amount = Number(rec.amount);
+            const account = String(rec.account || '').trim(), description = String(rec.description || '').trim();
+            const validStatuses = kind === 'cheque' ? ['emitido','depositado','cobrado','rechazado','anulado'] : ['pendiente','conciliado','anulado'];
+            if (!['movimiento','cheque'].includes(kind) || !Number.isFinite(dateValue) ||
+                !account || account.length > 80 || !description || description.length > 120 ||
+                !Number.isSafeInteger(amount) || amount <= 0 ||
+                !['entrada','salida'].includes(String(rec.direction || '')) ||
+                !validStatuses.includes(String(rec.status || '')) ||
+                (kind === 'cheque' && (!String(rec.checkNo || '').trim() || String(rec.checkNo).length > 40 || !String(rec.payee || '').trim() || String(rec.payee).length > 100 || rec.direction !== 'salida')) ||
+                (kind === 'movimiento' && (String(rec.reference || '').length > 80 || !['entrada','salida'].includes(rec.direction)))) {
+              res.rejected.push({ coll, id }); continue;
+            }
+            if (ex) {
+              const before = Object.assign({}, ex), after = Object.assign({}, rec);
+              delete before.status; delete before.reconciled; delete after.status; delete after.reconciled;
+              if (JSON.stringify(before) !== JSON.stringify(after) || !validStatuses.includes(String(rec.status || ''))) {
+                res.rejected.push({ coll, id }); continue;
+              }
             }
           }
           if (coll === 'spay' && ex) {
