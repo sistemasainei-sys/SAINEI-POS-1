@@ -65,9 +65,8 @@ for (const tab of registered) {
   tab.render(sec);
   if (!sec.innerHTML) throw new Error('El módulo no generó contenido: ' + tab.id);
 }
-const pausedTab = registered.find((x) => x.id === 'ventas-pausadas');
-if (!pausedTab || typeof actions['vs-pausar'] !== 'function' || typeof actions['vs-restaurar'] !== 'function' || typeof actions['vs-eliminar'] !== 'function') {
-  throw new Error('Falta el módulo de ventas pausadas o sus acciones.');
+if (registered.some((x) => x.id === 'ventas-pausadas') || typeof actions['vs-pausar'] === 'function') {
+  throw new Error('El módulo de ventas pausadas debe retirarse del punto de venta.');
 }
 const variantTab = registered.find((x) => x.id === 'variantes');
 if (!variantTab || typeof actions['var-nueva'] !== 'function' || typeof actions['var-guardar'] !== 'function') {
@@ -92,8 +91,8 @@ for (const [label, pattern] of securityChecks) {
   if (!pattern.test(serverSource)) throw new Error("Falta protección del servidor: " + label);
 }
 
-if (!indexSource.includes("'suspendedSales'") || !serverSource.includes("suspendedSales: 'move'") || !serverSource.includes("coll === 'suspendedSales' && user.role === 'cajero'")) {
-  throw new Error('Las ventas pausadas no están incluidas en la sincronización por usuario y sus permisos.');
+if (!indexSource.includes('data-a="newsale"') || !indexSource.includes('function selectSale(id)') || !indexSource.includes("['caja','Punto de venta']") || !indexSource.includes("['caja','Apertura / cierre']")) {
+  throw new Error('Falta el flujo de múltiples tickets dentro de Punto de venta o la nomenclatura de Finanzas.');
 }
 const supplierTab = registered.find((x) => x.id === 'proveedores-hist');
 if (!supplierTab) throw new Error('No se registró la pestaña Proveedores.');
