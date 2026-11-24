@@ -1,5 +1,17 @@
 # SAINEI POS
 
+# Compatibilidad de dispositivos
+
+- **Servidor principal:** Windows 10 actualizado o Windows 11.
+- **Cajas y consultas:** Windows, Mac, iPhone, iPad, Android y tablets mediante navegador moderno.
+- Los dispositivos cliente deben conectarse a la misma red local que la PC servidor e iniciar sesión con su propio usuario.
+- Mac y dispositivos móviles son clientes web en esta versión; el servidor local no se instala en ellos.
+- El acceso desde fuera del comercio requiere HTTPS y acceso remoto seguro; no abrir puertos del router.
+- La interfaz incluye diseño adaptable para pantallas pequeñas. La compatibilidad final debe confirmarse con pruebas en equipos reales.
+
+La matriz completa y los criterios de prueba están en [docs/COMPATIBILIDAD-PLATAFORMAS.md](docs/COMPATIBILIDAD-PLATAFORMAS.md).
+
+
 Sistema de punto de venta web para operar con un servidor central y varias cajas dentro de la misma red.
 
 ## Modalidad local: sin Render ni pago de alojamiento
