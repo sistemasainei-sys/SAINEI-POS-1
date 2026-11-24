@@ -2196,7 +2196,8 @@ function renderFinance(){
 function returnStatsForRange(range){
   var amount=0,cost=0,tax=0,count=0,rows=[];
   state.sales.filter(function(s){return !s.void;}).forEach(function(s){
-    (s.returns||[]).forEach(function(ret){
+    var saved=Array.isArray(s.returns)?s.returns:[];
+    saved.forEach(function(ret){
       if(!inRange(ret.date||s.date,range))return;
       var items=ret.items||[],value=0,returnedCost=0,names=[];
       items.forEach(function(it){
@@ -2210,6 +2211,31 @@ function returnStatsForRange(range){
       tax+=(Number(s.iva5||0)+Number(s.iva10||0))*Math.min(1,value/Math.max(1,Number(s.total)||0));
       rows.push({date:ret.date||s.date,ticket:s.id,names:names.join(', '),method:ret.method==='banco'?'Banco / transferencia':ret.method==='credito'?'Saldo a favor':ret.method==='mixto'?'Mixto':'Efectivo',amount:refund});
     });
+    // Respaldo: si el servidor aceptó la reposición de stock pero no conservó
+    // el arreglo returns del ticket, reconstruir el registro desde los movimientos.
+    if(!saved.length){
+      var prefix='Devolución ticket '+s.id,groups={};
+      (state.moves||[]).filter(function(m){return m.type==='devolucion'&&m.note===prefix;}).forEach(function(m){
+        var key=String(m.date||s.date);if(!groups[key])groups[key]=[];
+        groups[key].push(m);
+      });
+      Object.keys(groups).forEach(function(date){
+        if(!inRange(date,range))return;
+        var value=0,refund=0,returnedCost=0,names=[];
+        groups[date].forEach(function(m){
+          var src=(s.items||[]).filter(function(x){return Number(x.id)===Number(m.pid);})[0];
+          if(!src)return;
+          var qty=Number(m.qty)||0,line=Number(src.amount!=null?src.amount:Number(src.price||0)*Number(src.qty||0));
+          var part=Math.round(line/Math.max(Number(src.qty)||0,0.000001)*qty*(1-Math.max(0,Math.min(100,Number(s.discPct||0)))/100));
+          refund+=part;value+=Number(src.price||0)*qty;returnedCost+=Number(src.cost||0)*qty;
+          names.push(esc(src.name)+' × '+nf3.format(qty));
+        });
+        if(!names.length)return;
+        amount+=refund;cost+=returnedCost;count++;
+        tax+=(Number(s.iva5||0)+Number(s.iva10||0))*Math.min(1,value/Math.max(1,Number(s.total)||0));
+        rows.push({date:date,ticket:s.id,names:names.join(', '),method:'Registrada por movimiento de stock',amount:refund});
+      });
+    }
   });
   rows.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
   return {amount:amount,cost:cost,tax:tax,count:count,rows:rows};
