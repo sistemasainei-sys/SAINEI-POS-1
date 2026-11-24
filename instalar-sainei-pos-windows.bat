@@ -46,6 +46,10 @@ echo.
 echo Datos permanentes: %SAINEI_DATA%
 echo Configurando inicio automatico del servidor...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0configurar-inicio-automatico-sainei.ps1"
+echo Configurando firewall para permitir cajas en la red privada local...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0configurar-firewall-elevado.ps1"
+if errorlevel 1 echo AVISO: No se pudo configurar el firewall. Ejecuta configurar-firewall-sainei.ps1 como administrador para habilitar las cajas.
+
 if errorlevel 1 (
   echo No se pudo configurar el inicio automatico.
   echo Puedes iniciar manualmente con iniciar-sainei-pos-windows.bat.
