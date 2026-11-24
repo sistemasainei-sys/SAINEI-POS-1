@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - sainei-pos-finalizacion-independiente
+      - sainei-pos-finalizacion-segura
   pull_request:
     branches:
       - main
@@ -32,3 +33,5 @@ jobs:
         run: node scripts/test-windows-launchers.js
       - name: Verify license and user data safety
         run: node scripts/test-license-data-safety.js
+      - name: Test local server license and persistence
+        run: node scripts/test-server-local.js

@@ -5,6 +5,12 @@ const assert = require('node:assert/strict');
 const server = fs.readFileSync('server.js', 'utf8');
 const index = fs.readFileSync('index.html', 'utf8');
 
+// Cada comercio debe activar su propia licencia firmada; el modo local no puede saltarse el control.
+assert.doesNotMatch(server, /SAINEI_LOCAL_MODE/);
+assert.doesNotMatch(server, /SAINEI_INSTALL_ID/);
+assert.match(server, /let INSTALL_ID = getMeta\('installId'\)/);
+assert.match(server, /crypto\.randomBytes\(12\)\.toString\('hex'\)\.toUpperCase\(\)/);
+
 // Activar una licencia solo guarda el token; no debe recrear, borrar ni resetear usuarios/datos.
 const activation = server.slice(server.indexOf("if (p === '/api/license/activate'"), server.indexOf("if (p === '/api/info'"));
 assert.match(activation, /setMeta\('licenseToken', token\)/);
@@ -29,7 +35,7 @@ assert.match(sync, /if\(e&&e\.status===401\)\{sessionLost\(\)/);
 
 // El principal y encargado pueden cerrar turnos ajenos; el cajero sigue limitado a su propio turno.
 assert.match(server, /encargado:\s*\{[^\n]*shifts:\s*\{[^}]*upd:\s*1/);
-assert.match(server, /if \(coll === 'shifts' && user\.role === 'cajero'\)/);
+assert.match(server, /if \(coll === 'shifts' && user\.role !== 'admin'\)/);
 assert.match(index, /function closeShiftModal\(id\)/);
 assert.match(index, /function doCloseShift\(\)\s*\{\s*var sh=closingShiftTarget\?/);
 assert.match(index, /closeothershift:function\(el,id\)\{closeShiftModal\(id\);\}/);
@@ -44,7 +50,7 @@ assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\)/);
 assert.match(server, /if \(!active \|\| pin\) sessions\.delete\(t\);\s*else \{ s\.role = role; s\.name = name; \}/);
 
 // El cambio de PIN propio conserva la sesión actual y revoca las sesiones hermanas.
-const mypin = server.slice(server.indexOf("if (p === '/api/mypin'"), server.indexOf("if (!admin)"));
+const mypin = server.slice(server.indexOf("if (p === '/api/mypin'"), server.indexOf("if (p === '/api/users'"));
 assert.match(mypin, /session\.uid === me\.uid && token !== me\.token\) sessions\.delete\(token\)/);
 
 // Una venta nueva debe incluir sus salidas de inventario completas; si no, se rechaza el ticket y sus movimientos.

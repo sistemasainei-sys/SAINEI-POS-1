@@ -14,16 +14,25 @@ for (const file of files) {
 }
 const state = {
   clients: [{id:3,name:'Cliente prueba',phone:'0981'}], sales: [{id:9,clientId:3,total:25000,items:[],returns:[{amount:5000}]}], payments: [], expenses: [], spay: [{ id: 1, purchId: 7, amount: 20, method: 'banco' }], shifts: [],
-  products: [], moves: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
+  products: [], moves: [], suspendedSales: [], promotions: [], loyaltyRedemptions: [], purchases: [{ id: 7, supplier: 'Proveedor de prueba', total: 100, date: new Date().toISOString(), due: null, docNo: 'F-001', items: [] }], budgets: [], users: [],
 };
 const api = {
   state: () => state,
   user: () => ({ id: 1, role: 'admin' }),
+  isAdmin: () => true,
+  isServer: () => false,
+  request: () => Promise.resolve({ rows: [] }),
+  maxDiscount: () => 10,
+  applyDiscount: () => true,
+  cartSnapshot: () => ({ items: [], disc: 0, clientId: 0, pendingBudget: 0 }),
+  clearCart: () => {},
+  restoreCart: () => true,
   addAction(name, fn) {
     if (!/^[a-z][a-z0-9_-]{1,40}$/i.test(name) || typeof fn !== 'function') throw new Error('Acción inválida: ' + name);
     actions[name] = fn;
   },
   openModal(html) { openedModal = html; },
+  closeModal() {},
   addTab(spec) {
     if (!spec || !/^[a-z][a-z0-9_-]{1,30}$/i.test(spec.id)) throw new Error('ID de pestaña inválido');
     if (!spec.label || typeof spec.render !== 'function') throw new Error('Definición de pestaña incompleta: ' + spec.id);
@@ -32,6 +41,7 @@ const api = {
   },
   escape: (v) => String(v).replace(/[&<>"']/g, ''),
   money: (v) => 'Gs. ' + v,
+  number: (v) => Number(v) || 0,
   round3: (v) => Math.round(v * 1000) / 1000,
   newId: () => 1,
   log: () => {},
@@ -54,6 +64,36 @@ for (const tab of registered) {
   };
   tab.render(sec);
   if (!sec.innerHTML) throw new Error('El módulo no generó contenido: ' + tab.id);
+}
+const pausedTab = registered.find((x) => x.id === 'ventas-pausadas');
+if (!pausedTab || typeof actions['vs-pausar'] !== 'function' || typeof actions['vs-restaurar'] !== 'function' || typeof actions['vs-eliminar'] !== 'function') {
+  throw new Error('Falta el módulo de ventas pausadas o sus acciones.');
+}
+const variantTab = registered.find((x) => x.id === 'variantes');
+if (!variantTab || typeof actions['var-nueva'] !== 'function' || typeof actions['var-guardar'] !== 'function') {
+  throw new Error('Falta el módulo de variantes o sus acciones.');
+}
+const promoTab = registered.find((x) => x.id === 'promociones');
+if (!promoTab || typeof actions['promo-nueva'] !== 'function' || typeof actions['promo-aplicar'] !== 'function') {
+  throw new Error('Falta el módulo de promociones o sus acciones.');
+}
+const indexSource = fs.readFileSync(path.join(process.cwd(), 'index.html'), 'utf8');
+const serverSource = fs.readFileSync(path.join(process.cwd(), 'server.js'), 'utf8');
+const securityChecks = [
+  ["rechazo de origen cruzado", /new URL\(origin\)\.host !== req\.headers\.host/],
+  ["autenticación antes de sincronizar", /const me = auth\(req\);[\s\S]*?if \(!me\) return fail\(res, 401/],
+  ["transacción SQLite para sincronización", /function processSync\(user, body\)[\s\S]*?tx\(\(\) => \{/],
+  ["validación de stock no negativo", /nextStock < 0/],
+  ["un solo turno abierto por cajero", /anotherOpenShift[\s\S]*?\|\| anotherOpenShift/],
+  ["ventas inmutables", /Las ventas existentes son inmutables/],
+  ["importe y medio de devolución validados por servidor", /ret\.method[\s\S]*?expectedAmount/],
+];
+for (const [label, pattern] of securityChecks) {
+  if (!pattern.test(serverSource)) throw new Error("Falta protección del servidor: " + label);
+}
+
+if (!indexSource.includes("'suspendedSales'") || !serverSource.includes("suspendedSales: 'move'") || !serverSource.includes("coll === 'suspendedSales' && user.role === 'cajero'")) {
+  throw new Error('Las ventas pausadas no están incluidas en la sincronización por usuario y sus permisos.');
 }
 const supplierTab = registered.find((x) => x.id === 'proveedores-hist');
 if (!supplierTab) throw new Error('No se registró la pestaña Proveedores.');
