@@ -207,3 +207,18 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 
 - [x] En la sincronización del servidor, un usuario no administrador no puede abrir un segundo turno mientras ya tenga otro turno abierto. La comprobación ocurre dentro de la transacción de sincronización, para reducir aperturas duplicadas por solicitudes simultáneas.
 - [ ] Falta validar con dos cajas y dos sesiones reales; no se ejecutaron pruebas funcionales.
+
+
+### Libro bancario y seguimiento de cheques — implementación inicial
+
+- [x] Agregar una colección sincronizada para movimientos bancarios y cheques, separada de ventas, gastos y pagos a proveedores.
+- [x] Registrar ingresos/egresos bancarios con banco/cuenta, fecha, concepto, referencia e importe.
+- [x] Registrar cheques emitidos con número, beneficiario, cuenta e importe.
+- [x] Permitir seguimiento de cheques: emitido, depositado, cobrado, rechazado o anulado.
+- [x] Permitir marcar movimientos bancarios como conciliados o anulados.
+- [x] Restringir la consulta y edición a administrador/encargado; validar en servidor importes, fechas, campos y cambios de estado sin permitir alterar importes históricos.
+- [x] Incluir la colección en sincronización y reservas de identificadores.
+- [ ] Pruebas funcionales con movimientos y cheques de prueba en la demo, y revisión de sincronización entre dos sesiones.
+- [ ] Conciliación contra extracto real y validación contable con el comercio antes de uso operativo.
+
+**Límite:** este módulo es un libro de control manual. No se conecta a bancos ni confirma el cobro de un cheque automáticamente.
