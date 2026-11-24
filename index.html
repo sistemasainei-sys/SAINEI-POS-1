@@ -570,6 +570,29 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
  .sainei-footer .sf-info,.sainei-footer .sf-contact{align-items:center}
 }
 
+/* Ajuste móvil: navegación inferior sin tapar la caja ni los controles */
+@media(max-width:900px){
+ .tabs{
+  position:fixed;top:auto;left:0;right:0;bottom:0;z-index:60;
+  width:100%;max-width:100%;height:auto;max-height:84px;
+  margin:0;padding:7px 8px calc(7px + env(safe-area-inset-bottom,0px));
+  display:flex;flex-direction:row;align-items:center;justify-content:flex-start;
+  gap:4px;overflow-x:auto;overflow-y:hidden;
+  background:#f28c28;box-shadow:0 -5px 18px rgba(110,62,12,.18);
+  border-top:1px solid rgba(255,255,255,.28);
+ }
+ .tab{flex:0 0 auto;width:auto;min-width:max-content;min-height:42px;
+  padding:8px 10px;font-size:12px;gap:3px;white-space:nowrap}
+ main{padding-bottom:calc(112px + env(safe-area-inset-bottom,0px))}
+ .sainei-footer{display:none}
+ body{padding-bottom:0}
+}
+@media(max-width:480px){
+ .tabs{max-height:78px;padding-left:6px;padding-right:6px}
+ .tab{min-height:40px;padding:7px 9px;font-size:11px}
+ main{padding-left:10px;padding-right:10px;padding-bottom:calc(104px + env(safe-area-inset-bottom,0px))}
+}
+
 </style>
 
 </head>
