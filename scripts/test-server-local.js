@@ -110,6 +110,17 @@ async function main() {
   const deniedUsers = await json(base, '/api/users', { headers: cashierHeaders });
   assert.equal(deniedUsers.status, 403, 'El cajero no debe administrar usuarios.');
 
+  // Verificar que las ventas abiertas quedan guardadas en SQLite por usuario.
+  const pendingPayload = { salesCarts: [{ id: 7, cart: [{ id: 123, qty: 2, price: 18000, k: 1 }], disc: 5, clientId: 0, pendingBudget: 0 }], activeSale: 7, salesSeq: 8 };
+  const pendingWrite = await json(base, '/api/open-sales', { method: 'PUT', headers: adminHeaders, body: JSON.stringify(pendingPayload) });
+  assert.equal(pendingWrite.status, 200);
+  const pendingRead = await json(base, '/api/open-sales', { headers: adminHeaders });
+  assert.equal(pendingRead.status, 200);
+  assert.equal(pendingRead.body.salesCarts[0].cart[0].price, 18000);
+  assert.equal(pendingRead.body.activeSale, 7);
+  const cashierPending = await json(base, '/api/open-sales', { headers: cashierHeaders });
+  assert.deepEqual(cashierPending.body.salesCarts, []);
+
   // Dos administradores con una revisión antigua no deben sobrescribir configuración más reciente.
   const configFirst = await json(base, '/api/sync', {
     method: 'POST', headers: adminHeaders,
