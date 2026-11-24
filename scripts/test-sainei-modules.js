@@ -87,6 +87,9 @@ const securityChecks = [
   ["un solo turno abierto por cajero", /anotherOpenShift[\s\S]*?\|\| anotherOpenShift/],
   ["ventas inmutables", /Las ventas existentes son inmutables/],
   ["importe y medio de devolución validados por servidor", /ret\.method[\s\S]*?expectedAmount/],
+  ["distribución contable de devoluciones", /cashPart \+ bankPart \+ creditPart !== Number\(ret\.amount\)/],
+  ["límite de saldo a favor por crédito original", /creditedTotal > originalCredit/],
+  ["cuentas por cobrar solo descuentan crédito aplicado", /Number\(r\.creditAmount\)\|\|0/],
 ];
 for (const [label, pattern] of securityChecks) {
   if (!pattern.test(serverSource)) throw new Error("Falta protección del servidor: " + label);
