@@ -19,9 +19,13 @@ const clientLauncher = read('2-Abrir-Caja.bat');
 const firewall = read('configurar-firewall-sainei.ps1');
 const updaterBat = read('ACTUALIZAR-SAINEl-POS.bat');
 const updater = read('actualizar-sainei-pos.ps1');
+const lanConnector = read('Conectar-desde-otra-PC.bat');
 
 if (!mainLauncher.includes('instalar-sainei-pos-windows.bat')) {
   throw new Error('1-INSTALAR.bat debe delegar al instalador principal.');
+}
+if (!lanConnector.includes('instalar-sainei-pos-windows.bat') || lanConnector.includes('set /p IP=')) {
+  throw new Error('El acceso para conectar otra PC debe usar detección automática y no solicitar una IP manual.');
 }
 if (!installer.includes('configurar-inicio-automatico-sainei.ps1') || !installer.includes('configurar-firewall-elevado.ps1')) {
   throw new Error('El instalador debe configurar el inicio automatico.');
