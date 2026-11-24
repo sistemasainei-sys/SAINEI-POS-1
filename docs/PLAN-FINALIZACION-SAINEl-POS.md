@@ -7,15 +7,16 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 - [x] Base SQLite local en la computadora principal de cada comercio; no requiere Render ni base de datos en la nube para guardar ventas.
 - [x] Las cajas adicionales se conectan a la computadora principal por la red local y usan la misma base del comercio.
 - [x] La carpeta de datos se mantiene separada de los archivos del programa para protegerla durante actualizaciones.
-- [ ] Completar el paquete de instalación y el procedimiento de actualización sin tocar la base de datos.
+- [x] Unificar el instalador Windows (`1-INSTALAR.bat`), inicio manual y automático, acceso directo y carpeta de datos separada. La actualización conserva los datos si no se reemplaza `%LOCALAPPDATA%\\SAINEI-POS\\datos`.
+- [ ] Completar y documentar un actualizador automático de archivos del programa que realice copia previa y excluya siempre la carpeta de datos.
 - [ ] Verificar copia externa y restauración cuando el usuario autorice sus pruebas.
 
-**Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet después de activar la licencia. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
+**Decisión de alcance:** Render no es requisito para vender ni operar la versión local. Dentro del comercio, las operaciones necesitan la red local y la computadora principal encendida, pero no internet. El modo local actual no solicita activación. Si se pierde la conexión con la computadora principal, las cajas adicionales no pueden confirmar operaciones. No se implementará modo offline ni sincronización posterior.
 
 ## Prioridad 1 — Operación local y respaldo de datos
 
 - [ ] Verificar restauración y copias antes/después de cada actualización. La guía de riesgos está en `docs/REVISION-SEGURIDAD-OPERACION.md` y el procedimiento para el administrador en `docs/PROCEDIMIENTO-RESPALDO-RESTAURACION.md`.
-- [ ] Mantener Render fuera del camino crítico de instalación, licencias y almacenamiento local.
+- [x] Mantener Render fuera del camino crítico de instalación, licencias y almacenamiento local en la modalidad local actual.
 
 ## Prioridad 2 — Seguridad de conexión y acceso
 
@@ -50,10 +51,10 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 
 ## Prioridad 5 — Compatibilidad y publicación
 
-- [ ] Prueba de instalación limpia y actualización en Windows 10/11.
+- [ ] Prueba de instalación limpia y actualización en Windows 10/11 (la realizará el usuario en su computadora).
 - [ ] Pruebas de navegador en PC, tablet, Android y Safari iPhone.
 - [ ] Pruebas de impresión y exportación en los dispositivos admitidos.
-- [ ] Ensayo de backup/restore en una copia de prueba; nunca sobre datos de clientes.
+- [ ] Ensayo de backup/restore en una copia de prueba; nunca sobre datos de clientes (lo realizará el usuario en su computadora).
 - [ ] Publicación solo después de aprobación explícita del usuario.
 
 ## Fuera del alcance actual (no implementar sin nueva decisión)
@@ -177,3 +178,14 @@ No se ejecutaron pruebas. Cambio incorporado únicamente en la rama de finalizac
 - [x] El instalador espera disponibilidad del puerto local y abre el navegador cuando el servidor responde.
 - [x] Agregar registro de errores de inicio del proceso en la carpeta de datos.
 - [ ] Verificar la tarea programada y el reinicio real en una PC Windows del comercio. No se ejecutaron pruebas.
+
+
+### Estado actualizado del paquete local — 23/11/2026
+
+- [x] El instalador principal `1-INSTALAR.bat` delega al instalador guiado.
+- [x] El instalador valida Node.js 22.13+, intenta instalar Node.js LTS con winget, crea la carpeta permanente de datos, registra el inicio automático y genera el acceso directo del Escritorio.
+- [x] El inicio manual y el automático configuran `SAINEI_LOCAL_MODE=1` y utilizan `%LOCALAPPDATA%\\SAINEI-POS\\datos`.
+- [x] Se actualizó la verificación estática del paquete para comprobar que los dos caminos de inicio usan la misma ruta y que el instalador no borra los datos.
+- [ ] No se ejecutaron pruebas funcionales ni de instalación. La validación real queda para el usuario.
+- [ ] No hay un instalador MSI/EXE firmado; la distribución inicial es la carpeta completa del proyecto con sus archivos BAT/PowerShell.
+- [ ] No existe emisión comercial offline de claves por cliente. El modo local está diseñado actualmente sin activación. No se incluye una clave privada en el repositorio.
