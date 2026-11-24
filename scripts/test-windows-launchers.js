@@ -50,8 +50,11 @@ if (!updater.includes('datos-antes-de-actualizar-') || !updater.includes('sainei
 if (!updater.includes("'datos'") || !updater.includes("'.env'") || !updater.includes("'.env.local'")) {
   throw new Error('El actualizador debe excluir datos y configuraciones locales.');
 }
-if (!updater.includes('Start-ScheduledTask') || !updater.includes('updateSucceeded')) {
+if (!updater.includes('Start-ScheduledTask') || !updater.includes('Stop-ScheduledTask') || !updater.includes('updateSucceeded')) {
   throw new Error('El actualizador debe intentar reactivar el servidor si la actualizacion falla.');
+}
+if (!updater.includes('sourceFull.StartsWith($targetFull') || !updater.includes('targetFull.StartsWith($sourceFull')) {
+  throw new Error('El actualizador debe impedir carpetas de origen y destino anidadas.');
 }
 if (!server.includes("process.env.SAINEI_LOCAL_MODE === '1'")) {
   throw new Error('El servidor debe reconocer la modalidad local configurada por los lanzadores.');
