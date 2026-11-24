@@ -12,7 +12,9 @@ const root = fs.mkdtempSync(path.join(os.tmpdir(), 'sainei-pos-api-'));
 const dataDir = path.join(root, 'datos-comercio');
 const sourceRoot = process.cwd();
 let child;
+let peerChild;
 let output = '';
+let peerOutput = '';
 
 function sleep(ms) { return new Promise(resolve => setTimeout(resolve, ms)); }
 async function freePort() {
@@ -37,6 +39,32 @@ async function startServer(port) {
     await sleep(100);
   }
   throw new Error('El servidor no respondió a tiempo:\n' + output);
+}
+async function startPeerServer(port) {
+  peerChild = spawn(process.execPath, [path.join(root, 'server.js'), '--port=' + port, '--data=' + dataDir], {
+    cwd: root,
+    env: { ...process.env, SAINEI_LOCAL_MODE: '1', SAINEI_INSTALL_ID: 'AAAAAAAAAAAAAAAAAAAAAAAA' },
+    stdio: ['ignore', 'pipe', 'pipe']
+  });
+  peerChild.stdout.on('data', b => { peerOutput += b.toString(); });
+  peerChild.stderr.on('data', b => { peerOutput += b.toString(); });
+  const base = 'http://127.0.0.1:' + port;
+  for (let i = 0; i < 100; i++) {
+    if (peerChild.exitCode !== null || peerChild.signalCode !== null) throw new Error('El segundo servidor terminó al iniciar:\n' + peerOutput);
+    try { const r = await fetch(base + '/api/ping'); if (r.ok) return base; } catch (_) {}
+    await sleep(100);
+  }
+  throw new Error('El segundo servidor no respondió a tiempo:\n' + peerOutput);
+}
+async function stopPeerServer() {
+  if (!peerChild || peerChild.exitCode !== null || peerChild.signalCode !== null) return;
+  const current = peerChild;
+  current.kill('SIGTERM');
+  await Promise.race([
+    new Promise(resolve => current.once('exit', resolve)),
+    sleep(5000).then(() => { if (current.exitCode === null && current.signalCode === null) current.kill('SIGKILL'); })
+  ]);
+  peerChild = null;
 }
 async function stopServer() {
   if (!child || child.exitCode !== null) return;
@@ -126,6 +154,11 @@ async function main() {
   assert.equal(sale.body.recs.products.find(p => p.id === productId).stock, 8);
   assert.equal(sale.body.recs.sales.find(x => x.id === saleId).total, 2000);
 
+  // Dos procesos independientes comparten la misma SQLite, como dos cajas conectadas por LAN.
+  const peerBase = await startPeerServer(await freePort());
+  const peerLogin = await json(peerBase, '/api/login', { method: 'POST', body: JSON.stringify({ userId: setup.body.userId, pin: '5729' }) });
+  assert.equal(peerLogin.status, 200, 'La segunda caja debe autenticarse contra la misma base local.');
+  const peerHeaders = { Authorization: 'Bearer ' + peerLogin.body.token };
   // Dos cajas venden simultáneamente las últimas unidades: solo una venta puede confirmar.
   const concurrentSaleIds = [];
   const concurrentMoveIds = [];
@@ -133,8 +166,8 @@ async function main() {
     concurrentSaleIds.push((await json(base, '/api/ids?kind=sale&n=1', { headers: adminHeaders })).body.start);
     concurrentMoveIds.push((await json(base, '/api/ids?kind=move&n=1', { headers: adminHeaders })).body.start);
   }
-  const concurrentRequests = concurrentSaleIds.map((id, i) => json(base, '/api/sync', {
-    method: 'POST', headers: adminHeaders,
+  const concurrentRequests = concurrentSaleIds.map((id, i) => json(i === 0 ? base : peerBase, '/api/sync', {
+    method: 'POST', headers: i === 0 ? adminHeaders : peerHeaders,
     body: JSON.stringify({ since: 0, changes: {
       sales: { up: [{ id, date: now, items: [{ id: productId, name: 'Producto de prueba', qty: 5, price: 1000, cost: 500, amount: 5000 }], total: 5000, iva5: 0, iva10: 0, cmv: 2500, method: 'efectivo', discPct: 0 }] },
       moves: { up: [{ id: concurrentMoveIds[i], pid: productId, qty: -5, date: now, type: 'venta', note: 'Ticket ' + id }] }
@@ -150,6 +183,8 @@ async function main() {
   assert.equal(concurrentState.body.recs.products.find(p => p.id === productId).stock, 3);
   const acceptedConcurrentId = concurrentSaleIds.find(id => concurrentState.body.recs.sales.some(x => x.id === id));
   assert.ok(acceptedConcurrentId, 'La venta aceptada debe quedar registrada.');
+
+  await stopPeerServer();
 
   // Una devolución parcial repone stock; una devolución que supera lo vendido se rechaza.
   const originalSale = sale.body.recs.sales.find(x => x.id === saleId);
@@ -350,6 +385,7 @@ main().catch(async error => {
   console.error(output);
   process.exitCode = 1;
 }).finally(async () => {
+  await stopPeerServer();
   await stopServer();
   try { fs.rmSync(root, { recursive: true, force: true }); } catch (_) {}
 });
