@@ -14,6 +14,8 @@ const scheduled = read('configurar-inicio-automatico-sainei.ps1');
 const firewallElevated = read('configurar-firewall-elevado.ps1');
 const vbs = read('servidor-oculto.vbs');
 const server = read('server.js');
+const updaterBat = read('ACTUALIZAR-SAINEl-POS.bat');
+const updater = read('actualizar-sainei-pos.ps1');
 
 if (!mainLauncher.includes('instalar-sainei-pos-windows.bat')) {
   throw new Error('1-INSTALAR.bat debe delegar al instalador principal.');
@@ -39,9 +41,21 @@ if (!scheduled.includes('ejecutar-servidor-sainei.ps1') || !scheduled.includes('
 if (!vbs.includes('ejecutar-servidor-sainei.ps1') && !vbs.includes('Iniciar-Servidor.bat')) {
   throw new Error('El iniciador oculto debe delegar a un lanzador existente.');
 }
+if (!updaterBat.includes('actualizar-sainei-pos.ps1') || !updaterBat.includes('Source') || !updaterBat.includes('Target')) {
+  throw new Error('El acceso de actualizacion debe solicitar la carpeta de origen y delegar al actualizador PowerShell.');
+}
+if (!updater.includes('datos-antes-de-actualizar-') || !updater.includes('sainei.db') || !updater.includes('robocopy.exe')) {
+  throw new Error('El actualizador debe respaldar la base y copiar archivos del programa.');
+}
+if (!updater.includes("'datos'") || !updater.includes("'.env'") || !updater.includes("'.env.local'")) {
+  throw new Error('El actualizador debe excluir datos y configuraciones locales.');
+}
+if (!updater.includes('Start-ScheduledTask') || !updater.includes('updateSucceeded')) {
+  throw new Error('El actualizador debe intentar reactivar el servidor si la actualizacion falla.');
+}
 if (!server.includes("process.env.SAINEI_LOCAL_MODE === '1'")) {
   throw new Error('El servidor debe reconocer la modalidad local configurada por los lanzadores.');
 }
 for (const file of ['2-Abrir-Caja.bat', 'Conectar-desde-otra-PC.bat', 'respaldar-sainei-pos-windows.bat']) read(file);
 
-console.log('OK: estructura estatica de instalacion, inicio local y conservacion de datos.');
+console.log('OK: estructura estatica de instalacion, inicio local, actualizacion y conservacion de datos.');
