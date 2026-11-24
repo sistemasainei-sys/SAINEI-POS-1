@@ -92,6 +92,7 @@ endlocal
 exit /b 0
 
 :mantener_cliente
+if not defined SAINEI_SERVER_URL set /p SAINEI_SERVER_URL=<"%LOCALAPPDATA%\SAINEI-POS\cliente.url"
 powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$target='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$target;$s.WorkingDirectory='%~dp0';$s.Save()"
 echo.
 echo SERVIDOR SAINEI POS DETECTADO: !SAINEI_SERVER_URL!
