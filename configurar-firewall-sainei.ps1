@@ -10,6 +10,10 @@ try {
     -Profile Private -RemoteAddress LocalSubnet `
     -Description 'Permite SAINEI POS solo desde equipos de la red privada local.' | Out-Null
   Write-Host 'Regla creada: TCP 8080 solo desde la subred local y perfil Privado.' -ForegroundColor Green
+  New-NetFirewallRule -DisplayName 'SAINEI POS - Descubrimiento LAN' `
+    -Direction Inbound -Action Allow -Protocol UDP -LocalPort 45808 `
+    -Profile Private -RemoteAddress LocalSubnet `
+    -Description 'Permite que las cajas encuentren automaticamente el servidor SAINEI POS en la red privada.' | Out-Null
   Write-Host 'No habilita acceso publico ni reenvio de puertos del router.'
   Write-Host 'Asegurate de que Windows identifique la red del comercio como Privada.'
 } catch {
