@@ -13,7 +13,7 @@ window.SAINEI_POS_MODULES.push({init:function(api){
   var pending=checks.filter(function(x){return ['emitido','depositado'].indexOf(x.status)>=0;}).reduce(function(t,x){return t+Number(x.amount||0);},0);
   sec.innerHTML='<div class="card" style="padding:16px;margin:12px 0"><h2>Bancos y cheques</h2><p class="muted">Libro interno de movimientos y seguimiento de cheques. Registrá los movimientos según el extracto bancario; no se conecta automáticamente con el banco.</p><div class="tiles">'+tile('Movimientos',bank.length)+tile('Saldo neto registrado',money(balance))+tile('Cheques pendientes',money(pending))+'</div><div class="actions"><button class="btn primary" data-bank="new-move">Registrar movimiento</button><button class="btn" data-bank="new-check">Registrar cheque</button><button class="btn" data-bank="csv">Exportar CSV</button></div></div><div class="card" style="padding:14px;margin:12px 0"><h3>Movimientos bancarios</h3>'+table(bank,false)+'</div><div class="card" style="padding:14px;margin:12px 0"><h3>Cheques</h3>'+table(checks,true)+'</div>';
   sec.querySelectorAll('[data-bank]').forEach(function(b){b.addEventListener('click',function(){var a=b.dataset.bank;if(a==='new-move')form(sec,'movimiento');if(a==='new-check')form(sec,'cheque');if(a==='csv')csv();});});
-  sec.querySelectorAll('[data-bank-status]').forEach(function(b){b.addEventListener('click',function(){status(Number(b.dataset.id),b.dataset.bankStatus);});});
+  sec.querySelectorAll('[data-bank-status]').forEach(function(b){b.addEventListener('change',function(){status(Number(b.dataset.id),b.value);});});
  }
  function tile(l,v){return '<div class="tile"><div class="muted">'+esc(l)+'</div><strong>'+esc(v)+'</strong></div>';}
  function table(a,isCheck){
@@ -36,10 +36,10 @@ window.SAINEI_POS_MODULES.push({init:function(api){
   };
  }
  function status(id,next){
-  var s=api.state(),x=(s.bankEntries||[]).filter(function(z){return Number(z.id)===id&&z.kind==='cheque';})[0];if(!x)return;
+  var s=api.state(),x=(s.bankEntries||[]).filter(function(z){return Number(z.id)===id;})[0];if(!x)return;
   var prev=x.status;var allowed=x.kind==='cheque'?['emitido','depositado','cobrado','rechazado','anulado']:['pendiente','conciliado','anulado'];if(allowed.indexOf(next)<0)return;
   x.status=next;x.reconciled=next==='conciliado'||next==='cobrado';
-  Promise.resolve(api.save()).then(function(ok){if(ok===false){x.status=prev;return;}api.refresh();api.toast('Estado del cheque actualizado.');}).catch(function(){x.status=prev;});
+  Promise.resolve(api.save()).then(function(ok){if(ok===false){x.status=prev;return;}api.refresh();api.toast(x.kind==='cheque'?'Estado del cheque actualizado.':'Movimiento conciliado.');}).catch(function(){x.status=prev;});
  }
  function date(v){var d=new Date(v);return isNaN(d)?'—':d.toLocaleDateString('es-PY');}
  function csv(){
