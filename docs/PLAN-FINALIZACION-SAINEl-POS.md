@@ -6,6 +6,8 @@ Este plan pertenece a la rama de desarrollo. No autoriza despliegues, merges a m
 
 - [x] Base SQLite local en la computadora principal de cada comercio; no requiere Render ni base de datos en la nube para guardar ventas.
 - [x] Las cajas adicionales se conectan a la computadora principal por la red local y usan la misma base del comercio.
+- [x] Descubrimiento automático del servidor por UDP en la LAN y detección del rol servidor/caja cliente durante la instalación Windows; el cliente conserva la dirección y vuelve a descubrir si cambia.
+- [ ] Validar en dos o más PCs Windows reales que la detección funcione con el firewall, Wi-Fi/cable y reinicio del servidor.
 - [x] La carpeta de datos se mantiene separada de los archivos del programa para protegerla durante actualizaciones.
 - [x] Unificar el instalador Windows (`1-INSTALAR.bat`), inicio manual y automático, acceso directo y carpeta de datos separada. La actualización conserva los datos si no se reemplaza `%LOCALAPPDATA%\\SAINEI-POS\\datos`.
 - [x] Incorporar actualizador guiado desde carpeta extraída: detiene el servidor, guarda copia completa de los datos en `actualizaciones` y excluye datos, repositorio, dependencias y configuración local al copiar el programa. Falta que el usuario lo verifique en su PC.
