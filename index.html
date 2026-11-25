@@ -1874,7 +1874,9 @@ function voidSale(id){
 /* ---------- Productos ---------- */
 function renderSeg(tab){
   var el=$('#seg-'+tab);if(!el)return;
-  el.innerHTML=SUBS[tab].map(function(s){return '<button class="chip" data-a="sub" data-t="'+tab+'" data-v="'+s[0]+'" aria-pressed="'+(ui.sub[tab]===s[0])+'">'+s[1]+'</button>';}).join('');
+  var subs=SUBS[tab].filter(function(s){return !(tab==='finanzas'&&s[0]==='bancos'&&!userCan('bankEntries','view'));});
+  if(tab==='finanzas'&&ui.sub.finanzas==='bancos'&&!userCan('bankEntries','view'))ui.sub.finanzas='caja';
+  el.innerHTML=subs.map(function(s){return '<button class="chip" data-a="sub" data-t="'+tab+'" data-v="'+s[0]+'" aria-pressed="'+(ui.sub[tab]===s[0])+'">'+s[1]+'</button>';}).join('');
   document.querySelectorAll('#v-'+tab+' [data-sub]').forEach(function(d){d.hidden=d.dataset.sub!==ui.sub[tab];});
 }
 function ivaTxt(p){return p.iva===0?'Exento':p.iva+'%';}
@@ -2330,7 +2332,7 @@ function renderBankEntries(){
   var rows=(state.bankEntries||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
   var incoming=rows.filter(function(x){return x.kind==='movimiento'&&x.direction==='entrada'&&x.status!=='anulado';}).reduce(function(a,x){return a+x.amount;},0);
   var outgoing=rows.filter(function(x){return (x.kind==='movimiento'&&x.direction==='salida'||x.kind==='cheque'&&x.status!=='rechazado'&&x.status!=='anulado')&&x.status!=='anulado';}).reduce(function(a,x){return a+x.amount;},0);
-  $('#bankTiles').innerHTML=tile('Entradas registradas',gs(incoming))+tile('Salidas y cheques',gs(outgoing))+tile('Movimientos',rows.length);
+  $('#bankTiles').innerHTML=tile('Entradas registradas',gs(incoming))+tile('Salidas y cheques',gs(outgoing))+tile('Saldo neto registrado',gs(incoming-outgoing))+tile('Movimientos',rows.length);
   $('#bankBody').innerHTML=rows.length?rows.map(function(x){
     var status=x.status==='conciliado'?'Conciliado':x.status==='emitido'?'Emitido':x.status==='depositado'?'Depositado':x.status==='cobrado'?'Cobrado':x.status==='rechazado'?'Rechazado':x.status==='anulado'?'Anulado':'Pendiente';
     var entry=x.kind==='movimiento'&&x.direction==='entrada'?x.amount:0,exit=x.direction==='salida'?x.amount:0;
