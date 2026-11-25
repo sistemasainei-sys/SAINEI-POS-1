@@ -57,6 +57,7 @@ En una sola PC, el sistema se usa desde `http://localhost:8080`. Para varias caj
 - Copias automáticas: `%LOCALAPPDATA%\SAINEI-POS\datos\copias`.
 - Usa `respaldar-sainei-pos-windows.bat` para copiar respaldos a una unidad externa.
 - Antes de actualizar, cierra las cajas y ejecuta `ACTUALIZAR-SAINEl-POS.bat`. El actualizador crea una copia de seguridad antes de reemplazar archivos.
+- El paquete Windows debe descargarse de una compilación exitosa de GitHub Actions correspondiente al commit actual de `main`; no reutilices paquetes de compilaciones anteriores.
 
 ## Seguridad y límites
 
