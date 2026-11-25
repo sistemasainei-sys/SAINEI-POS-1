@@ -1,0 +1,60 @@
+name: SAINEI POS - paquete Windows
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'server.js'
+      - 'public/**'
+      - 'src/**'
+      - 'scripts/**'
+      - '*.bat'
+      - '*.ps1'
+      - '*.vbs'
+      - 'package.json'
+      - 'docs/INICIO-SIN-COSTO-WINDOWS.md'
+      - '.github/workflows/windows-installer-package.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-package:
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      - name: Descargar código
+        uses: actions/checkout@v4
+
+      - name: Preparar Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22.13.0'
+
+      - name: Validar versión de Node
+        run: node --version
+
+      - name: Ejecutar pruebas del proyecto
+        run: npm test
+
+      - name: Crear paquete instalable
+        shell: pwsh
+        run: |
+          $out = Join-Path $env:RUNNER_TEMP 'SAINEI-POS-Windows.zip'
+          git archive --format=zip --output=$out HEAD
+          if (!(Test-Path $out)) { throw 'No se generó el paquete ZIP.' }
+          $hash = (Get-FileHash $out -Algorithm SHA256).Hash
+          "SHA256  $hash" | Set-Content (Join-Path $env:RUNNER_TEMP 'SHA256.txt')
+          "Paquete: $out"
+          "SHA256: $hash"
+
+      - name: Publicar paquete Windows
+        uses: actions/upload-artifact@v4
+        with:
+          name: SAINEI-POS-Windows
+          path: |
+            ${{ runner.temp }}/SAINEI-POS-Windows.zip
+            ${{ runner.temp }}/SHA256.txt
+          if-no-files-found: error
+          retention-days: 30
