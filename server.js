@@ -194,7 +194,7 @@ function allowed(user, coll, op, rec, existing) {
     if(coll==='shifts'&&(op==='ins'||op==='upd')&&!has('cash_manage'))return false;
     if(coll==='suspendedSales'&&(op==='ins'||op==='upd')&&!has('sales_sell'))return false;
   }
-  if (coll === 'moves' && user.role === 'cajero') { if (!(rec.type === 'venta' && Number(rec.qty) < 0)) return false; }
+  if (coll === 'moves' && user.role === 'cajero' && !custom) { if (!(rec.type === 'venta' && Number(rec.qty) < 0)) return false; }
   if (coll === 'shifts' && user.role !== 'admin') {
     if (op === 'ins' && Number(rec.uid) !== Number(user.uid)) return false;
     if (op === 'upd' && existing && Number(existing.uid) !== Number(user.uid)) return false;
