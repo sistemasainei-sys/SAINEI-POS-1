@@ -6,6 +6,8 @@ on:
       - sainei-pos-release-candidate
       - sainei-pos-sin-licencia
       - sainei-pos-instalador-seguro
+  pull_request:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
