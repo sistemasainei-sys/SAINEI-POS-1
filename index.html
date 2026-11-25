@@ -2901,7 +2901,8 @@ function userForm(u,role){
 }
 function saveUser(){
   var name=$('#uf-name').value.trim(),pin=$('#uf-pin').value,err=$('#ufErr'),u=ui.editUser?getU(ui.editUser):null;
-  var role=$('#uf-role').value,act=u?($('#uf-active')?$('#uf-active').checked:true):true,perms={};\n  document.querySelectorAll('[data-userperm]').forEach(function(el){var k=el.getAttribute('data-userperm'),op=el.getAttribute('data-op');if(!perms[k])perms[k]={};perms[k][op]=el.checked?1:0;});
+  var role=$('#uf-role').value,act=u?($('#uf-active')?$('#uf-active').checked:true):true,perms={};
+  document.querySelectorAll('[data-userperm]').forEach(function(el){var k=el.getAttribute('data-userperm'),op=el.getAttribute('data-op');if(!perms[k])perms[k]={};perms[k][op]=el.checked?1:0;});
   if(!name){err.textContent='Escribí el nombre.';return;}
   if(SERVER){api('POST','/api/users',{id:u?u.id:0,name:name,role:u&&u.id===cur.id?u.role:role,pin:pin,active:act,perms:perms}).then(function(r){state.users=r.users;closeModal();renderCurrent();toast('Usuario guardado');}).catch(function(e){err.textContent=e.message||'No se pudo guardar.';});return;}
   if(state.users.some(function(o){return o.name.toLowerCase()===name.toLowerCase()&&(!u||o.id!==u.id);})){err.textContent='Ya existe un usuario con ese nombre.';return;}
