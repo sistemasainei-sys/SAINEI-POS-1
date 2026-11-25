@@ -2478,7 +2478,7 @@ function renderTabs(){
   var bl=$('#brandLogo');if(state.shop.logo){bl.src=state.shop.logo;bl.hidden=false;}else bl.hidden=true;
 }
 function renderCurrent(){
-  renderTabs();renderClientSelect();
+  applyAppearance();renderTabs();renderClientSelect();
   switch(ui.tab){
     case 'caja':renderProducts();renderCart();break;
     case 'productos':renderProdTab();break;
