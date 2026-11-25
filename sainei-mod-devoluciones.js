@@ -6,6 +6,7 @@ window.SAINEI_POS_MODULES.push({
   api.addTab({id:'devoluciones',label:'Devoluciones',canView:function(u){return u&&['admin','encargado'].indexOf(u.role)>=0;},render:render});
   api.addAction('return-open',function(el,id){openReturn(id);});
   api.addAction('return-save',function(){saveReturn();});
+  api.addAction('return-print',function(el){printReturn(el&&el.getAttribute('data-id'),el&&el.getAttribute('data-rid'));});
   function esc(v){return api.escape(v==null?'':String(v));}
   function money(v){return api.money(Math.round(Number(v)||0));}
   function getSale(id){return (api.state().sales||[]).filter(function(x){return Number(x.id)===Number(id);})[0];}
@@ -16,7 +17,7 @@ window.SAINEI_POS_MODULES.push({
   function render(sec){
    var s=api.state(),sales=(s.sales||[]).filter(function(x){return !x.void&&x.items&&x.items.length;}).slice().reverse();
    sec.innerHTML='<div class="card" style="padding:16px;margin:12px 0"><h2>Devoluciones parciales y totales</h2><p class="muted">Registra la mercadería devuelta, repone el stock y distribuye el reembolso entre efectivo, banco o saldo a favor del cliente. No permite devolver más unidades que las vendidas.</p><div class="tiles">'+tile('Ventas registradas',String(sales.length))+tile('Devoluciones registradas',String(sales.reduce(function(n,x){return n+(x.returns||[]).length;},0)))+'</div></div>'+
-    '<div class="card" style="padding:16px;margin:12px 0;overflow:auto"><table><thead><tr><th>Ticket</th><th>Fecha</th><th>Cliente</th><th class="r">Total pendiente</th><th>Estado</th><th></th></tr></thead><tbody>'+(sales.length?sales.map(function(x){var cl=(s.clients||[]).filter(function(z){return z.id===x.clientId;})[0];var all=x.items.every(function(i){return available(x,i)<=0;});var returnedValue=(x.returns||[]).reduce(function(a,r){return a+returnTotal(r);},0);return '<tr><td>#'+esc(String(x.id).padStart(6,'0'))+'</td><td>'+esc(new Date(x.date).toLocaleDateString('es-PY'))+'</td><td>'+esc(cl?cl.name:'Consumidor final')+'</td><td class="r">'+money(Math.max(0,Number(x.total||0)-returnedValue))+'</td><td>'+(all?'<span class="pill tag">Devuelta</span>':(x.returns&&x.returns.length?'<span class="pill low">Parcial</span>':'<span class="pill ok">Sin devolución</span>'))+'</td><td><button class="btn" data-a="return-open" data-id="'+x.id+'" '+(all?'disabled':'')+'>Registrar devolución</button></td></tr>';}).join(''):'<tr><td colspan="6">No hay ventas disponibles.</td></tr>')+'</tbody></table></div>';
+    '<div class="card" style="padding:16px;margin:12px 0;overflow:auto"><table><thead><tr><th>Ticket</th><th>Fecha</th><th>Cliente</th><th class="r">Total pendiente</th><th>Estado</th><th></th></tr></thead><tbody>'+(sales.length?sales.map(function(x){var cl=(s.clients||[]).filter(function(z){return z.id===x.clientId;})[0];var all=x.items.every(function(i){return available(x,i)<=0;});var returnedValue=(x.returns||[]).reduce(function(a,r){return a+returnTotal(r);},0);return '<tr><td>#'+esc(String(x.id).padStart(6,'0'))+'</td><td>'+esc(new Date(x.date).toLocaleDateString('es-PY'))+'</td><td>'+esc(cl?cl.name:'Consumidor final')+'</td><td class="r">'+money(Math.max(0,Number(x.total||0)-returnedValue))+'</td><td>'+(all?'<span class="pill tag">Devuelta</span>':(x.returns&&x.returns.length?'<span class="pill low">Parcial</span>':'<span class="pill ok">Sin devolución</span>'))+'</td><td><button class="btn" data-a="return-open" data-id="'+x.id+'" '+(all?'disabled':'')+'>Registrar devolución</button>'+(x.returns||[]).map(function(r){return ' <button class="btn" data-a="return-print" data-id="'+x.id+'" data-rid="'+esc(r.id)+'">Imprimir '+esc(new Date(r.date||x.date).toLocaleDateString('es-PY'))+'</button>';}).join('')+'</td></tr>';}).join(''):'<tr><td colspan="6">No hay ventas disponibles.</td></tr>')+'</tbody></table></div>';
   }
   function tile(l,v){return '<div class="tile"><div class="muted">'+esc(l)+'</div><strong>'+esc(v)+'</strong></div>';}
   function openReturn(id){
@@ -32,6 +33,18 @@ window.SAINEI_POS_MODULES.push({
    if(!box)return 0;var total=0;
    Array.prototype.slice.call(box.querySelectorAll('[data-ret-idx]')).forEach(function(inp){var idx=Number(inp.dataset.retIdx),src=s.items[idx],qty=Math.max(0,Number(inp.value)||0);if(!src||!qty)return;var line=Number(src.amount!=null?src.amount:Number(src.price||0)*Number(src.qty||0));var unit=line/Math.max(Number(src.qty||0),0.000001);total+=Math.round(unit*qty*(1-Math.max(0,Math.min(100,Number(s.discPct||0)))/100));});
    return total;
+  }
+  function printReturn(saleId,returnId){
+   var s=getSale(Number(saleId));if(!s)return;
+   var r=(s.returns||[]).filter(function(x){return String(x.id)===String(returnId);})[0];if(!r)return;
+   var w=window.open('','_blank','width=520,height=720');if(!w){api.toast('El navegador bloqueó la ventana de impresión. Permití ventanas emergentes para SAINEI POS.');return;}
+   var rows=(r.items||[]).map(function(it){
+    var idx=it.lineIndex!=null?Number(it.lineIndex):(s.items||[]).findIndex(function(z){return Number(z.id)===Number(it.id);});
+    var src=(s.items||[])[idx];return '<tr><td>'+esc(src?src.name:it.name||'Artículo')+'</td><td>'+esc(it.qty)+'</td><td style="text-align:right">'+money(it.amount)+'</td></tr>';
+   }).join('');
+   var method=r.method==='mixto'?'Mixto':r.method==='banco'?'Banco / transferencia':r.method==='credito'?'Saldo a favor':'Efectivo';
+   var html='<!doctype html><html lang="es"><head><meta charset="utf-8"><title>Devolución SAINEI POS</title><style>body{font:14px Arial,sans-serif;color:#111;margin:24px}h2,p{margin:5px 0}table{width:100%;border-collapse:collapse;margin:18px 0}th,td{padding:7px 3px;border-bottom:1px solid #ccc;text-align:left}th:last-child,td:last-child{text-align:right}.total{font-size:18px;font-weight:bold;text-align:right;margin-top:16px}.muted{color:#555;font-size:12px}@media print{body{margin:4mm}}</style></head><body><h2>COMPROBANTE DE DEVOLUCIÓN</h2><p>SAINEI POS</p><p class="muted">Ticket original: #'+esc(String(s.id).padStart(6,'0'))+'</p><p>Fecha: '+esc(new Date(r.date||s.date).toLocaleString('es-PY'))+'</p><p>Cliente: '+esc(s.clientName||'Consumidor final')+'</p><table><thead><tr><th>Producto</th><th>Cant.</th><th>Importe</th></tr></thead><tbody>'+rows+'</tbody></table><p>Forma de devolución: '+method+'</p><p>Efectivo: '+money(r.cashAmount||0)+'</p><p>Banco: '+money(r.bankAmount||0)+'</p><p>Saldo a favor: '+money(r.creditAmount||0)+'</p><div class="total">Total devuelto: '+money(r.totalAmount!=null?r.totalAmount:r.amount)+'</div><p class="muted" style="margin-top:28px">Comprobante de devolución · SAINEI POS</p><script>window.onload=function(){window.print();};<\/script></body></html>';
+   w.document.open();w.document.write(html);w.document.close();
   }
   function saveReturn(){
    var box=document.getElementById('overlay'),btn=box&&box.querySelector('[data-a="return-save"]');if(!btn)return;
