@@ -31,6 +31,7 @@ CREATE INDEX IF NOT EXISTS rec_rev ON rec(rev);
 CREATE TABLE IF NOT EXISTS sing(k TEXT PRIMARY KEY, j TEXT NOT NULL, rev INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS counters(kind TEXT PRIMARY KEY, n INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL, salt TEXT, hash TEXT);
+try { db.exec('ALTER TABLE users ADD COLUMN perms TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column')) throw e; }
 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT, u TEXT, a TEXT);
 CREATE TABLE IF NOT EXISTS login_attempts(k TEXT PRIMARY KEY, n INTEGER NOT NULL, blocked_until INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS open_sales(uid INTEGER PRIMARY KEY, j TEXT NOT NULL, updated INTEGER NOT NULL);
@@ -99,7 +100,7 @@ const weakPin = p => String(p).length < 4 || String(p).length > 64 || /^(.)\1+$/
 const ROLES = ['admin', 'encargado', 'cajero'];
 function newRecCode() { const al = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypto.randomBytes(16); let o = ''; for (let i = 0; i < 16; i++) { o += al[b[i] % al.length]; if (i % 4 === 3 && i < 15) o += '-'; } return o; }
 const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-const pubUser = u => ({ id: u.id, name: u.name, role: u.role, active: !!u.active });
+const pubUser = u => ({ id: u.id, name: u.name, role: u.role, active: !!u.active, perms: (() => { try { return u.perms ? JSON.parse(u.perms) : null; } catch (_) { return null; } })() });
 const allUsers = () => prep('SELECT * FROM users ORDER BY id').all();
 const hasAdmin = () => !!prep("SELECT 1 x FROM users WHERE role='admin' AND active=1").get();
 function audit(who, what) { prep('INSERT INTO audit(t,u,a) VALUES(?,?,?)').run(nowIso(), String(who || '-').slice(0, 60), String(what || '').slice(0, 300)); }
@@ -178,7 +179,8 @@ function bumpCounter(kind, id) { const r = prep('SELECT n FROM counters WHERE ki
 
 function allowed(user, coll, op, rec, existing) {
   if (user.role === 'admin') return true;
-  const p = (PERM[user.role] || {})[coll];
+  const custom = user.perms && typeof user.perms === 'object' ? user.perms : null;
+  const p = custom ? custom[coll] : (PERM[user.role] || {})[coll];
   if (!p || !p[op]) return false;
   if (coll === 'moves' && user.role === 'cajero') { if (!(rec.type === 'venta' && Number(rec.qty) < 0)) return false; }
   if (coll === 'shifts' && user.role !== 'admin') {
@@ -889,7 +891,9 @@ async function handle(req, res) {
       return fail(res, 400, 'Versión de sincronización inválida.');
     }
     if (b.epoch && b.epoch !== EPOCH) { const c = collect(0, null); return send(res, 200, { reset: true, rev: REV, epoch: EPOCH, recs: c.recs, dels: c.dels, sing: c.sing, lastBackup: lastBackup() }); }
-    const r = processSync({ uid: me.uid, name: me.name, role: me.role }, b), c = collect(since, r);
+    const dbUser = prep('SELECT perms FROM users WHERE id=?').get(me.uid);
+    let customPerms = null; try { customPerms = dbUser && dbUser.perms ? JSON.parse(dbUser.perms) : null; } catch (_) {}
+    const r = processSync({ uid: me.uid, name: me.name, role: me.role, perms: customPerms }, b), c = collect(since, r);
     return send(res, 200, { rev: REV, epoch: EPOCH, recs: c.recs, dels: c.dels, sing: c.sing, rejected: r.rejected, lastBackup: lastBackup() });
   }
   if (p === '/api/mypin' && m === 'POST') {
@@ -918,7 +922,8 @@ async function handle(req, res) {
       if (ex.id === me.uid && (role !== 'admin' || !active)) return fail(res, 400, 'No podes quitarte tu propio permiso.');
       if (ex.role === 'admin' && ex.active && (role !== 'admin' || !active) && prep("SELECT COUNT(*) n FROM users WHERE role='admin' AND active=1 AND id<>?").get(ex.id).n === 0) return fail(res, 400, 'Tiene que quedar al menos un usuario principal activo.');
       const k = pin ? mkPin(pin) : { salt: ex.salt, hash: ex.hash };
-      prep('UPDATE users SET name=?,role=?,active=?,salt=?,hash=? WHERE id=?').run(name, role, active, k.salt, k.hash, ex.id);
+      const perms = b.perms && typeof b.perms === 'object' && !Array.isArray(b.perms) ? JSON.stringify(b.perms) : ex.perms;
+      prep('UPDATE users SET name=?,role=?,active=?,salt=?,hash=?,perms=? WHERE id=?').run(name, role, active, k.salt, k.hash, perms, ex.id);
       for (const [t, s] of [...sessions]) {
         if (s.uid !== ex.id) continue;
         // Un cambio de clave invalida todas las sesiones anteriores.
@@ -928,7 +933,7 @@ async function handle(req, res) {
       }
       audit(me.name, 'Edito al usuario ' + name);
     } else {
-      const nid = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get('user'), n = (c ? c.n : 0) + 1; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run('user', n); const k = mkPin(pin); prep('INSERT INTO users(id,name,role,active,salt,hash) VALUES(?,?,?,?,?,?)').run(n, name, role, 1, k.salt, k.hash); return n; });
+      const nid = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get('user'), n = (c ? c.n : 0) + 1; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run('user', n); const k = mkPin(pin); prep('INSERT INTO users(id,name,role,active,salt,hash,perms) VALUES(?,?,?,?,?,?,?)').run(n, name, role, 1, k.salt, k.hash, b.perms && typeof b.perms === 'object' ? JSON.stringify(b.perms) : null); return n; });
       audit(me.name, 'Creo el usuario ' + name + ' (' + role + ')');
     }
     return send(res, 200, { users: allUsers().map(pubUser) });
