@@ -1874,8 +1874,9 @@ function voidSale(id){
 /* ---------- Productos ---------- */
 function renderSeg(tab){
   var el=$('#seg-'+tab);if(!el)return;
-  var subs=SUBS[tab].filter(function(s){return !(tab==='finanzas'&&s[0]==='bancos'&&!userCan('bankEntries','view'));});
-  if(tab==='finanzas'&&ui.sub.finanzas==='bancos'&&!userCan('bankEntries','view'))ui.sub.finanzas='caja';
+  var financePerm={caja:'shifts',gastos:'expenses',bancos:'bankEntries',devoluciones:'sales',pagar:'purchases',res:'expenses'};
+  var subs=SUBS[tab].filter(function(s){return tab!=='finanzas'||userCan(financePerm[s[0]]||'expenses','view');});
+  if(tab==='finanzas'&&!subs.some(function(x){return x[0]===ui.sub.finanzas;}))ui.sub.finanzas=subs.length?subs[0][0]:'caja';
   el.innerHTML=subs.map(function(s){return '<button class="chip" data-a="sub" data-t="'+tab+'" data-v="'+s[0]+'" aria-pressed="'+(ui.sub[tab]===s[0])+'">'+s[1]+'</button>';}).join('');
   document.querySelectorAll('#v-'+tab+' [data-sub]').forEach(function(d){d.hidden=d.dataset.sub!==ui.sub[tab];});
 }
@@ -2804,7 +2805,7 @@ function userCan(coll,op){
     :{products:{view:1,ins:1,upd:1,del:1},sales:{view:1,ins:1,upd:1},clients:{view:1,ins:1,upd:1,del:1},budgets:{view:1,ins:1,upd:1},purchases:{view:1,ins:1,upd:1},payments:{view:1,ins:1},expenses:{view:1,ins:1,upd:1},shifts:{view:1,ins:1,upd:1},moves:{view:1,ins:1},spay:{view:1,ins:1,upd:1},bankEntries:{view:1,ins:1,upd:1},suspendedSales:{view:1,ins:1,upd:1}};
   return !!(defs[coll]&&defs[coll][op]);
 }
-function canTab(t){if(!cur)return false;var map={caja:'sales',productos:'products',ventas:'sales',clientes:'clients',finanzas:'expenses',stock:'moves',compras:'purchases',devoluciones:'sales',presupuestos:'budgets'};if(map[t]&&!userCan(map[t],'view'))return false;if(MODULE_TABS[t]){var cv=MODULE_TABS[t].canView;return typeof cv==='function'?!!cv(cur):cv===true?true:cur.role==='admin';}if(cur.role==='admin')return true;if(cur.role==='encargado')return t!=='ajustes';return t==='caja'||t==='clientes';}
+function canTab(t){if(!cur)return false;var map={caja:'sales',productos:'products',ventas:'sales',clientes:'clients',stock:'moves',compras:'purchases',devoluciones:'sales',presupuestos:'budgets'};if(t==='finanzas'&&!['shifts','expenses','bankEntries','sales','purchases'].some(function(k){return userCan(k,'view');}))return false;if(map[t]&&!userCan(map[t],'view'))return false;if(MODULE_TABS[t]){var cv=MODULE_TABS[t].canView;return typeof cv==='function'?!!cv(cur):cv===true?true:cur.role==='admin';}if(cur.role==='admin')return true;if(cur.role==='encargado')return t!=='ajustes';return t==='caja'||t==='clientes';}
 var ENCACT={'closeothershift':1,'void':1,newprod:1,edit:1,saveprod:1,delprod:1,importprod:1,exportprod:1,tplprod:1,newadjust:1,adjust:1,saveadjust:1,newpurchase:1,puadd:1,purm:1,puok:1,viewpurch:1,newexpense:1,saveexpense:1,paypurch:1,savepay:1,exportsales:1,newfromcode:1,delclient:1};
 function getU(id){return state.users.filter(function(u){return u.id===id;})[0];}
 function hasAdmin(){if(SERVER&&INFO)return !!INFO.hasAdmin;return state.users.some(function(u){return u.active&&u.role==='admin';});}
