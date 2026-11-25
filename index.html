@@ -222,7 +222,7 @@ td.r,th.r{text-align:right}
 /* Pantalla de venta */
 .caja2{display:grid;grid-template-columns:minmax(0,1fr) 440px;gap:16px;align-items:start}
 .cajaL{display:flex;flex-direction:column;gap:12px;min-width:0}
-.tools2{display:flex;gap:8px;flex-wrap:wrap}
+.sale-tabs{display:flex;gap:7px;align-items:center;flex-wrap:wrap;margin-bottom:2px}.sale-tab{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--line);background:var(--surface);border-radius:9px;padding:8px 12px;font-weight:700;white-space:nowrap}.sale-tab[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--fg)}.sale-tab .sale-x{border:0;background:transparent;color:var(--muted);font-size:17px;padding:0 2px}.sale-new{width:38px;height:38px;border-radius:9px;border:1px dashed var(--accent);background:var(--accent-soft);color:var(--accent);font-size:23px;font-weight:700}.tools2{display:flex;gap:8px;flex-wrap:wrap}
 .tools2 .search{flex:1 1 260px;width:auto;font-size:18px;padding:14px 16px}
 .tools2 .btn[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .gridwrap{padding:12px;display:grid;gap:10px;max-height:40vh;overflow:auto}
@@ -609,6 +609,7 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
 <main>
   <section id="v-caja" class="caja2" aria-label="Caja">
     <div class="cajaL">
+      <div id="saleTabs" class="sale-tabs" role="tablist" aria-label="Ventas abiertas"></div>
       <div class="tools2">
         <input id="q" class="search" type="search" placeholder="Escaneá con el lector o buscá por nombre" autocomplete="off" aria-label="Buscar producto o código de barras">
         <button class="btn" id="gridBtn" data-a="gridtoggle" aria-pressed="false">Productos</button>
@@ -895,7 +896,7 @@ var KEY='minisuper-pos-v2',OLD='minisuper-pos-v1',storageOK=true;
 var nf=new Intl.NumberFormat('es-PY');
 var nf3=new Intl.NumberFormat('es-PY',{minimumFractionDigits:3,maximumFractionDigits:3});
 var METHODS={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia / QR',credito:'Crédito',mixto:'Pago combinado'};
-var TABS=[['caja','Caja'],['panel','Panel'],['productos','Productos'],['stock','Stock'],['clientes','Clientes'],['finanzas','Finanzas'],['ventas','Ventas'],['presupuestos','Presupuestos'],['ajustes','Ajustes']];
+var TABS=[['caja','Punto de venta'],['panel','Panel'],['productos','Productos'],['stock','Stock'],['clientes','Clientes'],['finanzas','Finanzas'],['ventas','Ventas'],['presupuestos','Presupuestos'],['ajustes','Ajustes']];
 var MODULE_TABS={};
 var SUBS={productos:[['lista','Lista'],['balanza','Balanza']],stock:[['exist','Existencias'],['compras','Compras'],['mov','Movimientos']],finanzas:[['caja','Caja'],['gastos','Gastos'],['pagar','Por pagar'],['res','Resumen']]};
 var EXP_CATS=['Alquiler','Sueldos','Luz, agua e internet','Impuestos','Mantenimiento','Transporte','Otros'];
@@ -1201,6 +1202,14 @@ function nid(kind){if(SERVER)return srvId(kind);state.n[kind]=(state.n[kind]||0)
 var ui={pendingBudget:0,editUser:null,cust:{mode:'idle',pay:null,timer:null,lines:[]},custOverlay:false,grid:false,lastK:0,tab:'caja',sub:{productos:'lista',stock:'exist',finanzas:'caja'},q:'',cat:'Todas',cart:[],kseq:1,disc:0,clientId:0,pq:'',sq:'',cq:'',onlyLow:false,mvProd:'',range:'hoy',finRange:'hoy',
   pay:{method:'efectivo',recv:''},editId:null,editClient:null,confirmDel:false,confirmReset:false,confirmClear:false,pu:null,weigh:null,sticky:false,afterShift:null,openSale:null,acctClient:null};
 var toastTimer=null;
+function ensureSaleTabs(){if(ui.saleTabs&&ui.saleTabs.length)return;ui.saleTabs=[];var r=null;try{r=JSON.parse(sessionStorage.getItem('sainei-open-sales-v1')||'null');}catch(e){}if(r&&Array.isArray(r.tabs)&&r.tabs.length){ui.saleTabs=r.tabs.filter(function(x){return x&&Number.isFinite(x.id)&&Array.isArray(x.cart);});if(ui.saleTabs.length){ui.activeSaleId=r.activeId||ui.saleTabs[0].id;ui.nextSaleId=Math.max.apply(null,ui.saleTabs.map(function(x){return x.id;}))+1;var a=ui.saleTabs.filter(function(x){return x.id===ui.activeSaleId;})[0]||ui.saleTabs[0];ui.activeSaleId=a.id;ui.cart=a.cart;ui.disc=a.disc||0;ui.clientId=a.clientId||0;ui.lastK=a.lastK||0;ui.kseq=Math.max(ui.kseq,a.kseq||1);return;}}ui.saleTabs=[{id:1,cart:ui.cart.slice(),disc:ui.disc||0,clientId:ui.clientId||0,lastK:ui.lastK||0,kseq:ui.kseq||1}];ui.activeSaleId=1;ui.nextSaleId=2;}
+function saveActiveSale(){ensureSaleTabs();var a=ui.saleTabs.filter(function(x){return x.id===ui.activeSaleId;})[0];if(!a)return;a.cart=ui.cart.map(function(x){return Object.assign({},x);});a.disc=ui.disc||0;a.clientId=ui.clientId||0;a.lastK=ui.lastK||0;a.kseq=ui.kseq||1;try{sessionStorage.setItem('sainei-open-sales-v1',JSON.stringify({activeId:ui.activeSaleId,tabs:ui.saleTabs}));}catch(e){}}
+function renderSaleTabs(){ensureSaleTabs();var el=$('#saleTabs');if(!el)return;el.innerHTML=ui.saleTabs.map(function(a,i){var n=i+1,q=a.cart.reduce(function(v,l){return v+l.qty;},0);return '<button class="sale-tab" role="tab" data-a="saleTab" data-v="'+a.id+'" aria-selected="'+(a.id===ui.activeSaleId)+'">Venta '+n+(q?' · '+q:'')+(ui.saleTabs.length>1?'<span class="sale-x" data-a="closeSaleTab" data-v="'+a.id+'" aria-label="Cerrar venta">×</span>':'')+'</button>';}).join('')+'<button class="sale-new" data-a="newSaleTab" aria-label="Nueva venta" title="Nueva venta">+</button>';}
+function switchSaleTab(id){ensureSaleTabs();if(id===ui.activeSaleId)return;saveActiveSale();var a=ui.saleTabs.filter(function(x){return x.id===id;})[0];if(!a)return;ui.activeSaleId=id;ui.cart=a.cart.map(function(x){return Object.assign({},x);});ui.disc=a.disc||0;ui.clientId=a.clientId||0;ui.lastK=a.lastK||0;ui.kseq=Math.max(ui.kseq,a.kseq||1);ui.pay={method:'efectivo',recv:''};var d=$('#disc');if(d)d.value=ui.disc||'';renderCart();var cc=$('#cartClient');if(cc)cc.value=String(ui.clientId||0);focusSearch();}
+function newSaleTab(){ensureSaleTabs();saveActiveSale();var id=ui.nextSaleId++;ui.saleTabs.push({id:id,cart:[],disc:0,clientId:0,lastK:0,kseq:ui.kseq||1});ui.activeSaleId=id;ui.cart=[];ui.disc=0;ui.clientId=0;ui.lastK=0;ui.pay={method:'efectivo',recv:''};var d=$('#disc');if(d)d.value='';renderCart();var cc=$('#cartClient');if(cc)cc.value='0';focusSearch();}
+function closeSaleTab(id){ensureSaleTabs();if(ui.saleTabs.length<2)return;var a=ui.saleTabs.filter(function(x){return x.id===id;})[0];if(!a)return;if(a.cart.length&&!confirm('Esta venta tiene productos. ¿Querés cerrar solamente este ticket?'))return;ui.saleTabs=ui.saleTabs.filter(function(x){return x.id!==id;});if(ui.activeSaleId===id){var n=ui.saleTabs[0];ui.activeSaleId=n.id;ui.cart=n.cart.map(function(x){return Object.assign({},x);});ui.disc=n.disc||0;ui.clientId=n.clientId||0;ui.lastK=n.lastK||0;}saveActiveSale();renderCart();var d=$('#disc');if(d)d.value=ui.disc||'';var cc=$('#cartClient');if(cc)cc.value=String(ui.clientId||0);}
+function finishActiveSale(){ensureSaleTabs();ui.cart=[];ui.disc=0;ui.clientId=0;ui.lastK=0;var a=ui.saleTabs.filter(function(x){return x.id===ui.activeSaleId;})[0];if(a){a.cart=[];a.disc=0;a.clientId=0;a.lastK=0;}if(ui.saleTabs.length>1){var n=ui.saleTabs.filter(function(x){return x.id!==ui.activeSaleId;})[0];ui.activeSaleId=n.id;ui.cart=n.cart.map(function(x){return Object.assign({},x);});ui.disc=n.disc||0;ui.clientId=n.clientId||0;ui.lastK=n.lastK||0;}saveActiveSale();}
+
 
 function getP(id){for(var i=0;i<state.products.length;i++){if(state.products[i].id===id)return state.products[i];}return null;}
 function getC(id){for(var i=0;i<state.clients.length;i++){if(state.clients[i].id===id)return state.clients[i];}return null;}
@@ -1280,6 +1289,7 @@ function totals(){
   return {sub:sub,disc:disc,total:total,n:n,ex:ex,g5:g5,g10:g10,iva10:Math.round(g10/11),iva5:Math.round(g5/21),cmv:Math.round(cmv)};
 }
 function renderCart(){
+  ensureSaleTabs();
   ui.cart=ui.cart.filter(function(l){return getP(l.id);});
   var t=totals();
   if(ui.cust.mode==='gracias'&&ui.cart.length){clearTimeout(ui.cust.timer);ui.cust.mode='compra';}
@@ -1308,6 +1318,7 @@ function renderCart(){
   $('#pbN').textContent=t.n+(t.n===1?' artículo':' artículos');
   $('#payBtn').disabled=!ui.cart.length;
   document.querySelector('#paybar .cobrar').disabled=!ui.cart.length;
+  saveActiveSale();renderSaleTabs();
   custPush();
 }
 /* ---------- Pantalla del cliente ---------- */
@@ -1398,7 +1409,7 @@ function renderClientSelect(){
   s.innerHTML='<option value="0">Consumidor final</option>'+state.clients.map(function(c){return '<option value="'+c.id+'">'+esc(c.name)+'</option>';}).join('');
   s.value=String(ui.clientId);
 }
-function cartQty(id){return ui.cart.reduce(function(a,l){return a+(l.id===id?l.qty:0);},0);}
+function cartQty(id){ensureSaleTabs();return ui.saleTabs.reduce(function(a,t){return a+t.cart.reduce(function(n,l){return n+(l.id===id?l.qty:0);},0);},0);}
 function addUnit(id){
   var p=getP(id);if(!p)return;
   if(p.type==='medida'){openMeasure(id);return;}
@@ -1620,7 +1631,7 @@ function confirmSale(){
     method:m,paid:recv,creditAmount:m==='mixto'?creditAmount:(m==='credito'?t.total:0),payParts:payParts,change:m==='efectivo'?Math.max(0,recv-t.total):0,due:due,void:false,uid:cur?cur.id:0,uname:cur?cur.name:''};
   log('Venta #'+pad(sid,6)+' · '+gs(t.total)+' · '+METHODS[m]+(t.disc?' · descuento '+(ui.disc||0)+'%':''));
   state.sales.push(sale);if(ui.pendingBudget){var pb=(state.budgets||[]).filter(function(x){return x.id===ui.pendingBudget;})[0];if(pb){pb.status='convertido';pb.saleId=sid;pb.convertedAt=nowIso();}ui.pendingBudget=0;}save();setThanks(sale);
-  ui.cart=[];ui.disc=0;ui.clientId=0;$('#disc').value='';
+  finishActiveSale();$('#disc').value='';
   renderCurrent();
   ui.openSale=sid;
   openModal(receiptHtml(sale,true),{pay:true});
@@ -2394,6 +2405,9 @@ function setTab(t){
 /* ---------- Acciones ---------- */
 var A={
   tab:function(el,id,v){setTab(v);},
+  newSaleTab:function(){newSaleTab();},
+  saleTab:function(el,id,v){switchSaleTab(parseInt(v,10));},
+  closeSaleTab:function(el,id,v){if(el.classList.contains('sale-x'))closeSaleTab(parseInt(v,10));},
   shiftpill:function(){if(cur&&cur.role==='cajero'){if(curShift())closeShiftModal();else{ui.afterShift=null;openShiftModal();}return;}ui.sub.finanzas='caja';setTab('finanzas');},
   sub:function(el,id,v){ui.sub[el.dataset.t]=v;renderCurrent();},
   cat:function(el,id,v){ui.cat=v;renderProducts();},
