@@ -226,7 +226,23 @@ async function main() {
   const cashierLogin = await json(base, '/api/login', { method: 'POST', body: JSON.stringify({ userId: cashierUser.id, pin: '8372' }) });
   assert.equal(cashierLogin.status, 200);
   const cashierHeaders = { Authorization: 'Bearer ' + cashierLogin.body.token };
-  const deniedUsers = await json(base, '/api/users', { headers: cashierHeaders });
+  // Permisos granulares: permitir alta de productos sin permitir su edición.
+  const customPerms = Object.assign({}, cashierUser.permissions, { products_view: true, products_create: true, products_edit: false, products_delete: false, cash_manage: true });
+  const customUpdate = await json(base, '/api/users', { method: 'POST', headers: adminHeaders,
+    body: JSON.stringify({ id: cashierUser.id, name: cashierUser.name, role: 'cajero', pin: '', active: true, permissions: customPerms }) });
+  assert.equal(customUpdate.status, 200, 'El administrador debe poder guardar permisos individuales.');
+  const customLogin = await json(base, '/api/login', { method: 'POST', body: JSON.stringify({ userId: cashierUser.id, pin: '8372' }) });
+  assert.equal(customLogin.status, 200, 'El cajero debe volver a ingresar con los permisos actualizados.');
+  const customHeaders = { Authorization: 'Bearer ' + customLogin.body.token };
+  const customProductId = (await json(base, '/api/ids?kind=prod&n=1', { headers: customHeaders })).body.start;
+  assert.ok(customProductId, 'El permiso de alta debe habilitar reservar el ID de producto.');
+  const customCreate = await json(base, '/api/sync', { method: 'POST', headers: customHeaders,
+    body: JSON.stringify({ since: 0, changes: { products: { up: [{ id: customProductId, name: 'Alta sin edición', price: 2000, cost: 1000, stock: 0, min: 0, type: 'u' }] } } }) });
+  assert.deepEqual(customCreate.body.rejected || [], [], 'Debe permitir crear productos cuando solo tiene permiso de alta.');
+  const customEdit = await json(base, '/api/sync', { method: 'POST', headers: customHeaders,
+    body: JSON.stringify({ since: 0, changes: { products: { up: [{ id: customProductId, name: 'Edición no permitida', price: 2000, cost: 1000, stock: 0, min: 0, type: 'u' }] } } }) });
+  assert.ok(customEdit.body.rejected.some(x => x.coll === 'products' && x.id === customProductId), 'No debe permitir editar productos si solo tiene permiso de alta.');
+  const deniedUsers = await json(base, '/api/users', { headers: customHeaders });
   assert.equal(deniedUsers.status, 403, 'El cajero no debe administrar usuarios.');
 
   // Conflictos de configuración: una segunda edición basada en una revisión vieja no pisa la primera.
