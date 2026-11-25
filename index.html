@@ -842,9 +842,12 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
       <h3>Impresora de tickets</h3>
       <p class="hint" style="margin:0">Funciona con cualquier impresora instalada en Windows: térmica de 80 mm o 58 mm, o una común de hoja A4. Dejala como impresora predeterminada de Windows. La impresión se usa desde el programa de Windows.</p>
       <div class="fields">
+        <label>Tipo de letra<select id="prFontFamily" class="input"><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Georgia">Georgia</option><option value="Trebuchet MS">Trebuchet MS</option><option value="system">Predeterminada</option></select></label>
         <label>Papel<select id="prPaper" class="input"><option value="80">Rollo térmico 80 mm</option><option value="58">Rollo térmico 58 mm</option><option value="a4">Hoja A4</option></select></label>
         <label>Copias<select id="prCopies" class="input"><option value="1">1</option><option value="2">2</option><option value="3">3</option></select></label>
-        <label>Tamaño de letra<select id="prFont" class="input"><option value="11">Chica</option><option value="12">Normal</option><option value="14">Grande</option></select></label>
+        <label>Tamaño de letra<select id="prFont" class="input"><option value="9">Muy chica</option><option value="10">Chica</option><option value="11">Normal</option><option value="12">Mediana</option><option value="14">Grande</option><option value="16">Muy grande</option></select></label>
+        <label>Color del encabezado<input id="prHeaderColor" class="input" type="color"></label>
+        <label>Color del pie de página<input id="prFooterColor" class="input" type="color"></label>
         <label>Mensaje al pie del ticket<input id="prFooter" class="input" type="text" maxlength="60"></label>
       </div>
       <label class="chk"><input type="checkbox" id="prAuto"><span>Imprimir el ticket automáticamente al cobrar</span></label>
@@ -1016,7 +1019,7 @@ function normalize(s){
   ['products','sales','clients','purchases','payments','expenses','shifts','moves','spay','budgets','suspendedSales'].forEach(function(k){s[k]=Array.isArray(s[k])?s[k]:[];});
   s.check=s.check||{};s.n=s.n||{};
   s.shop.logo=s.shop.logo||'';s.shop.logoBW=s.shop.logoBW||'';
-  var pr=s.print=s.print||{};pr.on=!!pr.on;pr.width=(pr.width==='58'||pr.width==='a4')?pr.width:'80';pr.copies=[1,2,3].indexOf(pr.copies)>=0?pr.copies:1;pr.font=[11,12,14].indexOf(pr.font)>=0?pr.font:12;pr.footer=pr.footer==null?'¡Gracias por su compra!':pr.footer;pr.logo=pr.logo!==false;pr.bw=pr.bw!==false;
+  var pr=s.print=s.print||{};pr.on=!!pr.on;pr.width=(pr.width==='58'||pr.width==='a4')?pr.width:'80';pr.copies=[1,2,3].indexOf(pr.copies)>=0?pr.copies:1;pr.font=[9,10,11,12,14,16].indexOf(Number(pr.font))>=0?Number(pr.font):12;pr.fontFamily=['Arial','Verdana','Tahoma','Georgia','Trebuchet MS','system'].indexOf(pr.fontFamily)>=0?pr.fontFamily:'Arial';pr.headerColor=/^#[0-9a-f]{6}$/i.test(pr.headerColor||'')?pr.headerColor:'#0755a4';pr.footerColor=/^#[0-9a-f]{6}$/i.test(pr.footerColor||'')?pr.footerColor:'#0755a4';pr.footer=pr.footer==null?'¡Gracias por su compra!':pr.footer;pr.logo=pr.logo!==false;pr.bw=pr.bw!==false;
   s.appearance=s.appearance||{};s.appearance.font=['arial','verdana','trebuchet'].indexOf(s.appearance.font)>=0?s.appearance.font:'system';s.appearance.size=[13,15,17,19].indexOf(Number(s.appearance.size))>=0?Number(s.appearance.size):15;s.appearance.productView=s.appearance.productView==='grid'?'grid':'list';
   s.scan=s.scan||{};s.scan.sound=s.scan.sound!==false;
   s.users=Array.isArray(s.users)?s.users:[];s.audit=Array.isArray(s.audit)?s.audit:[];
@@ -1673,9 +1676,9 @@ function ticketInner(s,forPrint){
     return '<div class="tl"><span>'+esc(i.name)+'<br><small>'+q+' x '+fmt(i.price)+'</small></span><span>'+fmt(i.amount!=null?i.amount:i.price*i.qty)+'</span></div>';
   }).join('');
   var logo=pr.logo?(forPrint&&pr.bw?(shop.logoBW||shop.logo):shop.logo):'';
-  return (logo?'<div class="c"><img class="tlogo" src="'+logo+'" alt=""></div>':'')+
+  return '<div class="ticket-header" style="color:'+pr.headerColor+'">'+(logo?'<div class="c"><img class="tlogo" src="'+logo+'" alt=""></div>':'')+
     (s.test?'<div class="c"><strong>*** TICKET DE PRUEBA ***</strong></div>':'')+
-    '<div class="c"><strong>'+esc(shop.name||'Mini Súper')+'</strong></div>'+(shop.ruc?'<div class="c">RUC '+esc(shop.ruc)+'</div>':'')+(shop.addr?'<div class="c">'+esc(shop.addr)+'</div>':'')+(shop.phone?'<div class="c">Tel. '+esc(shop.phone)+'</div>':'')+
+    '<div class="c"><strong>'+esc(shop.name||'Mini Súper')+'</strong></div>'+(shop.ruc?'<div class="c">RUC '+esc(shop.ruc)+'</div>':'')+(shop.addr?'<div class="c">'+esc(shop.addr)+'</div>':'')+(shop.phone?'<div class="c">Tel. '+esc(shop.phone)+'</div>':'')+'</div>'+
     '<div class="c">Ticket N° '+pad(s.id,6)+'</div><div class="c">'+d.toLocaleString('es-PY',{day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})+'</div>'+
     (cl?'<div class="c">Cliente: '+esc(cl.name)+(cl.doc?' · '+esc(cl.doc):'')+'</div>':'')+(s.uname?'<div class="c">Cajero: '+esc(s.uname)+'</div>':'')+'<hr>'+lines+'<hr>'+
     '<div class="tl"><span>Subtotal</span><span>'+fmt(s.sub)+'</span></div>'+
@@ -1688,7 +1691,7 @@ function ticketInner(s,forPrint){
     '<div class="tl"><span>Pago</span><span>'+METHODS[s.method]+'</span></div>'+(s.payParts?s.payParts.map(function(p){return '<div class="tl"><span>'+METHODS[p.method]+'</span><span>'+fmt(p.amount)+'</span></div>';}).join(''):'')+
     (s.method==='efectivo'?'<div class="tl"><span>Recibido</span><span>'+fmt(s.paid)+'</span></div><div class="tl"><span>Vuelto</span><span>'+fmt(s.change)+'</span></div>':'')+
     (saleCredit(s)>0?'<div class="tl"><span>Saldo a crédito, vence</span><span>'+fmt(saleCredit(s))+' · '+(s.due?fd(s.due):'-')+'</span></div>':'')+
-    '<hr>'+(pr.footer?'<div class="c">'+esc(pr.footer)+'</div>':'')+'<div class="c">Comprobante interno, no es factura</div>'+'<div class="c" style="font-size:.75em;opacity:.7;margin-top:6px"><strong>SAINEI POS</strong> · Tel. 0991 411 238</div>'+(s.void?'<div class="stamp">ANULADA</div>':'');
+    '<hr><div class="ticket-footer" style="color:'+pr.footerColor+'">'+(pr.footer?'<div class="c">'+esc(pr.footer)+'</div>':'')+'<div class="c">Comprobante interno, no es factura</div>'+'<div class="c" style="font-size:.75em;opacity:.85;margin-top:6px"><strong>SAINEI POS</strong> · Tel. 0991 411 238</div></div>'+(s.void?'<div class="stamp">ANULADA</div>':'');
 }
 function receiptHtml(s,fresh){
   var banner='';
@@ -1702,8 +1705,9 @@ function receiptHtml(s,fresh){
 /* ---------- Impresión ---------- */
 function applyPageStyle(){
   var w=state.print.width,css;
-  if(w==='a4')css='@page{size:A4;margin:12mm}#printArea .pt{width:100mm;font-size:'+state.print.font+'px}';
-  else css='@page{size:'+w+'mm auto;margin:0}#printArea{padding:2mm 3mm}#printArea .pt{width:'+(w==='58'?'46mm':'70mm')+';font-size:'+state.print.font+'px}';
+  var fam=state.print.fontFamily==='system'?'system-ui,Arial,sans-serif':'\\''+state.print.fontFamily+'\\',sans-serif';
+  if(w==='a4')css='@page{size:A4;margin:12mm}#printArea .pt{width:100mm;font-size:'+state.print.font+'px;font-family:'+fam+'}';
+  else css='@page{size:'+w+'mm auto;margin:0}#printArea{padding:2mm 3mm}#printArea .pt{width:'+(w==='58'?'46mm':'70mm')+';font-size:'+state.print.font+'px;font-family:'+fam+'}';
   $('#pageStyle').textContent=css;
 }
 function printSale(s){
@@ -2383,7 +2387,7 @@ function renderSettings(){
   $('#sName').value=state.shop.name;$('#sRuc').value=state.shop.ruc;$('#sAddr').value=state.shop.addr;$('#sPhone').value=state.shop.phone;
   $('#scFmt').value=state.scale.plu+'-'+state.scale.val;$('#scMode').value=state.scale.mode;
   var ap=state.appearance||{};$('#uiFontFamily').value=ap.font||'system';$('#uiFontSize').value=String(ap.size||15);$('#uiProductView').value=ap.productView||'list';applyAppearance();
-  var pr=state.print;$('#prPaper').value=pr.width;$('#prCopies').value=String(pr.copies);$('#prFont').value=String(pr.font);$('#prFooter').value=pr.footer;$('#prAuto').checked=pr.on;$('#prLogo').checked=pr.logo;$('#prBW').checked=pr.bw;$('#scSound').checked=state.scan.sound;renderLogoPreview();renderSafe();
+  var pr=state.print;$('#prPaper').value=pr.width;$('#prCopies').value=String(pr.copies);$('#prFont').value=String(pr.font);$('#prFontFamily').value=pr.fontFamily||'Arial';$('#prHeaderColor').value=pr.headerColor||'#0755a4';$('#prFooterColor').value=pr.footerColor||'#0755a4';$('#prFooter').value=pr.footer;$('#prAuto').checked=pr.on;$('#prLogo').checked=pr.logo;$('#prBW').checked=pr.bw;$('#scSound').checked=state.scan.sound;renderLogoPreview();renderSafe();
   renderChecklist();renderNote();renderUsers();
   var rb=$('#resetBtn');if(rb)rb.hidden=!!SERVER;
 }
@@ -2705,7 +2709,7 @@ function secDeny(an){
   if(cur.role!=='admin'&&ADMINACT[an]&&!key&&!(cur.role==='encargado'&&ENCACT[an])){toast('Esa acción es solo del usuario principal');logAs(cur.name,'Intentó una acción no permitida ('+an+')');return true;}
   return false;
 }
-var SETID=/^(sName|sRuc|sAddr|sPhone|prFooter|scFmt|scMode|prPaper|prCopies|prFont|prAuto|prLogo|prBW|scSound|logoFile|prodFile|importFile|secLock|secDisc|gVal|gPlu|dCode)$/;
+var SETID=/^(sName|sRuc|sAddr|sPhone|prFooter|prFontFamily|prHeaderColor|prFooterColor|scFmt|scMode|prPaper|prCopies|prFont|prAuto|prLogo|prBW|scSound|logoFile|prodFile|importFile|secLock|secDisc|gVal|gPlu|dCode)$/;
 function secDenyInput(id){if(!state)return false;if(/^(lkUser|lkName|lkPin|lkPin2|rcCode|rcPin|rcUser)$/.test(id))return false;if(!cur)return true;if(cur.role==='admin')return false;if(cur.role==='encargado')return SETID.test(id)&&!/^(prodFile|gVal|gPlu|dCode)$/.test(id);return SETID.test(id);}
 /* bloqueo por intentos fallidos (se guarda aparte para que reiniciar no lo borre) */
 function failGet(){try{return JSON.parse(localStorage.getItem('minisuper-fail')||'{}');}catch(e){return {};}}
@@ -3138,6 +3142,9 @@ document.addEventListener('change',function(e){
   else if(id==='prPaper'){state.print.width=t.value;save();}
   else if(id==='prCopies'){state.print.copies=parseInt(t.value,10)||1;save();}
   else if(id==='prFont'){state.print.font=parseInt(t.value,10)||12;save();}
+  else if(id==='prFontFamily'){state.print.fontFamily=t.value;save();}
+  else if(id==='prHeaderColor'){state.print.headerColor=t.value;save();}
+  else if(id==='prFooterColor'){state.print.footerColor=t.value;save();}
   else if(id==='uiFontFamily'){state.appearance.font=t.value;applyAppearance();save();toast('Tipo de letra actualizado');}
   else if(id==='uiFontSize'){state.appearance.size=parseInt(t.value,10)||15;applyAppearance();save();toast('Tamaño de letra actualizado');}
   else if(id==='uiProductView'){state.appearance.productView=t.value==='grid'?'grid':'list';applyAppearance();save();renderProducts();toast('Vista de productos actualizada');}
