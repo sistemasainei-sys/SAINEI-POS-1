@@ -109,6 +109,14 @@ main{max-width:1280px;margin:0 auto;padding-top:16px}
 .pcard:hover:not(:disabled){border-color:var(--accent)}
 .pcard:active:not(:disabled){background:var(--accent-soft)}
 .pcard:disabled{opacity:.55}
+/* Caja: forzar vista compacta sobre los estilos base de tarjeta */
+.grid .pcard{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name price" "stock price";align-items:center;gap:2px 12px;min-height:0;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 10px;background:transparent;text-align:left}
+.grid .pcard .pname{grid-area:name;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden;-webkit-line-clamp:1}
+.grid .pcard .pprice{grid-area:price;margin:0;font-size:15px;white-space:nowrap}
+.grid .pcard .pstock{grid-area:stock;font-size:11px}
+.grid .pcard img{display:none!important}
+.grid .pcard:hover:not(:disabled){background:var(--accent-soft);border-color:var(--line)}
+
 .pname{font-weight:500;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;overflow-wrap:anywhere}
 .pprice{font-family:var(--font-num);font-weight:700;font-size:17px;margin-top:auto;font-variant-numeric:tabular-nums}
 .pprice small{font-weight:500;font-size:12px;color:var(--muted)}
