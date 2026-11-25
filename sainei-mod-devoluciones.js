@@ -5,7 +5,7 @@ window.SAINEI_POS_MODULES.push({
  init:function(api){
   api.addTab({id:'devoluciones',label:'Devoluciones',canView:function(u){return u&&['admin','encargado'].indexOf(u.role)>=0;},render:render});
   api.addAction('return-open',function(el,id){openReturn(id);});
-  api.addAction('return-save',function(){saveReturn();});
+  api.addAction('return-save',function(){saveReturn();});\n  api.addAction('return-print',function(el){printReturn(Number(el.dataset.id),String(el.dataset.rid||''));});
   function esc(v){return api.escape(v==null?'':String(v));}
   function money(v){return api.money(Math.round(Number(v)||0));}
   function getSale(id){return (api.state().sales||[]).filter(function(x){return Number(x.id)===Number(id);})[0];}
@@ -16,7 +16,16 @@ window.SAINEI_POS_MODULES.push({
   function render(sec){
    var s=api.state(),sales=(s.sales||[]).filter(function(x){return !x.void&&x.items&&x.items.length;}).slice().reverse();
    sec.innerHTML='<div class="card" style="padding:16px;margin:12px 0"><h2>Devoluciones parciales y totales</h2><p class="muted">Registra la mercadería devuelta, repone el stock y distribuye el reembolso entre efectivo, banco o saldo a favor del cliente. No permite devolver más unidades que las vendidas.</p><div class="tiles">'+tile('Ventas registradas',String(sales.length))+tile('Devoluciones registradas',String(sales.reduce(function(n,x){return n+(x.returns||[]).length;},0)))+'</div></div>'+
+    '<div class="card" style="padding:16px;margin:12px 0;overflow:auto"><h3>Comprobantes de devolución</h3><table><thead><tr><th>Fecha</th><th>Ticket</th><th class="r">Importe</th><th></th></tr></thead><tbody>'+sales.reduce(function(out,x){(x.returns||[]).forEach(function(r){out.push('<tr><td>'+esc(new Date(r.date).toLocaleString('es-PY'))+'</td><td>#'+esc(x.id)+'</td><td class="r">'+money(returnTotal(r))+'</td><td><button class="btn" data-a="return-print" data-id="'+x.id+'" data-rid="'+esc(r.id)+'">Imprimir</button></td></tr>');});return out;},[]).join('')+'</tbody></table></div>'+
     '<div class="card" style="padding:16px;margin:12px 0;overflow:auto"><table><thead><tr><th>Ticket</th><th>Fecha</th><th>Cliente</th><th class="r">Total pendiente</th><th>Estado</th><th></th></tr></thead><tbody>'+(sales.length?sales.map(function(x){var cl=(s.clients||[]).filter(function(z){return z.id===x.clientId;})[0];var all=x.items.every(function(i){return available(x,i)<=0;});var returnedValue=(x.returns||[]).reduce(function(a,r){return a+returnTotal(r);},0);return '<tr><td>#'+esc(String(x.id).padStart(6,'0'))+'</td><td>'+esc(new Date(x.date).toLocaleDateString('es-PY'))+'</td><td>'+esc(cl?cl.name:'Consumidor final')+'</td><td class="r">'+money(Math.max(0,Number(x.total||0)-returnedValue))+'</td><td>'+(all?'<span class="pill tag">Devuelta</span>':(x.returns&&x.returns.length?'<span class="pill low">Parcial</span>':'<span class="pill ok">Sin devolución</span>'))+'</td><td><button class="btn" data-a="return-open" data-id="'+x.id+'" '+(all?'disabled':'')+'>Registrar devolución</button></td></tr>';}).join(''):'<tr><td colspan="6">No hay ventas disponibles.</td></tr>')+'</tbody></table></div>';
+  }
+  function printReturn(saleId,returnId){
+   var sale=getSale(saleId),ret=sale&&(sale.returns||[]).filter(function(x){return String(x.id)===String(returnId);})[0];
+   if(!sale||!ret){api.toast('No se encontró la devolución');return;}
+   var shop=api.state().shop||{},rows=(ret.items||[]).map(function(x){return '<tr><td>'+esc(x.name)+'</td><td class="r">'+esc(x.qty)+'</td><td class="r">'+money(x.amount)+'</td></tr>';}).join('');
+   var w=window.open('','_blank');if(!w){api.toast('Permití las ventanas emergentes para imprimir');return;}
+   w.document.write('<!doctype html><html><head><meta charset="utf-8"><title>Devolución #'+esc(returnId)+'</title><style>body{font:14px Arial,sans-serif;max-width:360px;margin:20px auto;color:#111}h2,p{text-align:center;margin:5px 0}table{width:100%;border-collapse:collapse;margin:14px 0}td,th{padding:6px 2px;border-bottom:1px solid #ddd;text-align:left}.r{text-align:right}.total{font-size:18px;font-weight:bold;text-align:right;border-top:2px solid #111;padding-top:10px}@media print{button{display:none}body{margin:0 auto}}</style></head><body><h2>'+esc(shop.name||'SAINEI POS')+'</h2><p>'+esc(shop.ruc||'')+'</p><p>COMPROBANTE DE DEVOLUCIÓN</p><p>Devolución '+esc(returnId)+' · Ticket #'+esc(sale.id)+'</p><p>'+esc(new Date(ret.date).toLocaleString('es-PY'))+'</p><table><thead><tr><th>Producto</th><th class="r">Cant.</th><th class="r">Importe</th></tr></thead><tbody>'+rows+'</tbody></table><p>Medio: '+esc(ret.method||'')+'</p><p>Efectivo: '+money(ret.cashAmount)+' · Banco: '+money(ret.bankAmount)+' · Crédito: '+money(ret.creditAmount)+'</p><div class="total">TOTAL DEVUELTO: '+money(returnTotal(ret))+'</div><p>Atendió: '+esc(ret.user||'')+'</p><p>Comprobante interno</p><button onclick="window.print()">Imprimir</button></body></html>');
+   w.document.close();w.focus();
   }
   function tile(l,v){return '<div class="tile"><div class="muted">'+esc(l)+'</div><strong>'+esc(v)+'</strong></div>';}
   function openReturn(id){
