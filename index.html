@@ -752,17 +752,6 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
         <tbody id="payBody"></tbody>
       </table></div>
     </div>
-    <div data-sub="devoluciones" hidden>
-      <div class="sec-head"><div class="controls">
-        <select id="finReturnRange" class="input" aria-label="Período de devoluciones"><option value="hoy">Hoy</option><option value="mes">Este mes</option><option value="todo">Todo</option></select>
-        <button class="btn" data-a="printreturns">Imprimir informe</button>
-      </div></div>
-      <div class="tiles" id="returnTiles"></div>
-      <div class="panel scroll"><table>
-        <thead><tr><th>Fecha</th><th>Ticket</th><th>Productos devueltos</th><th>Reembolso</th><th class="r">Importe</th></tr></thead>
-        <tbody id="returnBody"></tbody>
-      </table></div>
-    </div>
     <div data-sub="res" hidden>
       <div class="sec-head"><div class="controls">
         <select id="finRange" class="input" aria-label="Período"><option value="hoy">Hoy</option><option value="mes">Este mes</option><option value="todo">Todo</option></select>
@@ -926,7 +915,7 @@ var nf3=new Intl.NumberFormat('es-PY',{minimumFractionDigits:3,maximumFractionDi
 var METHODS={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia / QR',credito:'Crédito',mixto:'Pago combinado'};
 var TABS=[['caja','Punto de venta'],['panel','Panel'],['productos','Productos'],['stock','Stock'],['clientes','Clientes'],['finanzas','Finanzas'],['ventas','Ventas'],['presupuestos','Presupuestos'],['ajustes','Ajustes']];
 var MODULE_TABS={};
-var SUBS={productos:[['lista','Lista'],['balanza','Balanza']],stock:[['exist','Existencias'],['compras','Compras'],['mov','Movimientos']],finanzas:[['caja','Caja'],['gastos','Gastos'],['devoluciones','Devolución'],['pagar','Por pagar'],['res','Resumen']]};
+var SUBS={productos:[['lista','Lista'],['balanza','Balanza']],stock:[['exist','Existencias'],['compras','Compras'],['mov','Movimientos']],finanzas:[['caja','Caja'],['gastos','Gastos'],['pagar','Por pagar'],['res','Resumen']]};
 var EXP_CATS=['Alquiler','Sueldos','Luz, agua e internet','Impuestos','Mantenimiento','Transporte','Otros'];
 var MOVE_LABEL={venta:'Venta',anulacion:'Anulación de venta',compra:'Compra',ajuste:'Ajuste',inicial:'Stock inicial',devolucion:'Devolución'};
 var CHECK=[
@@ -1573,8 +1562,21 @@ function doCloseShift(){
   sh.expected=s.expected;sh.counted=parseInt(raw,10);sh.diff=sh.counted-s.expected;sh.note=$('#closeNote').value.trim();sh.closedAt=nowIso();sh.closedBy=cur?cur.name:'';sh.closedByRole=cur?cur.role:'';log('Cerró la caja de '+(sh.by||'cajero')+' · contado '+gs(sh.counted)+(sh.diff?' · diferencia '+gs(sh.diff):' · cuadrada'));
   closingShiftTarget=0;save();closeModal();renderCurrent();toast('Caja cerrada');
   if(SERVER){}else if(dirHandle&&dirOk)writeFolderBackup();else exportBackup();
+  closeReportsModal(sh.id);
 }
 
+function closeReportsModal(shiftId){
+  openModal('<h2>Caja cerrada correctamente</h2>'+
+    '<p class="muted" style="margin:0">Podés imprimir los cinco informes correspondientes al cierre.</p>'+
+    '<div class="panel card" style="margin:0">'+
+    '<button class="btn" data-a="printshift" data-id="'+Number(shiftId)+'">1. Informe de Caja</button>'+
+    '<button class="btn" data-a="printreturns">2. Informe de devoluciones</button>'+
+    '<button class="btn" data-a="printexpenses">3. Informe de gastos</button>'+
+    '<button class="btn" data-a="printpayables">4. Informe de cuentas por pagar</button>'+
+    '<button class="btn" data-a="printfinance">5. Resumen financiero</button>'+
+    '</div><div class="actions"><button class="btn primary" data-a="close">Finalizar</button></div>',{wide:true});
+}
+ 
 /* ---------- Cobro ---------- */
 function openCheckout(){
   if(!ui.cart.length)return;
@@ -2224,6 +2226,7 @@ function printFinancialReport(kind,id){
 
 /* ---------- Finanzas ---------- */
 function renderFinance(){
+  if(!SUBS.finanzas.some(function(x){return x[0]===ui.sub.finanzas;}))ui.sub.finanzas='res';
   renderSeg('finanzas');
   var sub=ui.sub.finanzas;
   if(sub==='caja'){
