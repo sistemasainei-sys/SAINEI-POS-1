@@ -225,7 +225,7 @@ async function main() {
   assert.ok(cashierUser);
   const cashierLogin = await json(base, '/api/login', { method: 'POST', body: JSON.stringify({ userId: cashierUser.id, pin: '8372' }) });
   assert.equal(cashierLogin.status, 200);
-  const cashierHeaders = { Authorization: 'Bearer ' + cashierLogin.body.token };
+  let cashierHeaders = { Authorization: 'Bearer ' + cashierLogin.body.token };
   // Permisos granulares: permitir alta de productos sin permitir su edición.
   const customPerms = Object.assign({}, cashierUser.permissions, { products_view: true, products_create: true, products_edit: false, products_delete: false, cash_manage: true });
   const customUpdate = await json(base, '/api/users', { method: 'POST', headers: adminHeaders,
@@ -234,6 +234,7 @@ async function main() {
   const customLogin = await json(base, '/api/login', { method: 'POST', body: JSON.stringify({ userId: cashierUser.id, pin: '8372' }) });
   assert.equal(customLogin.status, 200, 'El cajero debe volver a ingresar con los permisos actualizados.');
   const customHeaders = { Authorization: 'Bearer ' + customLogin.body.token };
+  cashierHeaders = customHeaders;
   const customProductId = (await json(base, '/api/ids?kind=prod&n=1', { headers: customHeaders })).body.start;
   assert.ok(customProductId, 'El permiso de alta debe habilitar reservar el ID de producto.');
   const customCreate = await json(base, '/api/sync', { method: 'POST', headers: customHeaders,
