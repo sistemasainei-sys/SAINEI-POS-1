@@ -898,7 +898,7 @@ var nf3=new Intl.NumberFormat('es-PY',{minimumFractionDigits:3,maximumFractionDi
 var METHODS={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia / QR',credito:'Crédito',mixto:'Pago combinado'};
 var TABS=[['caja','Punto de venta'],['panel','Panel'],['productos','Productos'],['stock','Stock'],['clientes','Clientes'],['finanzas','Finanzas'],['ventas','Ventas'],['presupuestos','Presupuestos'],['ajustes','Ajustes']];
 var MODULE_TABS={};
-var SUBS={productos:[['lista','Lista'],['balanza','Balanza']],stock:[['exist','Existencias'],['compras','Compras'],['mov','Movimientos']],finanzas:[['caja','Caja'],['gastos','Gastos'],['pagar','Por pagar'],['res','Resumen']]};
+var SUBS={productos:[['lista','Lista'],['balanza','Balanza']],stock:[['exist','Existencias'],['compras','Compras'],['mov','Movimientos']],finanzas:[['caja','Caja'],['devoluciones','Devoluciones'],['gastos','Gastos'],['pagar','Por pagar'],['res','Resumen']]};
 var EXP_CATS=['Alquiler','Sueldos','Luz, agua e internet','Impuestos','Mantenimiento','Transporte','Otros'];
 var MOVE_LABEL={venta:'Venta',anulacion:'Anulación de venta',compra:'Compra',ajuste:'Ajuste',inicial:'Stock inicial',devolucion:'Devolución'};
 var CHECK=[
@@ -2184,6 +2184,8 @@ function renderFinance(){
     var mes=state.expenses.filter(function(e){return inRange(e.date,'mes');});
     $('#expTiles').innerHTML=tile('Gastos de hoy',gs(sum(state.expenses.filter(function(e){return inRange(e.date,'hoy');}),'amount')))+tile('Gastos del mes',gs(sum(mes,'amount')));
     $('#expBody').innerHTML=ex.length?ex.map(function(e){return '<tr><td>'+fdt(e.date)+'</td><td>'+esc(e.concept)+'</td><td>'+esc(e.cat)+'</td><td>'+(e.method==='caja'?'Efectivo de la caja':'Otro medio')+'</td><td class="r num">'+gs(e.amount)+'</td></tr>';}).join(''):emptyRow(5,'Todavía no registraste gastos.');
+  }else if(sub==='devoluciones'){
+    renderFinanceReturns();
   }else if(sub==='pagar'){
     var pend=state.purchases.filter(function(pu){return purchaseOut(pu)>0;});
     var late=pend.filter(function(pu){return pu.due&&new Date(pu.due).getTime()<Date.now();});
@@ -2196,17 +2198,49 @@ function renderFinance(){
     renderResumen();
   }
 }
+function collectReturns(range){
+  var rows=[],amount=0,cost=0,tax=0,tax10=0,tax5=0,base10=0,base5=0,ex=0;
+  state.sales.filter(function(s){return !s.void;}).forEach(function(s){
+    (s.returns||[]).forEach(function(r){
+      if(!inRange(r.date||s.date,range))return;
+      var value=Number(r.totalAmount!=null?r.totalAmount:r.amount)||0,rv=0,rc=0;
+      (r.items||[]).forEach(function(it){
+        var idx=it.lineIndex!=null?Number(it.lineIndex):(s.items||[]).findIndex(function(x){return Number(x.id)===Number(it.id);});
+        var src=(s.items||[])[idx];if(!src)return;
+        rv+=Number(src.price||0)*Number(it.qty||0);rc+=Number(src.cost||0)*Number(it.qty||0);
+      });
+      var saleTotal=Math.max(1,Number(s.total)||0),share=Math.min(1,rv/saleTotal),t10=(Number(s.iva10)||0)*share,t5=(Number(s.iva5)||0)*share;
+      var t=t10+t5;amount+=value;cost+=rc;tax+=t;tax10+=t10;tax5+=t5;
+      base10+=t10/0.10;base5+=t5/0.05;
+      var names=(r.items||[]).map(function(it){var idx=it.lineIndex!=null?Number(it.lineIndex):(s.items||[]).findIndex(function(x){return Number(x.id)===Number(it.id);});var src=(s.items||[])[idx];return src?esc(src.name)+' × '+nf3.format(it.qty):'Artículo devuelto';}).join(', ');
+      rows.push({date:r.date||s.date,ticket:s.id,names:names,method:r.method==='mixto'?'Mixto':r.method==='banco'?'Banco':r.method==='credito'?'Saldo a favor':'Efectivo',amount:value});
+    });
+  });
+  rows.sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  return {rows:rows,amount:amount,cost:cost,tax:tax,tax10:tax10,tax5:tax5,base10:base10,base5:base5};
+}
+function renderFinanceReturns(){
+  var r=ui.finRange,ret=collectReturns(r);
+  var cash=0,bank=0,credit=0;
+  state.sales.filter(function(s){return !s.void;}).forEach(function(s){(s.returns||[]).forEach(function(x){if(!inRange(x.date||s.date,r))return;cash+=Number(x.cashAmount)||0;bank+=Number(x.bankAmount)||0;credit+=Number(x.creditAmount)||0;});});
+  $('#resTiles').innerHTML=tile('Devoluciones registradas',ret.rows.length)+tile('Importe devuelto',gs(ret.amount))+tile('Efectivo reembolsado',gs(cash))+tile('Banco / tarjeta',gs(bank))+tile('Saldo a favor / crédito',gs(credit));
+  $('#ivaBody').innerHTML='<tr><td colspan="3">Las devoluciones se descuentan de las ventas netas del resumen financiero.</td></tr>';
+  var host=$('#ivaBody').closest('.panel');
+  if(host)host.insertAdjacentHTML('afterend','<div class="panel scroll" style="padding:14px;margin-top:12px"><h3 style="margin:0 0 10px">Detalle de devoluciones</h3><table><thead><tr><th>Fecha</th><th>Ticket</th><th>Productos devueltos</th><th>Reembolso</th><th class="r">Importe</th></tr></thead><tbody>'+(ret.rows.length?ret.rows.map(function(x){return '<tr><td>'+fdt(x.date)+'</td><td>#'+String(x.ticket).padStart(6,'0')+'</td><td>'+x.names+'</td><td>'+x.method+'</td><td class="r num">'+gs(x.amount)+'</td></tr>';}).join(''):emptyRow(5,'Todavía no hay devoluciones registradas para este período.'))+'</tbody></table></div>');
+}
 function renderResumen(){
   var r=ui.finRange;$('#finRange').value=r;
-  var sales=state.sales.filter(function(s){return !s.void&&inRange(s.date,r);});
-  var tot=sum(sales,'total'),i10=sum(sales,'iva10'),i5=sum(sales,'iva5'),cmv=sum(sales,'cmv'),net=tot-i10-i5,gross=net-cmv;
-  var gast=sum(state.expenses.filter(function(e){return inRange(e.date,r);}),'amount'),res=gross-gast;
-  $('#resTiles').innerHTML=tile('Ventas (con IVA)',gs(tot))+tile('Ventas sin IVA',gs(net))+tile('Costo de la mercadería vendida',gs(cmv))+
+  var sales=state.sales.filter(function(s){return !s.void&&inRange(s.date,r);}),ret=collectReturns(r);
+  var grossSales=sum(sales,'total'),gross10=sum(sales,'iva10'),gross5=sum(sales,'iva5'),grossCmv=sum(sales,'cmv');
+  var tot=grossSales-ret.amount,i10=Math.max(0,gross10-ret.tax10),i5=Math.max(0,gross5-ret.tax5);
+  var cmv=Math.max(0,grossCmv-ret.cost),net=tot-i10-i5,gross=net-cmv;
+  var gast=sum(state.expenses.filter(function(e){return e.cat!=='Devolución'&&inRange(e.date,r);}),'amount'),res=gross-gast;
+  $('#resTiles').innerHTML=tile('Ventas brutas',gs(grossSales))+tile('Devoluciones',gs(ret.amount))+tile('Ventas netas (con IVA)',gs(tot))+tile('Ventas sin IVA',gs(net))+tile('Costo neto de mercadería',gs(cmv))+
     tile('Utilidad bruta',gs(gross)+(net>0?' ('+Math.round(gross/net*100)+'%)':''))+tile('Gastos',gs(gast))+tile('Resultado estimado',gs(res),res<0?'bad':'ok')+
     tile('Por cobrar a clientes',gs(totalReceivable()))+tile('Por pagar a proveedores',gs(totalPayable()));
-  $('#ivaBody').innerHTML='<tr><td>Gravadas 10%</td><td class="r num">'+gs(sum(sales,'g10'))+'</td><td class="r num">'+gs(i10)+'</td></tr>'+
-    '<tr><td>Gravadas 5%</td><td class="r num">'+gs(sum(sales,'g5'))+'</td><td class="r num">'+gs(i5)+'</td></tr>'+
-    '<tr><td>Exentas</td><td class="r num">'+gs(sum(sales,'ex'))+'</td><td class="r num">—</td></tr>';
+  $('#ivaBody').innerHTML='<tr><td>Gravadas 10% (neto)</td><td class="r num">'+gs(Math.max(0,sum(sales,'g10')-ret.base10))+'</td><td class="r num">'+gs(i10)+'</td></tr>'+
+    '<tr><td>Gravadas 5% (neto)</td><td class="r num">'+gs(Math.max(0,sum(sales,'g5')-ret.base5))+'</td><td class="r num">'+gs(i5)+'</td></tr>'+
+    '<tr><td>Exentas</td><td class="r num">'+gs(Math.max(0,sum(sales,'ex')-Math.max(0,ret.amount-ret.tax)))+'</td><td class="r num">—</td></tr>';
 }
 function expenseForm(){
   return '<h2>Registrar gasto</h2><div class="form">'+fld('exConcept','Concepto','','type="text" maxlength="80"',true)+sel('exCat','Categoría',EXP_CATS.map(function(c){return [c,c];}),'Otros')+
