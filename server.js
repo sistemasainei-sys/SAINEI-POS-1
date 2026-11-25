@@ -72,7 +72,7 @@ function newRecCode() { const al = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypt
 const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
 const PERMISSION_KEYS = ['products_view','products_create','products_edit','products_delete','stock_view','stock_adjust','clients_view','clients_create','clients_edit','clients_delete','sales_view','sales_sell','sales_void','returns_process','finance_view','expenses_create','expenses_edit','purchases_view','purchases_create','purchases_edit','suppliers_pay','budgets_view','budgets_create','budgets_edit','cash_manage','reports_view','discount_apply'];
 const DEFAULT_USER_PERMS = {
-  cajero: {products_view:false,products_create:false,products_edit:false,products_delete:false,stock_view:false,stock_adjust:false,clients_view:true,clients_create:true,clients_edit:true,clients_delete:false,sales_view:true,sales_sell:true,sales_void:false,returns_process:false,finance_view:false,expenses_create:false,expenses_edit:false,purchases_view:false,purchases_create:false,purchases_edit:false,suppliers_pay:false,budgets_view:false,budgets_create:false,budgets_edit:false,cash_manage:true,reports_view:false,discount_apply:true},
+  cajero: {products_view:false,products_create:false,products_edit:false,products_delete:false,stock_view:false,stock_adjust:false,clients_view:true,clients_create:true,clients_edit:true,clients_delete:false,sales_view:false,sales_sell:true,sales_void:false,returns_process:false,finance_view:false,expenses_create:false,expenses_edit:false,purchases_view:false,purchases_create:false,purchases_edit:false,suppliers_pay:false,budgets_view:false,budgets_create:false,budgets_edit:false,cash_manage:true,reports_view:false,discount_apply:true},
   encargado: {products_view:true,products_create:true,products_edit:true,products_delete:true,stock_view:true,stock_adjust:true,clients_view:true,clients_create:true,clients_edit:true,clients_delete:true,sales_view:true,sales_sell:true,sales_void:true,returns_process:true,finance_view:true,expenses_create:true,expenses_edit:true,purchases_view:true,purchases_create:true,purchases_edit:true,suppliers_pay:true,budgets_view:true,budgets_create:true,budgets_edit:true,cash_manage:true,reports_view:true,discount_apply:true}
 };
 function parsePermissions(raw, role) {
@@ -182,6 +182,9 @@ function allowed(user, coll, op, rec, existing) {
       if(/^Devolución ticket /.test(String(rec.note||''))&&!has('returns_process'))return false;
       if(rec.type==='ajuste'&&!has('stock_adjust'))return false;
       if(rec.type==='venta'&&!has('sales_sell'))return false;
+      if(rec.type==='anulacion'&&!has('sales_void'))return false;
+      if(rec.type==='compra'&&!has('purchases_create'))return false;
+      if(rec.type==='inicial'&&!has('products_create'))return false;
     }
     if(coll==='purchases'&&op==='ins'&&!has('purchases_create'))return false;
     if(coll==='purchases'&&op==='upd'&&!has('purchases_edit'))return false;
