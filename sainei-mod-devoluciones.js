@@ -5,7 +5,8 @@ window.SAINEI_POS_MODULES.push({
  init:function(api){
   api.addTab({id:'devoluciones',label:'Devoluciones',canView:function(u){return u&&['admin','encargado'].indexOf(u.role)>=0;},render:render});
   api.addAction('return-open',function(el,id){openReturn(id);});
-  api.addAction('return-save',function(){saveReturn();});\n  api.addAction('return-print',function(el){printReturn(Number(el.dataset.id),String(el.dataset.rid||''));});
+  api.addAction('return-save',function(){saveReturn();});
+  api.addAction('return-print',function(el){printReturn(Number(el.dataset.id),String(el.dataset.rid||''));});
   function esc(v){return api.escape(v==null?'':String(v));}
   function money(v){return api.money(Math.round(Number(v)||0));}
   function getSale(id){return (api.state().sales||[]).filter(function(x){return Number(x.id)===Number(id);})[0];}
