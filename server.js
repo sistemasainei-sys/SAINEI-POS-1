@@ -161,8 +161,8 @@ function bumpCounter(kind, id) { const r = prep('SELECT n FROM counters WHERE ki
 function allowed(user, coll, op, rec, existing) {
   if (user.role === 'admin') return true;
   const p = (PERM[user.role] || {})[coll];
-  if (!p || !p[op]) return false;
   const custom=user.permissions&&typeof user.permissions==='object'?user.permissions:null;
+  if (!custom && (!p || !p[op])) return false;
   if(custom){
     const has=k=>custom[k]===true;
     if(coll==='products'&&op==='ins'&&!has('products_create'))return false;
