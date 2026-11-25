@@ -172,6 +172,7 @@ function allowed(user, coll, op, rec, existing) {
     if(coll==='clients'&&op==='upd'&&!has('clients_edit'))return false;
     if(coll==='clients'&&op==='del'&&!has('clients_delete'))return false;
     if(coll==='sales'&&op==='ins'&&!has('sales_sell'))return false;
+    if(coll==='sales'&&op==='ins'&&Number(rec.discPct||0)>0&&!has('discount_apply'))return false;
     if(coll==='sales'&&op==='upd'){
       const before=existing||{}, after=rec||{};
       if(JSON.stringify(before.returns||[])!==JSON.stringify(after.returns||[])&&!has('returns_process'))return false;
@@ -185,6 +186,7 @@ function allowed(user, coll, op, rec, existing) {
       if(rec.type==='anulacion'&&!has('sales_void'))return false;
       if(rec.type==='compra'&&!has('purchases_create'))return false;
       if(rec.type==='inicial'&&!has('products_create'))return false;
+      if(!/^Devolución ticket /.test(String(rec.note||''))&&!['venta','ajuste','anulacion','compra','inicial'].includes(String(rec.type||''))&&!has('stock_adjust'))return false;
     }
     if(coll==='purchases'&&op==='ins'&&!has('purchases_create'))return false;
     if(coll==='purchases'&&op==='upd'&&!has('purchases_edit'))return false;
