@@ -29,4 +29,4 @@ Se agregó un flujo de GitHub Actions que revisa la sintaxis JavaScript de todos
 
 ## Pendientes del proyecto
 
-Pagos divididos, devoluciones/cambios, ventas suspendidas, promociones/cupones, reportes de caja X/Z, pruebas de recuperación y persistencia de datos, empaquetado de escritorio y publicación móvil.
+Pagos divididos, devoluciones/cambios, ventas suspendidas, promociones/cupones, pruebas de recuperación y persistencia de datos, empaquetado de escritorio y publicación móvil.
