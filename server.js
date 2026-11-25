@@ -863,7 +863,14 @@ async function handle(req, res) {
     // Un usuario limitado solo puede reservar IDs para colecciones donde
     // tenga permiso de alta; conocer otros contadores no debe habilitar su uso.
     if (me.role !== 'admin') {
-      const permitted = Object.keys(COLLS).some(coll => COLLS[coll] === kind && allowed({uid:me.uid,role:me.role,permissions:me.permissions},coll,'ins',{type:'venta',qty:-1},null));
+      const cp=me.permissions||{};
+      const permitted = cp ? (
+        (kind==='prod'&&cp.products_create)||(kind==='client'&&cp.clients_create)||
+        (kind==='sale'&&cp.sales_sell)||(kind==='shift'&&cp.cash_manage)||
+        (kind==='purch'&&cp.purchases_create)||(kind==='exp'&&cp.expenses_create)||
+        (kind==='budget'&&cp.budgets_create)||(kind==='pay'&&cp.clients_edit)||
+        (kind==='spay'&&cp.suppliers_pay)||(kind==='move'&&(cp.sales_sell||cp.returns_process||cp.stock_adjust||cp.purchases_create))
+      ) : Object.keys(COLLS).some(coll => COLLS[coll] === kind && !!((PERM[me.role] || {})[coll] || {}).ins);
       if (!permitted) return fail(res, 403, 'No tenes permiso para reservar identificadores de este tipo.');
     }
     const r = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get(kind), cur = c ? c.n : 0; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run(kind, cur + n); return { start: cur + 1, end: cur + n }; });
