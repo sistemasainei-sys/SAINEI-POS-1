@@ -98,6 +98,15 @@ main{max-width:1280px;margin:0 auto;padding-top:16px}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+#grid.product-list{display:flex;flex-direction:column;gap:0}
+#grid.product-list .pcard{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name price" "stock price";align-items:center;gap:2px 12px;width:100%;min-height:0;padding:9px 12px;border:0;border-bottom:1px solid var(--line);border-radius:0;background:transparent}
+#grid.product-list .pcard:hover:not(:disabled){background:var(--accent-soft)}
+#grid.product-list .pcard .pname{grid-area:name;display:block;white-space:nowrap;text-overflow:ellipsis;overflow:hidden}
+#grid.product-list .pcard .pprice{grid-area:price;margin:0;font-size:15px;white-space:nowrap}
+#grid.product-list .pcard .pstock{grid-area:stock;font-size:11px}
+#grid.product-list .pcard img{display:none!important}
+body{font-family:var(--ui-font,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif);font-size:var(--ui-font-size,14px)}
+
 .pcard{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;min-height:116px;min-width:0}
 .pcard:hover:not(:disabled){border-color:var(--accent)}
 .pcard:active:not(:disabled){background:var(--accent-soft)}
@@ -811,7 +820,16 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
         <div class="controls"><button class="btn primary" data-a="logoupload">Subir logo</button><button class="btn" id="logoDel" data-a="logoclear">Quitar logo</button></div></div>
       <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
       <p class="hint" style="margin:0">Se muestra arriba en el programa y en el ticket. Usá una imagen PNG o JPG con fondo blanco o transparente. Se ajusta sola al tamaño del ticket.</p>
+    </di
+    <div class="panel settings">
+      <h3>Tipografía del sistema</h3>
+      <p class="hint" style="margin:0">Elegí el tipo y tamaño de letra para las pantallas del programa.</p>
+      <div class="fields">
+        <label>Tipo de letra<select id="uiFontFamily" class="input"><option value="system">Predeterminada</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Georgia">Georgia</option><option value="Trebuchet MS">Trebuchet MS</option></select></label>
+        <label>Tamaño de letra<select id="uiFontSize" class="input"><option value="13">Pequeña</option><option value="14">Normal</option><option value="15">Mediana</option><option value="16">Grande</option><option value="18">Muy grande</option></select></label>
+      </div>
     </div>
+v>
     <div class="panel settings">
       <h3>Impresora de tickets</h3>
       <p class="hint" style="margin:0">Funciona con cualquier impresora instalada en Windows: térmica de 80 mm o 58 mm, o una común de hoja A4. Dejala como impresora predeterminada de Windows. La impresión se usa desde el programa de Windows.</p>
@@ -989,7 +1007,7 @@ function normalize(s){
   s.scale=s.scale||{};s.scale.plu=(s.scale.plu===4?4:5);s.scale.val=s.scale.plu===4?6:5;s.scale.mode=s.scale.mode==='peso'?'peso':'precio';
   ['products','sales','clients','purchases','payments','expenses','shifts','moves','spay','budgets','suspendedSales'].forEach(function(k){s[k]=Array.isArray(s[k])?s[k]:[];});
   s.check=s.check||{};s.n=s.n||{};
-  s.shop.logo=s.shop.logo||'';s.shop.logoBW=s.shop.logoBW||'';
+  s.shop.logo=s.shop.logo||'';s.shop.logoBW=s.shop.logoBW||'';s.shop.uiFont=['system','Arial','Verdana','Tahoma','Georgia','Trebuchet MS'].indexOf(s.shop.uiFont)>=0?s.shop.uiFont:'system';s.shop.uiFontSize=[13,14,15,16,18].indexOf(Number(s.shop.uiFontSize))>=0?Number(s.shop.uiFontSize):14;
   var pr=s.print=s.print||{};pr.on=!!pr.on;pr.width=(pr.width==='58'||pr.width==='a4')?pr.width:'80';pr.copies=[1,2,3].indexOf(pr.copies)>=0?pr.copies:1;pr.font=[11,12,14].indexOf(pr.font)>=0?pr.font:12;pr.footer=pr.footer==null?'¡Gracias por su compra!':pr.footer;pr.logo=pr.logo!==false;pr.bw=pr.bw!==false;
   s.scan=s.scan||{};s.scan.sound=s.scan.sound!==false;
   s.users=Array.isArray(s.users)?s.users:[];s.audit=Array.isArray(s.audit)?s.audit:[];
@@ -1271,6 +1289,7 @@ function renderProducts(){
   $('#chips').innerHTML=cats.map(function(c){return '<button class="chip" data-a="cat" data-v="'+esc(c)+'" aria-pressed="'+(c===ui.cat)+'">'+esc(c)+'</button>';}).join('');
   var q=norm(ui.q.trim());
   var list=state.products.filter(function(p){return (ui.cat==='Todas'||p.cat===ui.cat)&&(!q||norm(p.name).indexOf(q)>=0||String(p.code).indexOf(q)>=0);});
+  $('#grid').classList.add('product-list');
   $('#grid').innerHTML=list.length?list.map(function(p){
     var cls=p.stock<=0?'out':(p.stock<=p.min?'low':'');
     var txt=p.stock<=0?'Agotado':(p.stock<=p.min?'Quedan '+fq(p.stock,p):fq(p.stock,p)+' en stock');
@@ -2347,7 +2366,9 @@ function renderNote(){
 function renderChecklist(){
   $('#checklist').innerHTML=CHECK.map(function(c){var on=!!state.check[c[0]];return '<label class="chk'+(on?' done':'')+'"><input type="checkbox" data-a="chk" data-v="'+c[0]+'"'+(on?' checked':'')+'><span>'+esc(c[1])+'</span></label>';}).join('');
 }
+function applyUiTypography(){var f=state.shop.uiFont||'system',z=Number(state.shop.uiFontSize)||14;document.documentElement.style.setProperty('--ui-font',f==='system'?'system-ui, -apple-system, BlinkMacSystemFont, Segoe UI, sans-serif':f+', sans-serif');document.documentElement.style.setProperty('--ui-font-size',z+'px');}
 function renderSettings(){
+  $('#uiFontFamily').value=state.shop.uiFont||'system';$('#uiFontSize').value=String(state.shop.uiFontSize||14);applyUiTypography();
   $('#sName').value=state.shop.name;$('#sRuc').value=state.shop.ruc;$('#sAddr').value=state.shop.addr;$('#sPhone').value=state.shop.phone;
   $('#scFmt').value=state.scale.plu+'-'+state.scale.val;$('#scMode').value=state.scale.mode;
   var pr=state.print;$('#prPaper').value=pr.width;$('#prCopies').value=String(pr.copies);$('#prFont').value=String(pr.font);$('#prFooter').value=pr.footer;$('#prAuto').checked=pr.on;$('#prLogo').checked=pr.logo;$('#prBW').checked=pr.bw;$('#scSound').checked=state.scan.sound;renderLogoPreview();renderSafe();
@@ -2671,7 +2692,7 @@ function secDeny(an){
   if(cur.role!=='admin'&&ADMINACT[an]&&!key&&!(cur.role==='encargado'&&ENCACT[an])){toast('Esa acción es solo del usuario principal');logAs(cur.name,'Intentó una acción no permitida ('+an+')');return true;}
   return false;
 }
-var SETID=/^(sName|sRuc|sAddr|sPhone|prFooter|scFmt|scMode|prPaper|prCopies|prFont|prAuto|prLogo|prBW|scSound|logoFile|prodFile|importFile|secLock|secDisc|gVal|gPlu|dCode)$/;
+var SETID=/^(uiFontFamily|uiFontSize|sName|sRuc|sAddr|sPhone|prFooter|scFmt|scMode|prPaper|prCopies|prFont|prAuto|prLogo|prBW|scSound|logoFile|prodFile|importFile|secLock|secDisc|gVal|gPlu|dCode)$/;
 function secDenyInput(id){if(!state)return false;if(/^(lkUser|lkName|lkPin|lkPin2|rcCode|rcPin|rcUser)$/.test(id))return false;if(!cur)return true;if(cur.role==='admin')return false;if(cur.role==='encargado')return SETID.test(id)&&!/^(prodFile|gVal|gPlu|dCode)$/.test(id);return SETID.test(id);}
 /* bloqueo por intentos fallidos (se guarda aparte para que reiniciar no lo borre) */
 function failGet(){try{return JSON.parse(localStorage.getItem('minisuper-fail')||'{}');}catch(e){return {};}}
@@ -3083,6 +3104,8 @@ document.addEventListener('input',function(e){
   else if(id==='sRuc'){state.shop.ruc=t.value;save();}
   else if(id==='sAddr'){state.shop.addr=t.value;save();}
   else if(id==='sPhone'){state.shop.phone=t.value;save();}
+  else if(id==='uiFontFamily'){state.shop.uiFont=t.value;applyUiTypography();save();}
+  else if(id==='uiFontSize'){state.shop.uiFontSize=parseInt(t.value,10)||14;applyUiTypography();save();}
   else if(id==='prFooter'){state.print.footer=t.value;save();}
   else if(id==='scanTest'){clearTimeout(scanTimer);scanTimer=setTimeout(function(){scanTest(t.value);},250);}
 });
