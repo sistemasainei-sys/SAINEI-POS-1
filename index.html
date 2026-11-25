@@ -1302,7 +1302,7 @@ function renderCart(){
     var ctl=(p.type==='peso'||p.type==='medida')
       ?'<button class="wbtn" data-a="weigh" data-id="'+p.id+'" data-k="'+l.k+'" aria-label="Cambiar cantidad">'+nf3.format(l.qty)+' '+esc(p.unit||'kg')+'</button>'
       :'<div class="qty"><button data-a="dec" data-k="'+l.k+'" aria-label="Quitar una unidad">−</button><span>'+l.qty+'</span><button data-a="inc" data-k="'+l.k+'" aria-label="Agregar una unidad">+</button></div>';
-    return '<li class="line'+(isLast?' last':'')+'"><div class="lno">'+(i+1)+'</div><div class="lname">'+esc(p.name)+'<small>'+gs(l.price!=null?l.price:p.price)+(p.type==='peso'?' por kg':(p.type==='medida'?' por '+esc(p.unit||'m'):' c/u'))+'</small></div>'+ctl+
+    return '<li class="line'+(isLast?' last':'')+'"><div class="lno">'+(i+1)+'</div><div class="lname">'+esc(p.name)+'<small>'+gs(l.price!=null?l.price:p.price)+(p.type==='peso'?' por kg':(p.type==='medida'?' por '+esc(p.unit||'m'):' c/u'))+'</small></div>'+ctl+'<button class="wbtn" data-a="editlineprice" data-k="'+l.k+'" title="Modificar precio de esta venta">Precio</button>'+
       '<div class="ltotal">'+fmt(amt)+'</div><button class="x" data-a="rm" data-k="'+l.k+'" aria-label="Quitar del ticket">×</button></li>';
   }).join(''):'<li class="empty" style="list-style:none;padding:24px 16px;font-size:18px">La venta está vacía. Pasá el primer producto por el lector.</li>';
   var li=$('#lastItem');
@@ -2493,6 +2493,7 @@ var A={
   inc:function(el){changeQty(parseInt(el.dataset.k,10),1);},
   dec:function(el){changeQty(parseInt(el.dataset.k,10),-1);},
   rm:function(el){var k=parseInt(el.dataset.k,10);ui.cart=ui.cart.filter(function(l){return l.k!==k;});renderCart();},
+  editlineprice:function(el){var k=parseInt(el.dataset.k,10),l=ui.cart.filter(function(x){return x.k===k;})[0];if(!l)return;if(!isAdmin()&&!hasPermission('products_edit')){toast('No tenés permiso para modificar precios');return;}var p=getP(l.id);if(!p)return;var current=l.price!=null?l.price:p.price;var raw=window.prompt('Nuevo precio unitario para '+p.name, String(current));if(raw===null)return;var n=Number(String(raw).replace(/\\./g,'').replace(',','.'));if(!Number.isFinite(n)||n<0){toast('Ingresá un precio válido');return;}l.price=Math.round(n);saveActiveSale();renderCart();toast('Precio actualizado solo para esta venta');},
   clear:function(){ui.cart=[];ui.disc=0;$('#disc').value='';renderCart();},
   checkout:function(){openCheckout();},
   method:function(el,id,v){ui.pay.method=v;openModal(checkoutHtml(),{pay:true});updatePay();var r=$('#recv');if(r)r.focus();},
