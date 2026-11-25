@@ -26,7 +26,7 @@ window.SAINEI_POS_MODULES.push({
   api.addAction('auditoria-refresh',function(){var sec=document.querySelector('#v-auditoria');if(sec)load(sec);});
   api.addAction('auditoria-export',function(){
    var rows=[['Fecha y hora','Usuario','Acción']].concat(currentRows.map(function(x){return [date(x.t),x.u,x.a];}));
-   var csv='\\ufeff'+rows.map(function(row){return row.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(';');}).join('\\r\\n');
+   var csv='\uFEFF'+rows.map(function(row){return row.map(function(v){return '"'+String(v==null?'':v).replace(/"/g,'""')+'"';}).join(';');}).join('\r\n');
    var blob=new Blob([csv],{type:'text/csv;charset=utf-8'}),url=URL.createObjectURL(blob),a=document.createElement('a');
    a.href=url;a.download='auditoria-sainei-pos.csv';document.body.appendChild(a);a.click();a.remove();URL.revokeObjectURL(url);
   });
