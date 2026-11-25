@@ -1279,14 +1279,14 @@ function renderProducts(){
 }
 function lineAmount(l,p){var base=(l.price!=null?l.price:p.price)*l.qty;var pct=Math.min(100,Math.max(0,Number(l.discPct)||0));return Math.round(base*(1-pct/100));}
 function totals(){
-  var sub=0,n=0,b10=0,b5=0,bx=0,cmv=0;
+  var sub=0,lineDisc=0,n=0,b10=0,b5=0,bx=0,cmv=0;
   ui.cart.forEach(function(l){
     var p=getP(l.id);if(!p)return;
-    var a=lineAmount(l,p);sub+=a;n+=(p.type==='peso'?1:l.qty);cmv+=p.cost*l.qty;
+    var base=Math.round((l.price!=null?l.price:p.price)*l.qty),a=lineAmount(l,p);sub+=base;lineDisc+=base-a;n+=(p.type==='peso'?1:l.qty);cmv+=p.cost*l.qty;
     if(p.iva===10)b10+=a;else if(p.iva===5)b5+=a;else bx+=a;
   });
   var d=Math.min(100,Math.max(0,ui.disc||0));
-  var disc=Math.round(sub*d/100),total=sub-disc,f=sub?total/sub:1;
+  var disc=lineDisc+Math.round((sub-lineDisc)*d/100),total=sub-disc,f=sub?total/sub:1;
   var ex=Math.round(bx*f),g5=Math.round(b5*f),g10=total-ex-g5;
   return {sub:sub,disc:disc,total:total,n:n,ex:ex,g5:g5,g10:g10,iva10:Math.round(g10/11),iva5:Math.round(g5/21),cmv:Math.round(cmv)};
 }
