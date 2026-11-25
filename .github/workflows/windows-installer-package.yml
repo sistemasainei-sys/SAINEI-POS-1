@@ -2,6 +2,19 @@ name: SAINEI POS - paquete Windows
 
 on:
   workflow_dispatch:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'server.js'
+      - 'public/**'
+      - 'src/**'
+      - 'scripts/**'
+      - '*.bat'
+      - '*.ps1'
+      - '*.vbs'
+      - 'package.json'
+      - 'docs/INICIO-SIN-COSTO-WINDOWS.md'
+      - '.github/workflows/windows-installer-package.yml'
   push:
     branches: [main]
     paths:
