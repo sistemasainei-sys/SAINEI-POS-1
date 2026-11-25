@@ -31,11 +31,11 @@ CREATE INDEX IF NOT EXISTS rec_rev ON rec(rev);
 CREATE TABLE IF NOT EXISTS sing(k TEXT PRIMARY KEY, j TEXT NOT NULL, rev INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS counters(kind TEXT PRIMARY KEY, n INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL, salt TEXT, hash TEXT);
-try { db.exec('ALTER TABLE users ADD COLUMN perms TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column')) throw e; }
 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT, u TEXT, a TEXT);
 CREATE TABLE IF NOT EXISTS login_attempts(k TEXT PRIMARY KEY, n INTEGER NOT NULL, blocked_until INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS open_sales(uid INTEGER PRIMARY KEY, j TEXT NOT NULL, updated INTEGER NOT NULL);
 `);
+try { db.exec('ALTER TABLE users ADD COLUMN perms TEXT'); } catch (e) { if (!String(e.message).includes('duplicate column')) throw e; }
 const P = {}; const prep = s => P[s] || (P[s] = db.prepare(s));
 const getMeta = k => { const r = prep('SELECT v FROM meta WHERE k=?').get(k); return r ? r.v : null; };
 const setMeta = (k, v) => prep('INSERT OR REPLACE INTO meta(k,v) VALUES(?,?)').run(k, String(v));
