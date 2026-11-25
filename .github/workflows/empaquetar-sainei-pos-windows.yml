@@ -5,6 +5,7 @@ on:
     branches:
       - sainei-pos-release-candidate
       - sainei-pos-sin-licencia
+      - sainei-pos-instalador-seguro
   workflow_dispatch:
 
 permissions:
@@ -30,6 +31,10 @@ jobs:
           Get-ChildItem -Force | Where-Object { $_.Name -notin @('.git','node_modules','.github') } | Copy-Item -Destination $out -Recurse -Force
           if (!(Test-Path (Join-Path $out '1-INSTALAR.bat'))) { throw 'Falta 1-INSTALAR.bat' }
           if (!(Test-Path (Join-Path $out 'server.js'))) { throw 'Falta server.js' }
+          if (!(Test-Path (Join-Path $out 'instalar-sainei-pos-windows.bat'))) { throw 'Falta el instalador principal' }
+          if (!(Test-Path (Join-Path $out 'configurar-inicio-automatico-sainei.ps1'))) { throw 'Falta la configuración de inicio automático' }
+          if (!(Test-Path (Join-Path $out 'descubrir-servidor-sainei.ps1'))) { throw 'Falta el descubrimiento de servidor para cajas' }
+          if (!(Test-Path (Join-Path $out 'ACTUALIZAR-SAINEl-POS.bat'))) { throw 'Falta el actualizador con respaldo' }
           Compress-Archive -Path (Join-Path $out '*') -DestinationPath (Join-Path $env:RUNNER_TEMP 'SAINEI-POS-Instalacion-Windows.zip') -Force
       - name: Publicar paquete descargable
         uses: actions/upload-artifact@v4
