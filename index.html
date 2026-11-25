@@ -23,6 +23,7 @@
   --warn:#b96512; --warn-soft:#fff0df; --bad:#b42318; --bad-soft:#fde3df; --ok:#1769aa; --ok-soft:#e1efff;
   --font-head:'Space Grotesk','Segoe UI',system-ui,sans-serif; --font-body:'Inter','Segoe UI',system-ui,sans-serif;
   --font-num:'Space Grotesk','Inter',system-ui,sans-serif;
+  --app-font:'Segoe UI',Arial,sans-serif; --app-size:15px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -40,7 +41,7 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45;
+body{background:var(--bg);color:var(--fg);font-family:var(--app-font);font-size:var(--app-size);line-height:1.45;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 24px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
 body.lock{overflow:hidden}
@@ -98,6 +99,12 @@ main{max-width:1280px;margin:0 auto;padding-top:16px}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.grid.compact-products{display:flex;flex-direction:column;gap:4px}
+.grid.compact-products .pcard{display:flex;flex-direction:row;align-items:center;gap:10px;text-align:left;min-height:0;width:100%;padding:8px 10px;border-radius:6px}
+.grid.compact-products .pcard img{width:34px!important;height:34px!important;flex:0 0 34px;margin:0!important}
+.grid.compact-products .pname{display:block;flex:1;min-width:0;white-space:nowrap;text-overflow:ellipsis}
+.grid.compact-products .pprice{margin:0 0 0 auto;white-space:nowrap;font-size:15px}
+.grid.compact-products .pstock{white-space:nowrap;min-width:92px;text-align:right}
 .pcard{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;min-height:116px;min-width:0}
 .pcard:hover:not(:disabled){border-color:var(--accent)}
 .pcard:active:not(:disabled){background:var(--accent-soft)}
@@ -813,6 +820,15 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
       <p class="hint" style="margin:0">Se muestra arriba en el programa y en el ticket. Usá una imagen PNG o JPG con fondo blanco o transparente. Se ajusta sola al tamaño del ticket.</p>
     </div>
     <div class="panel settings">
+      <h3>Diseño y letras del programa</h3>
+      <p class="hint" style="margin:0">Estos ajustes cambian la apariencia de la pantalla y se guardan en la configuración del comercio.</p>
+      <div class="fields">
+        <label>Tipo de letra<select id="uiFont" class="input"><option value="Segoe UI">Segoe UI (recomendada)</option><option value="Arial">Arial</option><option value="Verdana">Verdana</option><option value="Tahoma">Tahoma</option><option value="Georgia">Georgia</option></select></label>
+        <label>Tamaño de letra<select id="uiSize" class="input"><option value="13px">Pequeña</option><option value="15px">Normal</option><option value="17px">Grande</option><option value="19px">Muy grande</option></select></label>
+        <label>Productos en Punto de venta<select id="uiProducts" class="input"><option value="compact">Lista lineal compacta</option><option value="cards">Tarjetas grandes</option></select></label>
+      </div>
+    </div>
+    <div class="panel settings">
       <h3>Impresora de tickets</h3>
       <p class="hint" style="margin:0">Funciona con cualquier impresora instalada en Windows: térmica de 80 mm o 58 mm, o una común de hoja A4. Dejala como impresora predeterminada de Windows. La impresión se usa desde el programa de Windows.</p>
       <div class="fields">
@@ -985,6 +1001,7 @@ function seed(){
 }
 function normalize(s){
   s.v=2;
+  s.uiPrefs=s.uiPrefs||{};s.uiPrefs.font=['Segoe UI','Arial','Verdana','Tahoma','Georgia'].indexOf(s.uiPrefs.font)>=0?s.uiPrefs.font:'Segoe UI';s.uiPrefs.size=['13px','15px','17px','19px'].indexOf(s.uiPrefs.size)>=0?s.uiPrefs.size:'15px';s.uiPrefs.products=s.uiPrefs.products==='cards'?'cards':'compact';
   s.shop=s.shop||{};s.shop.name=s.shop.name||'Mini Súper';s.shop.ruc=s.shop.ruc||'';s.shop.addr=s.shop.addr||'';s.shop.phone=s.shop.phone||'';
   s.scale=s.scale||{};s.scale.plu=(s.scale.plu===4?4:5);s.scale.val=s.scale.plu===4?6:5;s.scale.mode=s.scale.mode==='peso'?'peso':'precio';
   ['products','sales','clients','purchases','payments','expenses','shifts','moves','spay','budgets','suspendedSales'].forEach(function(k){s[k]=Array.isArray(s[k])?s[k]:[];});
@@ -1264,6 +1281,7 @@ function scaleProduct(plu){return state.products.filter(function(x){return x.typ
 
 /* ---------- Caja: productos y ticket ---------- */
 function renderProducts(){
+  var compact=(state.uiPrefs||{}).products!=='cards';var grid=$('#grid');if(grid)grid.classList.toggle('compact-products',compact);
   var gw=$('#gridWrap');if(gw)gw.hidden=!(ui.grid||(ui.q.trim()&&!/^\d+$/.test(ui.q.trim())));
   var gb=$('#gridBtn');if(gb)gb.setAttribute('aria-pressed',String(ui.grid));
   var cats=['Todas'].concat(Array.from(new Set(state.products.map(function(p){return p.cat;}))).sort());
@@ -2344,11 +2362,18 @@ function renderNote(){
   if(SERVER){n.textContent='Los datos se guardan en el servidor de este comercio (PC principal), dentro del establecimiento. No se envían a internet.';return;}
   n.textContent=DB?'Los datos se guardan en este equipo, dentro del navegador. Para estar seguro, activá las copias automáticas en una carpeta y guardá una copia de seguridad todos los días.':'Este navegador no permite guardar datos: lo que cargues se perderá al cerrar la página.';
 }
+function applyUiPrefs(){
+  var p=state&&state.uiPrefs||{};var root=document.documentElement;
+  var fonts={'Segoe UI':'Segoe UI,Arial,sans-serif','Arial':'Arial,sans-serif','Verdana':'Verdana,sans-serif','Tahoma':'Tahoma,sans-serif','Georgia':'Georgia,serif'};
+  root.style.setProperty('--app-font',fonts[p.font]||fonts['Segoe UI']);root.style.setProperty('--app-size',['13px','15px','17px','19px'].indexOf(p.size)>=0?p.size:'15px');
+  var g=$('#grid');if(g)g.classList.toggle('compact-products',p.products!=='cards');
+}
 function renderChecklist(){
   $('#checklist').innerHTML=CHECK.map(function(c){var on=!!state.check[c[0]];return '<label class="chk'+(on?' done':'')+'"><input type="checkbox" data-a="chk" data-v="'+c[0]+'"'+(on?' checked':'')+'><span>'+esc(c[1])+'</span></label>';}).join('');
 }
 function renderSettings(){
-  $('#sName').value=state.shop.name;$('#sRuc').value=state.shop.ruc;$('#sAddr').value=state.shop.addr;$('#sPhone').value=state.shop.phone;
+  $('#sName').value=state.shop.name;
+  var up=state.uiPrefs||{};$('#uiFont').value=up.font||'Segoe UI';$('#uiSize').value=up.size||'15px';$('#uiProducts').value=up.products||'compact';applyUiPrefs();$('#sRuc').value=state.shop.ruc;$('#sAddr').value=state.shop.addr;$('#sPhone').value=state.shop.phone;
   $('#scFmt').value=state.scale.plu+'-'+state.scale.val;$('#scMode').value=state.scale.mode;
   var pr=state.print;$('#prPaper').value=pr.width;$('#prCopies').value=String(pr.copies);$('#prFont').value=String(pr.font);$('#prFooter').value=pr.footer;$('#prAuto').checked=pr.on;$('#prLogo').checked=pr.logo;$('#prBW').checked=pr.bw;$('#scSound').checked=state.scan.sound;renderLogoPreview();renderSafe();
   renderChecklist();renderNote();renderUsers();
@@ -3105,6 +3130,7 @@ document.addEventListener('change',function(e){
   else if(id==='prCopies'){state.print.copies=parseInt(t.value,10)||1;save();}
   else if(id==='prFont'){state.print.font=parseInt(t.value,10)||12;save();}
   else if(id==='prAuto'){state.print.on=t.checked;save();}
+  else if(id==='uiFont'||id==='uiSize'||id==='uiProducts'){state.uiPrefs=state.uiPrefs||{};if(id==='uiFont')state.uiPrefs.font=t.value;else if(id==='uiSize')state.uiPrefs.size=t.value;else state.uiPrefs.products=t.value;applyUiPrefs();save();if(id==='uiProducts')renderProducts();toast('Diseño guardado');}
   else if(id==='prLogo'){state.print.logo=t.checked;save();}
   else if(id==='prBW'){state.print.bw=t.checked;save();}
   else if(id==='secLock'){state.sec.lockMin=parseInt(t.value,10)||0;log('Cambió el bloqueo automático a '+(state.sec.lockMin?state.sec.lockMin+' minutos':'desactivado'));save();renderUsers();toast('Guardado');}
