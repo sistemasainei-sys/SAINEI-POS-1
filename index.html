@@ -2862,28 +2862,39 @@ function renderUsers(){
 }
 function userForm(u,role){
   var self=u&&cur&&u.id===cur.id,r=u?u.role:role;
+  var defaults={
+    cajero:{sales:{ins:1},moves:{ins:1},clients:{ins:1,upd:1},budgets:{ins:1,upd:1},payments:{ins:1},shifts:{ins:1,upd:1},suspendedSales:{ins:1,upd:1}},
+    encargado:{products:{ins:1,upd:1,del:1},sales:{ins:1,upd:1},clients:{ins:1,upd:1,del:1},budgets:{ins:1,upd:1},purchases:{ins:1,upd:1},payments:{ins:1},expenses:{ins:1,upd:1},shifts:{ins:1,upd:1},moves:{ins:1},spay:{ins:1,upd:1},bankEntries:{ins:1,upd:1},suspendedSales:{ins:1,upd:1}}
+  };
+  var base=u&&u.perms?u.perms:(defaults[r]||{});
+  var labels={products:'Productos',sales:'Ventas',clients:'Clientes',budgets:'Presupuestos',purchases:'Compras',payments:'Cobros',expenses:'Gastos',shifts:'Caja',moves:'Movimientos de stock',spay:'Pagos a proveedores',bankEntries:'Bancos',suspendedSales:'Ventas suspendidas'};
+  var permRows=Object.keys(labels).map(function(k){
+    var p=base[k]||{}, actions=['ins','upd','del'];
+    return '<div class="sec-row" style="align-items:flex-start"><strong>'+labels[k]+'</strong><span style="display:flex;gap:10px;flex-wrap:wrap">'+actions.map(function(a){return '<label style="font-size:12px"><input type="checkbox" data-userperm="'+k+'" data-op="'+a+'"'+(p[a]?' checked':'')+'> '+({ins:'Agregar',upd:'Modificar',del:'Eliminar'}[a])+'</label>';}).join('')+'</span></div>';
+  }).join('');
   return '<h2>'+(u?'Editar usuario':(r==='admin'?'Nuevo usuario principal':(r==='encargado'?'Nuevo encargado':'Nuevo cajero')))+'</h2>'+
     '<label class="muted" for="uf-name">Nombre</label><input id="uf-name" class="input" type="text" maxlength="40" value="'+esc(u?u.name:'')+'">'+
     '<label class="muted" for="uf-pin">'+(u?'Clave nueva (dejá vacío para no cambiarla)':'Clave (mínimo 4 caracteres)')+'</label><input id="uf-pin" class="input" type="password" maxlength="40" autocomplete="new-password">'+
     '<label class="muted" for="uf-role">Tipo</label><select id="uf-role" class="input"'+(self?' disabled':'')+'><option value="cajero"'+(r==='cajero'?' selected':'')+'>Cajero</option><option value="encargado"'+(r==='encargado'?' selected':'')+'>Encargado</option><option value="admin"'+(r==='admin'?' selected':'')+'>Principal</option></select>'+
+    '<h3 style="margin-top:14px">Permisos personalizados</h3><p class="hint">Marcá lo que este usuario puede hacer. Los permisos se aplican en el servidor.</p><div class="panel" style="padding:10px;max-height:280px;overflow:auto">'+permRows+'</div>'+
     (u?'<label class="chk"><input type="checkbox" id="uf-active"'+(u.active?' checked':'')+(self?' disabled':'')+'><span>Usuario activo (si lo desactivás ya no puede ingresar)</span></label>':'')+
     '<p class="err" id="ufErr"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button><button class="btn primary" data-a="saveuser">Guardar</button></div>';
 }
 function saveUser(){
   var name=$('#uf-name').value.trim(),pin=$('#uf-pin').value,err=$('#ufErr'),u=ui.editUser?getU(ui.editUser):null;
-  var role=$('#uf-role').value,act=u?($('#uf-active')?$('#uf-active').checked:true):true;
+  var role=$('#uf-role').value,act=u?($('#uf-active')?$('#uf-active').checked:true):true,perms={};\n  document.querySelectorAll('[data-userperm]').forEach(function(el){var k=el.getAttribute('data-userperm'),op=el.getAttribute('data-op');if(!perms[k])perms[k]={};perms[k][op]=el.checked?1:0;});
   if(!name){err.textContent='Escribí el nombre.';return;}
-  if(SERVER){api('POST','/api/users',{id:u?u.id:0,name:name,role:u&&u.id===cur.id?u.role:role,pin:pin,active:act}).then(function(r){state.users=r.users;closeModal();renderCurrent();toast('Usuario guardado');}).catch(function(e){err.textContent=e.message||'No se pudo guardar.';});return;}
+  if(SERVER){api('POST','/api/users',{id:u?u.id:0,name:name,role:u&&u.id===cur.id?u.role:role,pin:pin,active:act,perms:perms}).then(function(r){state.users=r.users;closeModal();renderCurrent();toast('Usuario guardado');}).catch(function(e){err.textContent=e.message||'No se pudo guardar.';});return;}
   if(state.users.some(function(o){return o.name.toLowerCase()===name.toLowerCase()&&(!u||o.id!==u.id);})){err.textContent='Ya existe un usuario con ese nombre.';return;}
   if(!u&&weakPin(pin)||(u&&pin&&weakPin(pin))){err.textContent='La clave es muy fácil. Usá al menos 4 caracteres y evitá 1234 o repetidos.';return;}
   if(u){
     var wasAdmin=u.role==='admin'&&u.active;
     if(wasAdmin&&(role!=='admin'||!act)&&state.users.filter(function(o){return o.active&&o.role==='admin'&&o.id!==u.id;}).length===0){err.textContent='Tiene que quedar al menos un usuario principal activo.';return;}
     var ch=[];if(u.name!==name)ch.push('nombre');if(u.role!==role)ch.push('tipo');if(u.active!==act)ch.push(act?'activó':'desactivó');if(pin)ch.push('clave');
-    u.name=name;u.role=role;u.active=act;if(pin)setPin(u,pin);
+    u.name=name;u.role=role;u.active=act;u.perms=perms;if(pin)setPin(u,pin);
     log('Editó al usuario '+name+(ch.length?' ('+ch.join(', ')+')':''));
   }else{
-    var nu={id:nid('user'),name:name,role:role,active:true};setPin(nu,pin);state.users.push(nu);
+    var nu={id:nid('user'),name:name,role:role,active:true,perms:perms};setPin(nu,pin);state.users.push(nu);
     log('Creó el usuario '+name+' ('+(role==='admin'?'principal':'cajero')+')');
   }
   save();closeModal();renderCurrent();toast('Usuario guardado');
