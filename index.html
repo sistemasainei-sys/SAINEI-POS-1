@@ -2596,7 +2596,16 @@ function isAdmin(){return !!cur&&cur.role==='admin';}
 function isManager(){return !!cur&&(cur.role==='admin'||cur.role==='encargado');}
 function roleName(r){return r==='admin'?'Principal':(r==='encargado'?'Encargado':'Cajero');}
 function maxDisc(){return isManager()?100:(state&&state.sec?state.sec.maxDisc:10);}
-function canTab(t){if(!cur)return false;if(MODULE_TABS[t]){var cv=MODULE_TABS[t].canView;return typeof cv==='function'?!!cv(cur):cv===true?true:cur.role==='admin';}if(cur.role==='admin')return true;if(cur.role==='encargado')return t!=='ajustes';return t==='caja'||t==='clientes';}
+var USER_PERM_LABELS=[["products_view","Ver productos"],["products_create","Agregar productos"],["products_edit","Editar productos"],["products_delete","Eliminar productos"],["stock_view","Consultar stock"],["stock_adjust","Ajustar stock"],["clients_view","Ver clientes"],["clients_create","Agregar clientes"],["clients_edit","Editar clientes"],["clients_delete","Eliminar clientes"],["sales_view","Ver historial de ventas"],["sales_sell","Realizar ventas y cobrar"],["sales_void","Anular ventas"],["returns_process","Procesar devoluciones"],["finance_view","Ver finanzas"],["expenses_create","Registrar gastos"],["expenses_edit","Editar gastos"],["purchases_view","Ver compras"],["purchases_create","Cargar compras"],["purchases_edit","Editar compras"],["suppliers_pay","Pagar proveedores"],["budgets_view","Ver presupuestos"],["budgets_create","Crear presupuestos"],["budgets_edit","Editar presupuestos"],["cash_manage","Abrir y cerrar caja"],["reports_view","Ver panel e informes"],["discount_apply","Aplicar descuentos"]];
+var USER_PERM_DEFAULTS={
+cajero:{products_view:false,products_create:false,products_edit:false,products_delete:false,stock_view:false,stock_adjust:false,clients_view:true,clients_create:true,clients_edit:true,clients_delete:false,sales_view:true,sales_sell:true,sales_void:false,returns_process:false,finance_view:false,expenses_create:false,expenses_edit:false,purchases_view:false,purchases_create:false,purchases_edit:false,suppliers_pay:false,budgets_view:false,budgets_create:false,budgets_edit:false,cash_manage:true,reports_view:false,discount_apply:true},
+encargado:{products_view:true,products_create:true,products_edit:true,products_delete:true,stock_view:true,stock_adjust:true,clients_view:true,clients_create:true,clients_edit:true,clients_delete:true,sales_view:true,sales_sell:true,sales_void:true,returns_process:true,finance_view:true,expenses_create:true,expenses_edit:true,purchases_view:true,purchases_create:true,purchases_edit:true,suppliers_pay:true,budgets_view:true,budgets_create:true,budgets_edit:true,cash_manage:true,reports_view:true,discount_apply:true}
+};
+function userPermissions(u){if(!u||u.role==='admin')return null;var src=u.permissions&&typeof u.permissions==='object'?u.permissions:USER_PERM_DEFAULTS[u.role]||USER_PERM_DEFAULTS.cajero,out={};USER_PERM_LABELS.forEach(function(x){out[x[0]]=src[x[0]]===true;});return out;}
+function hasPermission(k){if(!cur)return false;if(cur.role==='admin')return true;var p=userPermissions(cur);return !!(p&&p[k]);}
+function permissionEditor(u,role){var p=userPermissions(u||{role:role});var groups=[['Productos y stock',['products_view','products_create','products_edit','products_delete','stock_view','stock_adjust']],['Clientes',['clients_view','clients_create','clients_edit','clients_delete']],['Ventas y caja',['sales_view','sales_sell','sales_void','returns_process','cash_manage','discount_apply']],['Compras y proveedores',['purchases_view','purchases_create','purchases_edit','suppliers_pay']],['Finanzas e informes',['finance_view','expenses_create','expenses_edit','reports_view']],['Presupuestos',['budgets_view','budgets_create','budgets_edit']]];return '<div class="panel" style="padding:12px;display:grid;gap:10px"><strong>Permisos personalizados</strong><p class="hint" style="margin:0">Activá solo las funciones que esta persona puede utilizar. Cada permiso es independiente: por ejemplo, puede agregar productos sin poder editarlos.</p>'+groups.map(function(g){return '<section><strong>'+g[0]+'</strong>'+g[1].map(function(k){var label=USER_PERM_LABELS.filter(function(x){return x[0]===k;})[0][1];return '<label class="chk"><input type="checkbox" data-user-perm="'+k+'"'+(p&&p[k]?' checked':'')+'><span>'+label+'</span></label>';}).join('')+'</section>';}).join('')+'</div>';}
+function readUserPermissions(){var p={};USER_PERM_LABELS.forEach(function(x){var el=document.querySelector('[data-user-perm="'+x[0]+'"]');p[x[0]]=!!(el&&el.checked);});return p;}
+function canTab(t){if(!cur)return false;if(cur.role==='admin')return true;var map={caja:'sales_sell',productos:['products_view','products_create','products_edit'],stock:['stock_view','stock_adjust'],clientes:['clients_view','clients_create','clients_edit'],finanzas:'finance_view',ventas:'sales_view',presupuestos:['budgets_view','budgets_create','budgets_edit'],panel:'reports_view'};if(map[t])return Array.isArray(map[t])?map[t].some(hasPermission):hasPermission(map[t]);if(MODULE_TABS[t]){var cv=MODULE_TABS[t].canView;return typeof cv==='function'?!!cv(cur):cv===true;}return false;}
 var ENCACT={'closeothershift':1,'void':1,newprod:1,edit:1,saveprod:1,delprod:1,importprod:1,exportprod:1,tplprod:1,newadjust:1,adjust:1,saveadjust:1,newpurchase:1,puadd:1,purm:1,puok:1,viewpurch:1,newexpense:1,saveexpense:1,paypurch:1,savepay:1,exportsales:1,newfromcode:1,delclient:1};
 function getU(id){return state.users.filter(function(u){return u.id===id;})[0];}
 function hasAdmin(){if(SERVER&&INFO)return !!INFO.hasAdmin;return state.users.some(function(u){return u.active&&u.role==='admin';});}
@@ -2605,10 +2614,13 @@ function logAs(who,txt){if(!state)return;if(SERVER){SYNC.pend.push({a:String(txt
 function log(txt){logAs(cur?cur.name:'—',txt);}
 var ADMINACT={'void':1,newprod:1,edit:1,saveprod:1,delprod:1,importprod:1,exportprod:1,tplprod:1,newadjust:1,adjust:1,saveadjust:1,newpurchase:1,puadd:1,purm:1,puok:1,viewpurch:1,newexpense:1,saveexpense:1,paypurch:1,savepay:1,exportsales:1,printtest:1,reauth:1,pickfolder:1,dropfolder:1,restoresnap:1,srvbackup:1,srvrestore:1,logoupload:1,logoclear:1,chk:1,'export':1,'import':1,clearall:1,reset:1,newfromcode:1,delclient:1,newuser:1,edituser:1,saveuser:1,newrec:1,viewaudit:1,exportaudit:1};
 var LOCKACT={login:1,setupadmin:1,forgot:1,forgotback:1,recover:1,recok:1,fatalimport:1,fatalfresh:1,reload:1};
+var ACTION_PERMISSIONS={newprod:'products_create',edit:'products_edit',saveprod:function(){return ui.editId?'products_edit':'products_create';},delprod:'products_delete',newadjust:'stock_adjust',adjust:'stock_view',saveadjust:'stock_adjust',newclient:'clients_create',editclient:'clients_edit',saveclient:function(){return ui.editClient?'clients_edit':'clients_create';},delclient:'clients_delete',void:'sales_void',exportsales:'sales_view',newpurchase:'purchases_create',puadd:'purchases_create',purm:'purchases_edit',puok:'purchases_create',viewpurch:'purchases_view',newexpense:'expenses_create',saveexpense:'expenses_create',paypurch:'suppliers_pay',savepay:'suppliers_pay',newbudget:'budgets_create',savebudget:'budgets_create',viewbudget:'budgets_view',exportsales:'sales_view',newSaleTab:'sales_sell',checkout:'sales_sell',confirm:'sales_sell'};
 function secDeny(an){
   if(LOCKACT[an])return false;
   if(!cur)return true;
-  if(cur.role!=='admin'&&ADMINACT[an]&&!(cur.role==='encargado'&&ENCACT[an])){toast('Esa acción es solo del usuario principal');logAs(cur.name,'Intentó una acción no permitida ('+an+')');return true;}
+  var rule=ACTION_PERMISSIONS[an],key=typeof rule==='function'?rule():rule;
+  if(key&&!hasPermission(key)){toast('No tenés permiso para esta función.');logAs(cur.name,'Intentó una acción sin permiso ('+an+')');return true;}
+  if(cur.role!=='admin'&&ADMINACT[an]&&!key&&!(cur.role==='encargado'&&ENCACT[an])){toast('Esa acción es solo del usuario principal');logAs(cur.name,'Intentó una acción no permitida ('+an+')');return true;}
   return false;
 }
 var SETID=/^(sName|sRuc|sAddr|sPhone|prFooter|scFmt|scMode|prPaper|prCopies|prFont|prAuto|prLogo|prBW|scSound|logoFile|prodFile|importFile|secLock|secDisc|gVal|gPlu|dCode)$/;
@@ -2733,23 +2745,24 @@ function userForm(u,role){
     '<label class="muted" for="uf-pin">'+(u?'Clave nueva (dejá vacío para no cambiarla)':'Clave (mínimo 4 caracteres)')+'</label><input id="uf-pin" class="input" type="password" maxlength="40" autocomplete="new-password">'+
     '<label class="muted" for="uf-role">Tipo</label><select id="uf-role" class="input"'+(self?' disabled':'')+'><option value="cajero"'+(r==='cajero'?' selected':'')+'>Cajero</option><option value="encargado"'+(r==='encargado'?' selected':'')+'>Encargado</option><option value="admin"'+(r==='admin'?' selected':'')+'>Principal</option></select>'+
     (u?'<label class="chk"><input type="checkbox" id="uf-active"'+(u.active?' checked':'')+(self?' disabled':'')+'><span>Usuario activo (si lo desactivás ya no puede ingresar)</span></label>':'')+
+    (r==='admin'?'':permissionEditor(u,r))+
     '<p class="err" id="ufErr"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button><button class="btn primary" data-a="saveuser">Guardar</button></div>';
 }
 function saveUser(){
   var name=$('#uf-name').value.trim(),pin=$('#uf-pin').value,err=$('#ufErr'),u=ui.editUser?getU(ui.editUser):null;
-  var role=$('#uf-role').value,act=u?($('#uf-active')?$('#uf-active').checked:true):true;
+  var role=$('#uf-role').value,act=u?($('#uf-active')?$('#uf-active').checked:true):true,permissions=role==='admin'?null:readUserPermissions();
   if(!name){err.textContent='Escribí el nombre.';return;}
-  if(SERVER){api('POST','/api/users',{id:u?u.id:0,name:name,role:u&&u.id===cur.id?u.role:role,pin:pin,active:act}).then(function(r){state.users=r.users;closeModal();renderCurrent();toast('Usuario guardado');}).catch(function(e){err.textContent=e.message||'No se pudo guardar.';});return;}
+  if(SERVER){api('POST','/api/users',{id:u?u.id:0,name:name,role:u&&u.id===cur.id?u.role:role,pin:pin,active:act,permissions:permissions}).then(function(r){state.users=r.users;closeModal();renderCurrent();toast('Usuario guardado');}).catch(function(e){err.textContent=e.message||'No se pudo guardar.';});return;}
   if(state.users.some(function(o){return o.name.toLowerCase()===name.toLowerCase()&&(!u||o.id!==u.id);})){err.textContent='Ya existe un usuario con ese nombre.';return;}
   if(!u&&weakPin(pin)||(u&&pin&&weakPin(pin))){err.textContent='La clave es muy fácil. Usá al menos 4 caracteres y evitá 1234 o repetidos.';return;}
   if(u){
     var wasAdmin=u.role==='admin'&&u.active;
     if(wasAdmin&&(role!=='admin'||!act)&&state.users.filter(function(o){return o.active&&o.role==='admin'&&o.id!==u.id;}).length===0){err.textContent='Tiene que quedar al menos un usuario principal activo.';return;}
     var ch=[];if(u.name!==name)ch.push('nombre');if(u.role!==role)ch.push('tipo');if(u.active!==act)ch.push(act?'activó':'desactivó');if(pin)ch.push('clave');
-    u.name=name;u.role=role;u.active=act;if(pin)setPin(u,pin);
+    u.name=name;u.role=role;u.active=act;u.permissions=permissions;if(pin)setPin(u,pin);
     log('Editó al usuario '+name+(ch.length?' ('+ch.join(', ')+')':''));
   }else{
-    var nu={id:nid('user'),name:name,role:role,active:true};setPin(nu,pin);state.users.push(nu);
+    var nu={id:nid('user'),name:name,role:role,active:true,permissions:permissions};setPin(nu,pin);state.users.push(nu);
     log('Creó el usuario '+name+' ('+(role==='admin'?'principal':'cajero')+')');
   }
   save();closeModal();renderCurrent();toast('Usuario guardado');
