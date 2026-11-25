@@ -915,13 +915,13 @@ async function handle(req, res) {
     if (ex) {
       if (ex.id === me.uid && (role !== 'admin' || !active)) return fail(res, 400, 'No podes quitarte tu propio permiso.');
       if (ex.role === 'admin' && ex.active && (role !== 'admin' || !active) && prep("SELECT COUNT(*) n FROM users WHERE role='admin' AND active=1 AND id<>?").get(ex.id).n === 0) return fail(res, 400, 'Tiene que quedar al menos un usuario principal activo.');
+      const permsChanged = JSON.stringify(parsePermissions(ex.permissions, ex.role)) !== JSON.stringify(permissions);
       const k = pin ? mkPin(pin) : { salt: ex.salt, hash: ex.hash };
       prep('UPDATE users SET name=?,role=?,active=?,salt=?,hash=?,permissions=? WHERE id=?').run(name, role, active, k.salt, k.hash, permissions?JSON.stringify(permissions):null, ex.id);
       for (const [t, s] of [...sessions]) {
         if (s.uid !== ex.id) continue;
-        // Un cambio de clave invalida todas las sesiones anteriores.
-        // Un usuario desactivado también pierde acceso inmediatamente.
-        if (!active || pin) sessions.delete(t);
+        // Cambiar clave, permisos o desactivar el usuario revoca las sesiones previas.
+        if (!active || pin || permsChanged) sessions.delete(t);
         else { s.role = role; s.name = name; s.permissions = permissions; }
       }
       audit(me.name, 'Edito al usuario ' + name);
