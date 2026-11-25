@@ -30,10 +30,11 @@ CREATE TABLE IF NOT EXISTS rec(coll TEXT NOT NULL, id INTEGER NOT NULL, j TEXT N
 CREATE INDEX IF NOT EXISTS rec_rev ON rec(rev);
 CREATE TABLE IF NOT EXISTS sing(k TEXT PRIMARY KEY, j TEXT NOT NULL, rev INTEGER NOT NULL);
 CREATE TABLE IF NOT EXISTS counters(kind TEXT PRIMARY KEY, n INTEGER NOT NULL);
-CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL, salt TEXT, hash TEXT);
+CREATE TABLE IF NOT EXISTS users(id INTEGER PRIMARY KEY, name TEXT NOT NULL, role TEXT NOT NULL, active INTEGER NOT NULL, salt TEXT, hash TEXT, permissions TEXT);
 CREATE TABLE IF NOT EXISTS audit(id INTEGER PRIMARY KEY AUTOINCREMENT, t TEXT, u TEXT, a TEXT);
 CREATE TABLE IF NOT EXISTS login_attempts(k TEXT PRIMARY KEY, n INTEGER NOT NULL, blocked_until INTEGER NOT NULL DEFAULT 0, updated INTEGER NOT NULL);
 `);
+try { db.exec('ALTER TABLE users ADD COLUMN permissions TEXT'); } catch (_) {}
 const P = {}; const prep = s => P[s] || (P[s] = db.prepare(s));
 const getMeta = k => { const r = prep('SELECT v FROM meta WHERE k=?').get(k); return r ? r.v : null; };
 const setMeta = (k, v) => prep('INSERT OR REPLACE INTO meta(k,v) VALUES(?,?)').run(k, String(v));
@@ -69,7 +70,18 @@ const weakPin = p => String(p).length < 4 || String(p).length > 64 || /^(.)\1+$/
 const ROLES = ['admin', 'encargado', 'cajero'];
 function newRecCode() { const al = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789', b = crypto.randomBytes(16); let o = ''; for (let i = 0; i < 16; i++) { o += al[b[i] % al.length]; if (i % 4 === 3 && i < 15) o += '-'; } return o; }
 const normCode = c => String(c || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
-const pubUser = u => ({ id: u.id, name: u.name, role: u.role, active: !!u.active });
+const PERMISSION_KEYS = ['products_view','products_create','products_edit','products_delete','stock_view','stock_adjust','clients_view','clients_create','clients_edit','clients_delete','sales_view','sales_sell','sales_void','returns_process','finance_view','expenses_create','expenses_edit','purchases_view','purchases_create','purchases_edit','suppliers_pay','budgets_view','budgets_create','budgets_edit','cash_manage','reports_view','discount_apply'];
+const DEFAULT_USER_PERMS = {
+  cajero: {products_view:false,products_create:false,products_edit:false,products_delete:false,stock_view:false,stock_adjust:false,clients_view:true,clients_create:true,clients_edit:true,clients_delete:false,sales_view:true,sales_sell:true,sales_void:false,returns_process:false,finance_view:false,expenses_create:false,expenses_edit:false,purchases_view:false,purchases_create:false,purchases_edit:false,suppliers_pay:false,budgets_view:false,budgets_create:false,budgets_edit:false,cash_manage:true,reports_view:false,discount_apply:true},
+  encargado: {products_view:true,products_create:true,products_edit:true,products_delete:true,stock_view:true,stock_adjust:true,clients_view:true,clients_create:true,clients_edit:true,clients_delete:true,sales_view:true,sales_sell:true,sales_void:true,returns_process:true,finance_view:true,expenses_create:true,expenses_edit:true,purchases_view:true,purchases_create:true,purchases_edit:true,suppliers_pay:true,budgets_view:true,budgets_create:true,budgets_edit:true,cash_manage:true,reports_view:true,discount_apply:true}
+};
+function parsePermissions(raw, role) {
+  var v=raw;
+  if(typeof raw==='string'){try{v=JSON.parse(raw);}catch(_){v=null;}}
+  if(!v||typeof v!=='object'||Array.isArray(v))return role==='admin'?null:Object.assign({},DEFAULT_USER_PERMS[role]||DEFAULT_USER_PERMS.cajero);
+  var out={};PERMISSION_KEYS.forEach(k=>out[k]=v[k]===true);return out;
+}
+const pubUser = u => ({ id: u.id, name: u.name, role: u.role, active: !!u.active, permissions: u.role==='admin'?null:parsePermissions(u.permissions,u.role) });
 const allUsers = () => prep('SELECT * FROM users ORDER BY id').all();
 const hasAdmin = () => !!prep("SELECT 1 x FROM users WHERE role='admin' AND active=1").get();
 function audit(who, what) { prep('INSERT INTO audit(t,u,a) VALUES(?,?,?)').run(nowIso(), String(who || '-').slice(0, 60), String(what || '').slice(0, 300)); }
@@ -93,7 +105,7 @@ function failAdd(key) {
   return n;
 }
 const failClear = key => prep('DELETE FROM login_attempts WHERE k=?').run(failKey(key));
-function newSession(u) { const t = crypto.randomBytes(24).toString('hex'); sessions.set(t, { uid: u.id, name: u.name, role: u.role, exp: Date.now() + SES_MS }); return t; }
+function newSession(u) { const t = crypto.randomBytes(24).toString('hex'); sessions.set(t, { uid: u.id, name: u.name, role: u.role, permissions: u.role==='admin'?null:parsePermissions(u.permissions,u.role), exp: Date.now() + SES_MS }); return t; }
 setInterval(() => { const n = Date.now(); for (const [t, s] of sessions) if (s.exp < n) sessions.delete(t); }, 600000).unref();
 
 /* ---------- Copias de seguridad ---------- */
@@ -150,6 +162,38 @@ function allowed(user, coll, op, rec, existing) {
   if (user.role === 'admin') return true;
   const p = (PERM[user.role] || {})[coll];
   if (!p || !p[op]) return false;
+  const custom=user.permissions&&typeof user.permissions==='object'?user.permissions:null;
+  if(custom){
+    const has=k=>custom[k]===true;
+    if(coll==='products'&&op==='ins'&&!has('products_create'))return false;
+    if(coll==='products'&&op==='upd'&&!has('products_edit'))return false;
+    if(coll==='products'&&op==='del'&&!has('products_delete'))return false;
+    if(coll==='clients'&&op==='ins'&&!has('clients_create'))return false;
+    if(coll==='clients'&&op==='upd'&&!has('clients_edit'))return false;
+    if(coll==='clients'&&op==='del'&&!has('clients_delete'))return false;
+    if(coll==='sales'&&op==='ins'&&!has('sales_sell'))return false;
+    if(coll==='sales'&&op==='upd'){
+      const before=existing||{}, after=rec||{};
+      if(JSON.stringify(before.returns||[])!==JSON.stringify(after.returns||[])&&!has('returns_process'))return false;
+      if(!!before.void!==!!after.void&&!has('sales_void'))return false;
+      if(JSON.stringify(before.returns||[])===JSON.stringify(after.returns||[])&&!!before.void===!!after.void&&!has('sales_sell'))return false;
+    }
+    if(coll==='moves'&&op==='ins'){
+      if(/^Devolución ticket /.test(String(rec.note||''))&&!has('returns_process'))return false;
+      if(rec.type==='ajuste'&&!has('stock_adjust'))return false;
+      if(rec.type==='venta'&&!has('sales_sell'))return false;
+    }
+    if(coll==='purchases'&&op==='ins'&&!has('purchases_create'))return false;
+    if(coll==='purchases'&&op==='upd'&&!has('purchases_edit'))return false;
+    if(coll==='expenses'&&op==='ins'&&!has('expenses_create'))return false;
+    if(coll==='expenses'&&op==='upd'&&!has('expenses_edit'))return false;
+    if(coll==='spay'&&(op==='ins'||op==='upd')&&!has('suppliers_pay'))return false;
+    if(coll==='budgets'&&op==='ins'&&!has('budgets_create'))return false;
+    if(coll==='budgets'&&op==='upd'&&!has('budgets_edit'))return false;
+    if(coll==='payments'&&op==='ins'&&!has('clients_edit'))return false;
+    if(coll==='shifts'&&(op==='ins'||op==='upd')&&!has('cash_manage'))return false;
+    if(coll==='suspendedSales'&&(op==='ins'||op==='upd')&&!has('sales_sell'))return false;
+  }
   if (coll === 'moves' && user.role === 'cajero') { if (!(rec.type === 'venta' && Number(rec.qty) < 0)) return false; }
   if (coll === 'shifts' && user.role !== 'admin') {
     if (op === 'ins' && Number(rec.uid) !== Number(user.uid)) return false;
@@ -819,8 +863,7 @@ async function handle(req, res) {
     // Un usuario limitado solo puede reservar IDs para colecciones donde
     // tenga permiso de alta; conocer otros contadores no debe habilitar su uso.
     if (me.role !== 'admin') {
-      const permitted = Object.keys(COLLS).some(coll => COLLS[coll] === kind &&
-        !!((PERM[me.role] || {})[coll] || {}).ins);
+      const permitted = Object.keys(COLLS).some(coll => COLLS[coll] === kind && allowed({uid:me.uid,role:me.role,permissions:me.permissions},coll,'ins',{type:'venta',qty:-1},null));
       if (!permitted) return fail(res, 403, 'No tenes permiso para reservar identificadores de este tipo.');
     }
     const r = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get(kind), cur = c ? c.n : 0; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run(kind, cur + n); return { start: cur + 1, end: cur + n }; });
@@ -834,7 +877,7 @@ async function handle(req, res) {
       return fail(res, 400, 'Versión de sincronización inválida.');
     }
     if (b.epoch && b.epoch !== EPOCH) { const c = collect(0, null); return send(res, 200, { reset: true, rev: REV, epoch: EPOCH, recs: c.recs, dels: c.dels, sing: c.sing, lastBackup: lastBackup() }); }
-    const r = processSync({ uid: me.uid, name: me.name, role: me.role }, b), c = collect(since, r);
+    const r = processSync({ uid: me.uid, name: me.name, role: me.role, permissions: me.permissions }, b), c = collect(since, r);
     return send(res, 200, { rev: REV, epoch: EPOCH, recs: c.recs, dels: c.dels, sing: c.sing, rejected: r.rejected, lastBackup: lastBackup() });
   }
   if (p === '/api/mypin' && m === 'POST') {
@@ -851,7 +894,7 @@ async function handle(req, res) {
   if (!admin) return fail(res, 403, 'Solo el usuario principal puede hacer esto.');
   if (p === '/api/users' && m === 'GET') return send(res, 200, { users: allUsers().map(pubUser) });
   if (p === '/api/users' && m === 'POST') {
-    const b = await readBody(req), name = String(b.name || '').trim().slice(0, 40), role = String(b.role), pin = String(b.pin || '');
+    const b = await readBody(req), name = String(b.name || '').trim().slice(0, 40), role = String(b.role), pin = String(b.pin || ''), permissions = role==='admin'?null:parsePermissions(b.permissions,role);
     const id = b.id ? Number(b.id) : 0, ex = id ? prep('SELECT * FROM users WHERE id=?').get(id) : null, active = b.active === false ? 0 : 1;
     if (b.id && (!Number.isSafeInteger(id) || id <= 0)) return fail(res, 400, 'Identificador de usuario invalido.');
     if (id && !ex) return fail(res, 404, 'El usuario que intentas modificar no existe.');
@@ -863,17 +906,17 @@ async function handle(req, res) {
       if (ex.id === me.uid && (role !== 'admin' || !active)) return fail(res, 400, 'No podes quitarte tu propio permiso.');
       if (ex.role === 'admin' && ex.active && (role !== 'admin' || !active) && prep("SELECT COUNT(*) n FROM users WHERE role='admin' AND active=1 AND id<>?").get(ex.id).n === 0) return fail(res, 400, 'Tiene que quedar al menos un usuario principal activo.');
       const k = pin ? mkPin(pin) : { salt: ex.salt, hash: ex.hash };
-      prep('UPDATE users SET name=?,role=?,active=?,salt=?,hash=? WHERE id=?').run(name, role, active, k.salt, k.hash, ex.id);
+      prep('UPDATE users SET name=?,role=?,active=?,salt=?,hash=?,permissions=? WHERE id=?').run(name, role, active, k.salt, k.hash, permissions?JSON.stringify(permissions):null, ex.id);
       for (const [t, s] of [...sessions]) {
         if (s.uid !== ex.id) continue;
         // Un cambio de clave invalida todas las sesiones anteriores.
         // Un usuario desactivado también pierde acceso inmediatamente.
         if (!active || pin) sessions.delete(t);
-        else { s.role = role; s.name = name; }
+        else { s.role = role; s.name = name; s.permissions = permissions; }
       }
       audit(me.name, 'Edito al usuario ' + name);
     } else {
-      const nid = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get('user'), n = (c ? c.n : 0) + 1; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run('user', n); const k = mkPin(pin); prep('INSERT INTO users(id,name,role,active,salt,hash) VALUES(?,?,?,?,?,?)').run(n, name, role, 1, k.salt, k.hash); return n; });
+      const nid = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get('user'), n = (c ? c.n : 0) + 1; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run('user', n); const k = mkPin(pin); prep('INSERT INTO users(id,name,role,active,salt,hash,permissions) VALUES(?,?,?,?,?,?,?)').run(n, name, role, 1, k.salt, k.hash, permissions?JSON.stringify(permissions):null); return n; });
       audit(me.name, 'Creo el usuario ' + name + ' (' + role + ')');
     }
     return send(res, 200, { users: allUsers().map(pubUser) });
