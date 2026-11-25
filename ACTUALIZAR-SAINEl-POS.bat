@@ -6,18 +6,20 @@ echo ==========================================
 echo        ACTUALIZADOR SAINEI POS
 echo ==========================================
 echo.
-echo Selecciona la carpeta EXTRAIDA de la nueva version.
-echo No selecciones la carpeta de datos del comercio.
-set /p "SOURCE=Ruta completa de la nueva version: "
-if not defined SOURCE (
-  echo No se indico una carpeta.
+echo Esta carpeta contiene la NUEVA version extraida.
+echo Los datos del comercio se conservaran y se respaldaran.
+echo.
+set "SOURCE=%~dp0"
+set /p "TARGET=Escribi la ruta de la carpeta donde esta instalado SAINEI POS: "
+if not defined TARGET (
+  echo No se indico la carpeta instalada.
   pause
   exit /b 1
 )
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0actualizar-sainei-pos.ps1" -Source "%SOURCE%" -Target "%~dp0"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0actualizar-sainei-pos.ps1" -Source "%SOURCE%" -Target "%TARGET%"
 if errorlevel 1 (
   echo.
-  echo No se completo la actualizacion. Los datos del comercio se mantienen separados.
+  echo No se completo la actualizacion. Revisa el mensaje anterior.
   pause
   exit /b 2
 )
