@@ -745,6 +745,11 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
         <tbody id="expBody"></tbody>
       </table></div>
     </div>
+    <div data-sub="bancos" hidden>
+      <div class="sec-head"><div class="controls"><button class="btn primary" data-a="newbankentry">Registrar movimiento</button><button class="btn" data-a="newbankcheck">Registrar cheque</button></div></div>
+      <div class="tiles" id="bankTiles"></div>
+      <div class="panel scroll"><table><thead><tr><th>Fecha</th><th>Cuenta / banco</th><th>Detalle</th><th>Tipo</th><th>Estado</th><th class="r">Entrada</th><th class="r">Salida</th><th></th></tr></thead><tbody id="bankBody"></tbody></table></div>
+    </div>
     <div data-sub="devoluciones" hidden>
       <div class="sec-head"><div class="controls"><button class="btn" data-a="printfinance" data-v="devoluciones">Imprimir devoluciones / PDF</button></div></div>
       <div class="tiles" id="returnTiles"></div>
@@ -912,7 +917,7 @@ var nf3=new Intl.NumberFormat('es-PY',{minimumFractionDigits:3,maximumFractionDi
 var METHODS={efectivo:'Efectivo',tarjeta:'Tarjeta',transferencia:'Transferencia / QR',credito:'Crédito',mixto:'Pago combinado'};
 var TABS=[['caja','Punto de venta'],['panel','Panel'],['productos','Productos'],['stock','Stock'],['clientes','Clientes'],['finanzas','Finanzas'],['ventas','Ventas'],['presupuestos','Presupuestos'],['ajustes','Ajustes']];
 var MODULE_TABS={};
-var SUBS={productos:[['lista','Lista'],['balanza','Balanza']],stock:[['exist','Existencias'],['compras','Compras'],['mov','Movimientos']],finanzas:[['caja','Apertura / cierre'],['gastos','Gastos'],['devoluciones','Devoluciones'],['pagar','Por pagar'],['res','Resumen']]};
+var SUBS={productos:[['lista','Lista'],['balanza','Balanza']],stock:[['exist','Existencias'],['compras','Compras'],['mov','Movimientos']],finanzas:[['caja','Apertura / cierre'],['gastos','Gastos'],['bancos','Bancos'],['devoluciones','Devoluciones'],['pagar','Por pagar'],['res','Resumen']]};
 var EXP_CATS=['Alquiler','Sueldos','Luz, agua e internet','Impuestos','Mantenimiento','Transporte','Otros'];
 var MOVE_LABEL={venta:'Venta',anulacion:'Anulación de venta',compra:'Compra',ajuste:'Ajuste',inicial:'Stock inicial',devolucion:'Devolución'};
 var CHECK=[
@@ -2275,6 +2280,8 @@ function renderFinance(){
     var mes=state.expenses.filter(function(e){return e.cat!=='Devolución'&&inRange(e.date,'mes');});
     $('#expTiles').innerHTML=tile('Gastos de hoy',gs(sum(state.expenses.filter(function(e){return inRange(e.date,'hoy');}),'amount')))+tile('Gastos del mes',gs(sum(mes,'amount')));
     $('#expBody').innerHTML=ex.length?ex.map(function(e){return '<tr><td>'+fdt(e.date)+'</td><td>'+esc(e.concept)+'</td><td>'+esc(e.cat)+'</td><td>'+(e.method==='caja'?'Efectivo de la caja':'Otro medio')+'</td><td class="r num">'+gs(e.amount)+'</td></tr>';}).join(''):emptyRow(5,'Todavía no registraste gastos.');
+  }else if(sub==='bancos'){
+    renderBankEntries();
   }else if(sub==='devoluciones'){
     renderDevoluciones();
   }else if(sub==='pagar'){
@@ -2288,6 +2295,49 @@ function renderFinance(){
   }else{
     renderResumen();
   }
+}
+function bankEntryForm(kind){
+  var cheque=kind==='cheque';
+  return '<h2>'+(cheque?'Registrar cheque':'Registrar movimiento bancario')+'</h2><div class="form">'+
+    fld('be-account','Banco / cuenta','','type="text" maxlength="80"',true)+
+    fld('be-date','Fecha',nowIso().slice(0,10),'type="date"')+
+    (cheque?fld('be-checkno','Número de cheque','','type="text" maxlength="40"',true)+fld('be-payee','Beneficiario','','type="text" maxlength="100"',true):sel('be-direction','Movimiento',[['entrada','Entrada / depósito'],['salida','Salida / débito']], 'entrada'))+
+    fld('be-description',cheque?'Concepto / motivo':'Descripción','','type="text" maxlength="120"',true)+
+    fld('be-amount','Importe (Gs.)','','type="text" inputmode="numeric"')+
+    '</div><p class="err" id="beErr" role="alert"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button><button class="btn primary" data-a="savebankentry" data-v="'+(cheque?'cheque':'movimiento')+'">Guardar</button></div>';
+}
+function saveBankEntry(kind){
+  if(!userCan('bankEntries','ins')){toast('No tenés permiso para registrar movimientos bancarios.');return;}
+  var account=$('#be-account').value.trim(),date=$('#be-date').value,description=$('#be-description').value.trim(),amount=Math.round(num($('#be-amount').value)),cheque=kind==='cheque',direction=cheque?'salida':$('#be-direction').value,checkNo=cheque?$('#be-checkno').value.trim():'',payee=cheque?$('#be-payee').value.trim():'';
+  var err=$('#beErr');
+  if(!account){err.textContent='Indicá el banco o la cuenta.';return;}
+  if(!date||!Number.isFinite(Date.parse(date+'T12:00:00'))){err.textContent='Indicá una fecha válida.';return;}
+  if(!description){err.textContent='Escribí el concepto del movimiento.';return;}
+  if(!(amount>0)){err.textContent='Ingresá un importe mayor a cero.';return;}
+  if(cheque&&(!checkNo||!payee)){err.textContent='Completá el número de cheque y el beneficiario.';return;}
+  var rec={id:nid('bank'),kind:kind,date:new Date(date+'T12:00:00').toISOString(),account:account,description:description,amount:amount,direction:direction,status:cheque?'emitido':'pendiente'};
+  if(cheque){rec.checkNo=checkNo;rec.payee=payee;}
+  state.bankEntries.push(rec);log((cheque?'Registró cheque ':'Registró movimiento bancario ')+account+' · '+gs(amount));save();closeModal();renderCurrent();toast(cheque?'Cheque registrado':'Movimiento bancario registrado');
+}
+function changeBankStatus(id){
+  var rec=state.bankEntries.filter(function(x){return Number(x.id)===Number(id);})[0];if(!rec)return;
+  var next=rec.kind==='cheque'?({emitido:'depositado',depositado:'cobrado',cobrado:'cobrado',rechazado:'rechazado',anulado:'anulado'}[rec.status]||'depositado'):({pendiente:'conciliado',conciliado:'conciliado',anulado:'anulado'}[rec.status]||'conciliado');
+  if(rec.status==='cobrado'||rec.status==='rechazado'||rec.status==='anulado'||rec.status==='conciliado'){toast('Este movimiento ya no admite más cambios.');return;}
+  if(!userCan('bankEntries','upd')){toast('No tenés permiso para modificar bancos.');return;}
+  rec.status=next;rec.reconciled=next==='conciliado'||next==='cobrado';save();renderCurrent();toast('Estado actualizado: '+next);
+}
+function renderBankEntries(){
+  var rows=(state.bankEntries||[]).slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+  var incoming=rows.filter(function(x){return x.kind==='movimiento'&&x.direction==='entrada'&&x.status!=='anulado';}).reduce(function(a,x){return a+x.amount;},0);
+  var outgoing=rows.filter(function(x){return (x.kind==='movimiento'&&x.direction==='salida'||x.kind==='cheque'&&x.status!=='rechazado'&&x.status!=='anulado')&&x.status!=='anulado';}).reduce(function(a,x){return a+x.amount;},0);
+  $('#bankTiles').innerHTML=tile('Entradas registradas',gs(incoming))+tile('Salidas y cheques',gs(outgoing))+tile('Movimientos',rows.length);
+  $('#bankBody').innerHTML=rows.length?rows.map(function(x){
+    var status=x.status==='conciliado'?'Conciliado':x.status==='emitido'?'Emitido':x.status==='depositado'?'Depositado':x.status==='cobrado'?'Cobrado':x.status==='rechazado'?'Rechazado':x.status==='anulado'?'Anulado':'Pendiente';
+    var entry=x.kind==='movimiento'&&x.direction==='entrada'?x.amount:0,exit=x.direction==='salida'?x.amount:0;
+    var detail=x.kind==='cheque'?'Cheque '+esc(x.checkNo)+' · '+esc(x.payee)+' · '+esc(x.description):esc(x.description);
+    var canUpdate=userCan('bankEntries','upd')&&!['conciliado','cobrado','rechazado','anulado'].includes(x.status);
+    return '<tr><td>'+fd(x.date)+'</td><td>'+esc(x.account)+'</td><td>'+detail+'</td><td>'+(x.kind==='cheque'?'Cheque':(x.direction==='entrada'?'Entrada':'Salida'))+'</td><td>'+status+'</td><td class="r num">'+(entry?gs(entry):'—')+'</td><td class="r num">'+(exit?gs(exit):'—')+'</td><td>'+(canUpdate?'<button class="btn" data-a="bankstatus" data-id="'+x.id+'">'+(x.kind==='cheque'?'Actualizar estado':'Conciliar')+'</button>':'')+'</td></tr>';
+  }).join(''):emptyRow(8,'Todavía no hay movimientos bancarios.');
 }
 function returnStatsForRange(range){
   var amount=0,cost=0,tax=0,count=0,rows=[];
@@ -2657,6 +2707,10 @@ var A={
   account:function(el,id){ui.acctClient=id;openModal(accountHtml(id),{wide:true});},
   cobrar:function(el,id){registerPayment(id);},
   newexpense:function(){openModal(expenseForm());$('#exConcept').focus();},
+  newbankentry:function(){if(!userCan('bankEntries','ins')){toast('No tenés permiso para bancos.');return;}openModal(bankEntryForm('movimiento'),{wide:true});},
+  newbankcheck:function(){if(!userCan('bankEntries','ins')){toast('No tenés permiso para bancos.');return;}openModal(bankEntryForm('cheque'),{wide:true});},
+  savebankentry:function(el){saveBankEntry(el.dataset.v||'movimiento');},
+  bankstatus:function(el,id){changeBankStatus(id);},
   saveexpense:function(){saveExpense();},
   paypurch:function(el,id){openModal(payPurchaseForm(id));},
   savepay:function(){savePurchasePayment();},
