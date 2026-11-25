@@ -1705,7 +1705,7 @@ function receiptHtml(s,fresh){
 /* ---------- Impresión ---------- */
 function applyPageStyle(){
   var w=state.print.width,css;
-  var fam=state.print.fontFamily==='system'?'system-ui,Arial,sans-serif':'\\''+state.print.fontFamily+'\\',sans-serif';
+  var fam=state.print.fontFamily==='system'?'system-ui,Arial,sans-serif':'"'+state.print.fontFamily+'",sans-serif';
   if(w==='a4')css='@page{size:A4;margin:12mm}#printArea .pt{width:100mm;font-size:'+state.print.font+'px;font-family:'+fam+'}';
   else css='@page{size:'+w+'mm auto;margin:0}#printArea{padding:2mm 3mm}#printArea .pt{width:'+(w==='58'?'46mm':'70mm')+';font-size:'+state.print.font+'px;font-family:'+fam+'}';
   $('#pageStyle').textContent=css;
