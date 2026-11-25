@@ -10,7 +10,7 @@ if (!server.includes("server.listen(PORT, '0.0.0.0'")) throw new Error('El servi
 if (!server.includes("new DatabaseSync(path.join(DATA, 'sainei.db'))")) throw new Error('La base de datos debe permanecer en la PC principal.');
 if (!server.includes("if (p === '/api/sync' && m === 'POST')")) throw new Error('La sincronización de datos debe seguir protegida por autenticación.');
 if (!sw.includes("u.pathname.startsWith('/api/')")) throw new Error('El service worker no debe cachear escrituras/API como si fueran confirmadas.');
-if (!sw.includes("return fetch(e.request)")) throw new Error('Las solicitudes API deben llegar al servidor real.');
+if (!sw.includes("fetch(e.request).then")) throw new Error('Los recursos de la interfaz deben poder volver a descargarse del servidor local.');
 if (html.includes('src="http') || html.includes("src='http") || html.includes('href="http') && !html.includes('https://www.dnit.gov.py')) {
   throw new Error('La interfaz no debe depender de recursos externos para operar sin internet.');
 }
