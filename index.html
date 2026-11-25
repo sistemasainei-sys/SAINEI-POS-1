@@ -1382,7 +1382,7 @@ function renderCart(){
     var ctl=(p.type==='peso'||p.type==='medida')
       ?'<button class="wbtn" data-a="weigh" data-id="'+p.id+'" data-k="'+l.k+'" aria-label="Cambiar cantidad">'+nf3.format(l.qty)+' '+esc(p.unit||'kg')+'</button>'
       :'<div class="qty"><button data-a="dec" data-k="'+l.k+'" aria-label="Quitar una unidad">−</button><span>'+l.qty+'</span><button data-a="inc" data-k="'+l.k+'" aria-label="Agregar una unidad">+</button></div>';
-    return '<li class="line'+(isLast?' last':'')+'"><div class="lno">'+(i+1)+'</div><div class="lname">'+esc(p.name)+'<small>'+gs(l.price!=null?l.price:p.price)+(p.type==='peso'?' por kg':(p.type==='medida'?' por '+esc(p.unit||'m'):' c/u'))+'</small></div>'+ctl+
+    return '<li class="line'+(isLast?' last':'')+'"><div class="lno">'+(i+1)+'</div><div class="lname">'+esc(p.name)+'<small>'+gs(l.price!=null?l.price:p.price)+(p.type==='peso'?' por kg':(p.type==='medida'?' por '+esc(p.unit||'m'):' c/u'))+'</small><button class="wbtn" data-a="priceedit" data-k="'+l.k+'">Precio</button></div>'+ctl+
       '<div class="ltotal">'+fmt(amt)+'</div><button class="x" data-a="rm" data-k="'+l.k+'" aria-label="Quitar del ticket">×</button></li>';
   }).join(''):'<li class="empty" style="list-style:none;padding:24px 16px;font-size:18px">La venta está vacía. Pasá el primer producto por el lector.</li>';
   var li=$('#lastItem');
@@ -2572,6 +2572,16 @@ var A={
   weigh:function(el,id){if(getP(id)&&getP(id).type==='medida')openMeasure(id,parseInt(el.dataset.k,10)||0);else openWeigh(id,parseInt(el.dataset.k,10)||0);},
   weighok:function(){weighOk();},
   inc:function(el){changeQty(parseInt(el.dataset.k,10),1);},
+  priceedit:function(el){
+    var k=parseInt(el.dataset.k,10),l=ui.cart.filter(function(x){return x.k===k;})[0],p=l&&getP(l.id);if(!l||!p)return;
+    openModal('<h2>Precio para esta venta</h2><p class="muted">'+esc(p.name)+'</p><label>Precio unitario<input id="linePrice" class="input" type="number" min="1" step="1" value="'+(l.price!=null?l.price:p.price)+'"></label><p class="hint">Este cambio solo afecta esta línea del ticket. El precio del producto en el inventario no se modifica.</p><div class="actions"><button class="btn" data-a="close">Cancelar</button><button class="btn primary" data-a="pricesave" data-k="'+k+'">Aplicar</button></div>');
+    $('#linePrice').focus();$('#linePrice').select();
+  },
+  pricesave:function(el){
+    var k=parseInt(el.dataset.k,10),l=ui.cart.filter(function(x){return x.k===k;})[0],v=Number($('#linePrice').value);
+    if(!l||!Number.isFinite(v)||v<=0){toast('Ingresá un precio válido');return;}
+    l.price=Math.round(v);closeModal();renderCart();persistSalesCarts();toast('Precio aplicado solo a esta venta');
+  },
   dec:function(el){changeQty(parseInt(el.dataset.k,10),-1);},
   rm:function(el){var k=parseInt(el.dataset.k,10);ui.cart=ui.cart.filter(function(l){return l.k!==k;});renderCart();},
   clear:function(){ui.cart=[];ui.disc=0;$('#disc').value='';renderCart();},
