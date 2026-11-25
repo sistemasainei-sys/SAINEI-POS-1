@@ -872,7 +872,7 @@ async function handle(req, res) {
         (kind==='sale'&&cp.sales_sell)||(kind==='shift'&&cp.cash_manage)||
         (kind==='purch'&&cp.purchases_create)||(kind==='exp'&&cp.expenses_create)||
         (kind==='budget'&&cp.budgets_create)||(kind==='pay'&&cp.clients_edit)||
-        (kind==='spay'&&cp.suppliers_pay)||(kind==='move'&&(cp.sales_sell||cp.returns_process||cp.stock_adjust||cp.purchases_create))
+        (kind==='spay'&&cp.suppliers_pay)||(kind==='move'&&(cp.sales_sell||cp.sales_void||cp.returns_process||cp.stock_adjust||cp.purchases_create||cp.products_create))
       ) : Object.keys(COLLS).some(coll => COLLS[coll] === kind && !!((PERM[me.role] || {})[coll] || {}).ins);
       if (!permitted) return fail(res, 403, 'No tenes permiso para reservar identificadores de este tipo.');
     }
