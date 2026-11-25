@@ -854,8 +854,13 @@ async function handle(req, res) {
     // Un usuario limitado solo puede reservar IDs para colecciones donde
     // tenga permiso de alta; conocer otros contadores no debe habilitar su uso.
     if (me.role !== 'admin') {
-      const permitted = Object.keys(COLLS).some(coll => COLLS[coll] === kind &&
-        !!((PERM[me.role] || {})[coll] || {}).ins);
+      const dbUser = prep('SELECT perms FROM users WHERE id=?').get(me.uid);
+      let custom = null; try { custom = dbUser && dbUser.perms ? JSON.parse(dbUser.perms) : null; } catch (_) {}
+      const permitted = Object.keys(COLLS).some(coll => {
+        if (COLLS[coll] !== kind) return false;
+        const p = custom && custom[coll] ? custom[coll] : ((PERM[me.role] || {})[coll] || {});
+        return !!p.ins;
+      });
       if (!permitted) return fail(res, 403, 'No tenes permiso para reservar identificadores de este tipo.');
     }
     const r = tx(() => { const c = prep('SELECT n FROM counters WHERE kind=?').get(kind), cur = c ? c.n : 0; prep('INSERT OR REPLACE INTO counters(kind,n) VALUES(?,?)').run(kind, cur + n); return { start: cur + 1, end: cur + n }; });
