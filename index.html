@@ -725,12 +725,12 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
       <div id="shiftCard"></div>
       <h3 style="margin:6px 0 10px">Cierres anteriores</h3>
       <div class="panel scroll"><table>
-        <thead><tr><th>Apertura</th><th>Cierre</th><th class="r">Fondo inicial</th><th class="r">Esperado</th><th class="r">Contado</th><th class="r">Diferencia</th></tr></thead>
+        <thead><tr><th>Apertura</th><th>Cierre</th><th class="r">Fondo inicial</th><th class="r">Esperado</th><th class="r">Contado</th><th class="r">Diferencia</th><th>Informe</th></tr></thead>
         <tbody id="shiftBody"></tbody>
       </table></div>
     </div>
     <div data-sub="gastos" hidden>
-      <div class="sec-head"><div class="controls"><button class="btn primary" data-a="newexpense">Registrar gasto</button></div></div>
+      <div class="sec-head"><div class="controls"><button class="btn" data-a="printexpenses">Imprimir informe</button><button class="btn primary" data-a="newexpense">Registrar gasto</button></div></div>
       <div class="tiles" id="expTiles"></div>
       <div class="panel scroll"><table>
         <thead><tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Pagado con</th><th class="r">Monto</th></tr></thead>
@@ -738,6 +738,7 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
       </table></div>
     </div>
     <div data-sub="pagar" hidden>
+      <div class="sec-head"><div class="controls"><button class="btn" data-a="printpayables">Imprimir informe</button></div></div>
       <div class="tiles" id="payTiles"></div>
       <div class="panel scroll"><table>
         <thead><tr><th>Fecha</th><th>Proveedor</th><th>N° documento</th><th>Vence</th><th class="r">Total</th><th class="r">Saldo</th><th></th></tr></thead>
@@ -747,6 +748,7 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
     <div data-sub="res" hidden>
       <div class="sec-head"><div class="controls">
         <select id="finRange" class="input" aria-label="Período"><option value="hoy">Hoy</option><option value="mes">Este mes</option><option value="todo">Todo</option></select>
+        <button class="btn" data-a="printfinance">Imprimir resumen</button>
       </div></div>
       <div class="tiles" id="resTiles"></div>
       <div class="panel scroll"><table>
@@ -2155,6 +2157,44 @@ function registerPayment(cid){
   toast(m==='efectivo'&&!sh?'Cobro registrado. No hay caja abierta, por eso no entra en el arqueo':'Cobro registrado');
 }
 
+/* ---------- Informes financieros imprimibles ---------- */
+function printFinancialReport(kind,id){
+  var title='',rows=[],totals='',subtitle='Generado: '+new Date().toLocaleString('es-PY');
+  function tr(cells){return '<tr>'+cells.map(function(x){return '<td>'+x+'</td>';}).join('')+'</tr>';}
+  if(kind==='shift'){
+    var sh=state.shifts.filter(function(x){return Number(x.id)===Number(id)&&x.closedAt;})[0];if(!sh){toast('No se encontró ese cierre');return;}
+    var z=shiftSummary(sh);title='Informe de cierre de caja';
+    rows.push(tr(['Apertura',fdt(sh.openAt)]),tr(['Cierre',fdt(sh.closedAt)]),tr(['Cajero',esc(sh.by||'—')]),tr(['Fondo inicial',gs(sh.openAmt)]),tr(['Ventas en efectivo',gs(z.by.efectivo)]),tr(['Cobros de crédito en efectivo',gs(z.cobros)]),tr(['Gastos desde caja',gs(z.gastos)]),tr(['Pagos a proveedores desde caja',gs(z.pagos)]),tr(['Efectivo esperado',gs(sh.expected)]),tr(['Efectivo contado',gs(sh.counted)]),tr(['Diferencia',gs(sh.diff)]),tr(['Observación',esc(sh.note||'—')]));
+    subtitle+=' · Turno '+esc(sh.by||'Caja')+' · '+fdt(sh.openAt);
+  }else if(kind==='expenses'){
+    title='Informe de gastos';var ex=state.expenses.slice().sort(function(a,b){return new Date(b.date)-new Date(a.date);});
+    rows.push('<tr><th>Fecha</th><th>Concepto</th><th>Categoría</th><th>Medio</th><th>Monto</th></tr>');
+    ex.forEach(function(x){rows.push(tr([fdt(x.date),esc(x.concept),esc(x.cat),x.method==='caja'?'Efectivo de caja':'Otro medio',gs(x.amount)]));});
+    totals='Total de gastos: '+gs(sum(ex,'amount'));
+  }else if(kind==='payables'){
+    title='Informe de cuentas por pagar';var pp=state.purchases.filter(function(x){return purchaseOut(x)>0;});
+    rows.push('<tr><th>Fecha</th><th>Proveedor</th><th>Documento</th><th>Vencimiento</th><th>Total</th><th>Saldo</th></tr>');
+    pp.forEach(function(x){rows.push(tr([fdt(x.date),esc(x.supplier),esc(x.docNo||'—'),x.due?fd(x.due):'—',gs(x.total),gs(purchaseOut(x))]));});
+    totals='Saldo pendiente: '+gs(totalPayable());
+  }else if(kind==='returns'){
+    title='Informe de devoluciones';var rr=collectReturns(ui.finRange);
+    rows.push('<tr><th>Fecha</th><th>Ticket</th><th>Productos</th><th>Reembolso</th><th>Importe</th></tr>');
+    rr.rows.forEach(function(x){rows.push(tr([fdt(x.date),'#'+pad(x.ticket,6),x.names,esc(x.method),gs(x.amount)]));});
+    totals='Cantidad: '+rr.rows.length+' · Total devuelto: '+gs(rr.amount)+' · Período: '+esc(ui.finRange);
+  }else if(kind==='summary'){
+    title='Resumen financiero';var r=ui.finRange,sales=state.sales.filter(function(x){return !x.void&&inRange(x.date,r);}),ret=collectReturns(r);
+    var grossSales=sum(sales,'total'),gross10=sum(sales,'iva10'),gross5=sum(sales,'iva5'),grossCmv=sum(sales,'cmv'),tot=grossSales-ret.amount;
+    var i10=Math.max(0,gross10-ret.tax10),i5=Math.max(0,gross5-ret.tax5),cmv=Math.max(0,grossCmv-ret.cost),net=tot-i10-i5,gross=net-cmv;
+    var gast=sum(state.expenses.filter(function(e){return e.cat!=='Devolución'&&inRange(e.date,r); }),'amount'),res=gross-gast;
+    [['Período',r],['Ventas brutas',gs(grossSales)],['Devoluciones',gs(ret.amount)],['Ventas netas',gs(tot)],['Ventas sin IVA',gs(net)],['Costo neto de mercadería',gs(cmv)],['Utilidad bruta',gs(gross)],['Gastos',gs(gast)],['Resultado estimado',gs(res)],['Por cobrar a clientes',gs(totalReceivable())],['Por pagar a proveedores',gs(totalPayable())]].forEach(function(x){rows.push(tr(x));});
+    rows.unshift('<tr><th>Concepto</th><th>Importe</th></tr>');
+    subtitle+=' · Período: '+esc(r);
+  }else return;
+  var w=window.open('','_blank');if(!w){toast('Permití las ventanas emergentes para imprimir');return;}
+  w.document.open();w.document.write('<!doctype html><html lang="es"><head><meta charset="utf-8"><title>'+esc(title)+'</title><style>body{font:14px Arial,sans-serif;color:#172536;padding:24px}h1{font-size:22px;margin:0 0 8px}p{color:#617184;font-size:12px}table{width:100%;border-collapse:collapse;margin-top:18px}td,th{padding:9px;border:1px solid #d7e0eb;text-align:left}th{background:#eef3f8}tfoot{font-weight:bold}.total{font-size:16px;font-weight:bold;margin-top:18px}@media print{body{padding:0}}</style></head><body><h1>SAINEI POS · '+esc(title)+'</h1><p>'+subtitle+'</p><table>'+rows.join('')+'</table>'+(totals?'<div class="total">'+totals+'</div>':'')+'</body></html>');
+  w.document.close();w.focus();setTimeout(function(){w.print();},250);
+}
+
 /* ---------- Finanzas ---------- */
 function renderFinance(){
   renderSeg('finanzas');
@@ -2177,8 +2217,8 @@ function renderFinance(){
     $('#shiftCard').innerHTML=card;
     var cl=state.shifts.filter(function(x){return x.closedAt;}).slice().reverse().slice(0,30);
     $('#shiftBody').innerHTML=cl.length?cl.map(function(x){
-      return '<tr><td>'+fdt(x.openAt)+'</td><td>'+fdt(x.closedAt)+'</td><td class="r num">'+gs(x.openAmt)+'</td><td class="r num">'+gs(x.expected)+'</td><td class="r num">'+gs(x.counted)+'</td><td class="r num" style="color:'+(x.diff===0?'var(--ok)':'var(--bad)')+'">'+(x.diff>0?'+':'')+fmt(x.diff)+'</td></tr>';
-    }).join(''):emptyRow(6,'Todavía no cerraste ninguna caja.');
+      return '<tr><td>'+fdt(x.openAt)+'</td><td>'+fdt(x.closedAt)+'</td><td class="r num">'+gs(x.openAmt)+'</td><td class="r num">'+gs(x.expected)+'</td><td class="r num">'+gs(x.counted)+'</td><td class="r num">'+(x.diff>0?'+':'')+fmt(x.diff)+'</td><td><button class="btn" data-a="printshift" data-id="'+x.id+'">Imprimir</button></td></tr>';
+    }).join(''):emptyRow(7,'Todavía no cerraste ninguna caja.');
   }else if(sub==='gastos'){
     var ex=state.expenses.slice().reverse().slice(0,200);
     var mes=state.expenses.filter(function(e){return inRange(e.date,'mes');});
@@ -2227,7 +2267,7 @@ function renderFinanceReturns(){
   $('#ivaBody').innerHTML='<tr><td colspan="3">Las devoluciones se descuentan de las ventas netas del resumen financiero.</td></tr>';
   var host=$('#ivaBody').closest('.panel'),detail=$('#finReturnsDetail');
   if(detail)detail.remove();
-  if(host)host.insertAdjacentHTML('afterend','<div id="finReturnsDetail" class="panel scroll" style="padding:14px;margin-top:12px"><h3 style="margin:0 0 10px">Detalle de devoluciones</h3><table><thead><tr><th>Fecha</th><th>Ticket</th><th>Productos devueltos</th><th>Reembolso</th><th class="r">Importe</th></tr></thead><tbody>'+(ret.rows.length?ret.rows.map(function(x){return '<tr><td>'+fdt(x.date)+'</td><td>#'+String(x.ticket).padStart(6,'0')+'</td><td>'+x.names+'</td><td>'+x.method+'</td><td class="r num">'+gs(x.amount)+'</td></tr>';}).join(''):emptyRow(5,'Todavía no hay devoluciones registradas para este período.'))+'</tbody></table></div>');
+  if(host)host.insertAdjacentHTML('afterend','<div id="finReturnsDetail" class="panel scroll" style="padding:14px;margin-top:12px"><div class="sec-head"><h3 style="margin:0">Detalle de devoluciones</h3><button class="btn" data-a="printreturns">Imprimir informe</button></div><table><thead><tr><th>Fecha</th><th>Ticket</th><th>Productos devueltos</th><th>Reembolso</th><th class="r">Importe</th></tr></thead><tbody>'+(ret.rows.length?ret.rows.map(function(x){return '<tr><td>'+fdt(x.date)+'</td><td>#'+String(x.ticket).padStart(6,'0')+'</td><td>'+x.names+'</td><td>'+x.method+'</td><td class="r num">'+gs(x.amount)+'</td></tr>';}).join(''):emptyRow(5,'Todavía no hay devoluciones registradas para este período.'))+'</tbody></table></div>');
 }
 function renderResumen(){
   var r=ui.finRange;$('#finRange').value=r;
@@ -2468,6 +2508,11 @@ var A={
   closeshiftmodal:function(){closeShiftModal();},
   closeothershift:function(el,id){closeShiftModal(id);},
   closeshift:function(){doCloseShift();},
+  printshift:function(el,id){printFinancialReport('shift',id);},
+  printexpenses:function(){printFinancialReport('expenses');},
+  printpayables:function(){printFinancialReport('payables');},
+  printreturns:function(){printFinancialReport('returns');},
+  printfinance:function(){printFinancialReport('summary');},
   newbudget:function(){openBudgetForm();},
   addbudgetline:function(){addBudgetLine();},
   removebudgetline:function(el){var row=el.closest('.bf-line');if(row)row.remove();budgetTotal();},
