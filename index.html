@@ -23,6 +23,7 @@
   --warn:#b96512; --warn-soft:#fff0df; --bad:#b42318; --bad-soft:#fde3df; --ok:#1769aa; --ok-soft:#e1efff;
   --font-head:'Space Grotesk','Segoe UI',system-ui,sans-serif; --font-body:'Inter','Segoe UI',system-ui,sans-serif;
   --font-num:'Space Grotesk','Inter',system-ui,sans-serif;
+  --app-font-size:15px;
 }
 @media (prefers-color-scheme: dark){
   :root:not([data-theme="light"]){
@@ -40,7 +41,7 @@
 }
 *{box-sizing:border-box}
 [hidden]{display:none!important}
-body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:15px;line-height:1.45;
+body{background:var(--bg);color:var(--fg);font-family:var(--font-body);font-size:var(--app-font-size);line-height:1.45;
   padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 24px}
 body::before{content:"";position:fixed;inset:0 0 auto;height:env(safe-area-inset-top,0px);z-index:30;background:var(--surface)}
 body.lock{overflow:hidden}
@@ -98,6 +99,12 @@ main{max-width:1280px;margin:0 auto;padding-top:16px}
 .chip[aria-pressed="true"]{background:var(--accent);color:var(--accent-fg);border-color:var(--accent)}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px}
+.product-list-mode .grid{display:flex;flex-direction:column;gap:0}
+.product-list-mode .pcard{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:"name price" "stock stock";align-items:center;gap:2px 12px;min-height:0;border:0;border-bottom:1px solid var(--line);border-radius:0;padding:8px 10px;background:transparent}
+.product-list-mode .pcard .pname{grid-area:name;display:block;-webkit-line-clamp:1;white-space:nowrap;text-overflow:ellipsis}
+.product-list-mode .pcard .pprice{grid-area:price;margin:0;font-size:15px;white-space:nowrap}
+.product-list-mode .pcard .pstock{grid-area:stock;font-size:11px}
+.product-list-mode .pcard img{display:none!important}
 .pcard{display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:12px;min-height:116px;min-width:0}
 .pcard:hover:not(:disabled){border-color:var(--accent)}
 .pcard:active:not(:disabled){background:var(--accent-soft)}
@@ -812,6 +819,14 @@ main{max-width:none;margin:0 0 0 218px;padding:22px 24px 30px;min-height:calc(10
       <input id="logoFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
       <p class="hint" style="margin:0">Se muestra arriba en el programa y en el ticket. Usá una imagen PNG o JPG con fondo blanco o transparente. Se ajusta sola al tamaño del ticket.</p>
     </div>
+    <div class="panel settings"><h3>Personalización de pantalla</h3>
+      <p class="hint" style="margin:0">Personalizá la apariencia del programa. Estos cambios no modifican productos ni precios.</p>
+      <div class="fields">
+        <label>Tipo de letra del programa<select id="uiFontFamily" class="input"><option value="system">Segoe UI / Sistema</option><option value="arial">Arial</option><option value="verdana">Verdana</option><option value="trebuchet">Trebuchet MS</option></select></label>
+        <label>Tamaño de letra<select id="uiFontSize" class="input"><option value="13">Pequeño</option><option value="15">Normal</option><option value="17">Grande</option><option value="19">Muy grande</option></select></label>
+        <label>Presentación de productos en venta<select id="uiProductView" class="input"><option value="list">Lineal / compacto</option><option value="grid">Tarjetas grandes</option></select></label>
+      </div>
+    </div>
     <div class="panel settings">
       <h3>Impresora de tickets</h3>
       <p class="hint" style="margin:0">Funciona con cualquier impresora instalada en Windows: térmica de 80 mm o 58 mm, o una común de hoja A4. Dejala como impresora predeterminada de Windows. La impresión se usa desde el programa de Windows.</p>
@@ -991,6 +1006,7 @@ function normalize(s){
   s.check=s.check||{};s.n=s.n||{};
   s.shop.logo=s.shop.logo||'';s.shop.logoBW=s.shop.logoBW||'';
   var pr=s.print=s.print||{};pr.on=!!pr.on;pr.width=(pr.width==='58'||pr.width==='a4')?pr.width:'80';pr.copies=[1,2,3].indexOf(pr.copies)>=0?pr.copies:1;pr.font=[11,12,14].indexOf(pr.font)>=0?pr.font:12;pr.footer=pr.footer==null?'¡Gracias por su compra!':pr.footer;pr.logo=pr.logo!==false;pr.bw=pr.bw!==false;
+  s.appearance=s.appearance||{};s.appearance.font=['arial','verdana','trebuchet'].indexOf(s.appearance.font)>=0?s.appearance.font:'system';s.appearance.size=[13,15,17,19].indexOf(Number(s.appearance.size))>=0?Number(s.appearance.size):15;s.appearance.productView=s.appearance.productView==='grid'?'grid':'list';
   s.scan=s.scan||{};s.scan.sound=s.scan.sound!==false;
   s.users=Array.isArray(s.users)?s.users:[];s.audit=Array.isArray(s.audit)?s.audit:[];
   var sc=s.sec=s.sec||{};sc.lockMin=[0,5,10,15,30].indexOf(sc.lockMin)>=0?sc.lockMin:10;sc.maxDisc=[0,5,10,20,50,100].indexOf(sc.maxDisc)>=0?sc.maxDisc:10;sc.rec=sc.rec||null;
@@ -2347,9 +2363,17 @@ function renderNote(){
 function renderChecklist(){
   $('#checklist').innerHTML=CHECK.map(function(c){var on=!!state.check[c[0]];return '<label class="chk'+(on?' done':'')+'"><input type="checkbox" data-a="chk" data-v="'+c[0]+'"'+(on?' checked':'')+'><span>'+esc(c[1])+'</span></label>';}).join('');
 }
+function applyAppearance(){
+  var a=state&&state.appearance||{},fonts={system:"'Segoe UI',system-ui,sans-serif",arial:"Arial,sans-serif",verdana:"Verdana,sans-serif",trebuchet:"'Trebuchet MS',sans-serif"};
+  document.documentElement.style.setProperty('--font-body',fonts[a.font]||fonts.system);
+  document.documentElement.style.setProperty('--font-head',fonts[a.font]||fonts.system);
+  document.documentElement.style.setProperty('--app-font-size',(Number(a.size)||15)+'px');
+  document.documentElement.classList.toggle('product-list-mode',(a.productView||'list')==='list');
+}
 function renderSettings(){
   $('#sName').value=state.shop.name;$('#sRuc').value=state.shop.ruc;$('#sAddr').value=state.shop.addr;$('#sPhone').value=state.shop.phone;
   $('#scFmt').value=state.scale.plu+'-'+state.scale.val;$('#scMode').value=state.scale.mode;
+  var ap=state.appearance||{};$('#uiFontFamily').value=ap.font||'system';$('#uiFontSize').value=String(ap.size||15);$('#uiProductView').value=ap.productView||'list';applyAppearance();
   var pr=state.print;$('#prPaper').value=pr.width;$('#prCopies').value=String(pr.copies);$('#prFont').value=String(pr.font);$('#prFooter').value=pr.footer;$('#prAuto').checked=pr.on;$('#prLogo').checked=pr.logo;$('#prBW').checked=pr.bw;$('#scSound').checked=state.scan.sound;renderLogoPreview();renderSafe();
   renderChecklist();renderNote();renderUsers();
   var rb=$('#resetBtn');if(rb)rb.hidden=!!SERVER;
@@ -3104,6 +3128,9 @@ document.addEventListener('change',function(e){
   else if(id==='prPaper'){state.print.width=t.value;save();}
   else if(id==='prCopies'){state.print.copies=parseInt(t.value,10)||1;save();}
   else if(id==='prFont'){state.print.font=parseInt(t.value,10)||12;save();}
+  else if(id==='uiFontFamily'){state.appearance.font=t.value;applyAppearance();save();toast('Tipo de letra actualizado');}
+  else if(id==='uiFontSize'){state.appearance.size=parseInt(t.value,10)||15;applyAppearance();save();toast('Tamaño de letra actualizado');}
+  else if(id==='uiProductView'){state.appearance.productView=t.value==='grid'?'grid':'list';applyAppearance();save();renderProducts();toast('Vista de productos actualizada');}
   else if(id==='prAuto'){state.print.on=t.checked;save();}
   else if(id==='prLogo'){state.print.logo=t.checked;save();}
   else if(id==='prBW'){state.print.bw=t.checked;save();}
