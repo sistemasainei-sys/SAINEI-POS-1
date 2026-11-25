@@ -868,8 +868,8 @@ async function handle(req, res) {
     // Un usuario limitado solo puede reservar IDs para colecciones donde
     // tenga permiso de alta; conocer otros contadores no debe habilitar su uso.
     if (me.role !== 'admin') {
-      const cp=me.permissions||{};
-      const permitted = cp ? (
+      const cp=me.permissions;
+      const permitted = cp && typeof cp==='object' ? (
         (kind==='prod'&&cp.products_create)||(kind==='client'&&cp.clients_create)||
         (kind==='sale'&&cp.sales_sell)||(kind==='shift'&&cp.cash_manage)||
         (kind==='purch'&&cp.purchases_create)||(kind==='exp'&&cp.expenses_create)||
