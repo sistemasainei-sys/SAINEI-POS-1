@@ -1933,6 +1933,7 @@ function productForm(p,pref){
     sel('pf-unit','Unidad de medida',[['m','Metro (m)'],['cm','Centímetro (cm)'],['kg','Kilogramo (kg)'],['L','Litro (L)'],['m²','Metro cuadrado (m²)'],['m³','Metro cúbico (m³)']],v.unit||'m')+
     fld('pf-plu','PLU de la balanza',v.plu,'type="text" inputmode="numeric" maxlength="5"')+
     fld('pf-cost','Costo (Gs.)',v.cost===''?'':fmt(v.cost),'type="text" inputmode="numeric"')+
+    sel('pf-margin','Margen de ganancia',[['','Elegir margen'],['10','10%'],['20','20%'],['30','30%'],['40','40%'],['50','50%'],['60','60%'],['70','70%'],['80','80%'],['90','90%'],['100','100%']],v.marginPercent==null?'':String(v.marginPercent))+
     fld('pf-price','Precio de venta (Gs., por kg si es por peso)',v.price===''?'':fmt(v.price),'type="text" inputmode="numeric"')+
     sel('pf-iva','IVA',[['10','10%'],['5','5%'],['0','Exento']],v.iva)+
     fld('pf-stock','Stock actual (kg si es por peso)',v.stock===''?'':String(v.stock).replace('.',','),'type="text" inputmode="decimal"')+
@@ -1942,6 +1943,12 @@ function productForm(p,pref){
     '<input id="pf-image-data" type="hidden" value="'+esc(v.image||'')+'"><div id="pf-image-preview" style="margin:8px 0">'+(v.image?'<img src="'+esc(v.image)+'" alt="Foto del producto" style="max-width:120px;max-height:120px;object-fit:contain;border-radius:8px">':'')+'</div>'+
     '</div><p class="err" id="pfErr" role="alert"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button>'+
     (p?'<button class="btn danger" id="delBtn" data-a="delprod">Eliminar</button>':'')+'<button class="btn primary" data-a="saveprod">Guardar</button></div>';
+}
+function updateProductPriceFromMargin(){
+  var costEl=$('#pf-cost'),marginEl=$('#pf-margin'),priceEl=$('#pf-price');
+  if(!costEl||!marginEl||!priceEl)return;
+  var cost=Math.round(num(costEl.value)),margin=parseFloat(marginEl.value);
+  if(cost>0&&Number.isFinite(margin)&&margin>=0)priceEl.value=fmt(Math.round(cost*(1+margin/100)));
 }
 function prepareProductImage(file){
   return new Promise(function(resolve,reject){
@@ -2003,7 +2010,8 @@ function saveProduct(){
     if(dupVariant){err.textContent='Esa variante ya existe en "'+dupVariant.name+'". Cada variante debe tener su propio producto, código y stock.';return;}
   }
   var prior=ui.editId?getP(ui.editId):null,imageInput=$('#pf-image-data');
-  var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim(),variantGroup:vg,variantName:vn,image:imageInput?imageInput.value:(prior&&prior.image||'')};
+  var marginValue=$('#pf-margin').value;
+  var data={name:name,cat:cat,code:code,type:type,unit:unit,plu:plu,cost:cost,marginPercent:marginValue===''?null:parseFloat(marginValue),price:price,iva:iva,stock:Math.max(0,stock),min:Math.max(0,min),supplier:$('#pf-sup').value.trim(),variantGroup:vg,variantName:vn,image:imageInput?imageInput.value:(prior&&prior.image||'')};
   if(ui.editId){
     var p=getP(ui.editId);
     if(round3(p.stock)!==data.stock)addMove(p.id,'ajuste',data.stock-p.stock,'Edición del producto');
@@ -3197,7 +3205,8 @@ document.addEventListener('input',function(e){
   if(!state&&e.target.id!=='fatalFile')return;
   if(secDenyInput(e.target.id))return;
   var t=e.target,id=t.id;
-  if(id==='q'){ui.q=t.value;renderProducts();autoScan();}
+  if(id==='pf-cost'){updateProductPriceFromMargin();}
+  else if(id==='q'){ui.q=t.value;renderProducts();autoScan();}
   else if(id==='disc'){var n=parseFloat(t.value),mx=maxDisc();if(!isNaN(n)&&n>mx){toast('Tu descuento máximo es '+mx+'%');t.value=mx;}ui.disc=isNaN(n)?0:Math.min(mx,Math.max(0,n));renderCart();}
   else if(id==='recv'){ui.pay.recv=digits(t.value);t.value=ui.pay.recv;updatePay();}
   else if(/^part-(efectivo|tarjeta|transferencia|credito)$/.test(id)){ui.pay.parts=ui.pay.parts||{};ui.pay.parts[id.slice(5)]=t.value;updatePay();}
@@ -3219,7 +3228,8 @@ document.addEventListener('change',function(e){
   if(!state&&e.target.id!=='fatalFile')return;
   if(secDenyInput(e.target.id))return;
   var t=e.target,id=t.id;
-  if(id==='range'){ui.range=t.value;renderSales();}
+  if(id==='pf-margin'){updateProductPriceFromMargin();}
+  else if(id==='range'){ui.range=t.value;renderSales();}
   else if(id==='finRange'){ui.finRange=t.value;renderResumen();}
   else if(id==='cartClient'){ui.clientId=parseInt(t.value,10)||0;}
   else if(id==='creditClient'||id==='creditDays'){updatePay();}
