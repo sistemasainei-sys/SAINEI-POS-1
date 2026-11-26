@@ -1,0 +1,11 @@
+(function(){
+'use strict';
+window.SAINEI_POS_MODULES=window.SAINEI_POS_MODULES||[];
+window.SAINEI_POS_MODULES.push({init:function(api){
+ function rows(){var s=api.state();s.promotions=Array.isArray(s.promotions)?s.promotions:[];return s.promotions;}
+ function active(p){var d=new Date(),today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');return p.enabled!==false&&(!p.from||p.from<=today)&&(!p.to||p.to>=today);}
+ function render(sec){var a=rows().filter(function(p){return !!p.code;});sec.innerHTML='<div class="card" style="padding:16px;margin:12px 0"><h2>Cupones</h2><p class="muted">Códigos vinculados a promociones existentes. Se aplican al ticket actual y respetan el límite de descuento del usuario.</p><label>Código<input id="saineiCouponCode" class="input" maxlength="30" placeholder="CLIENTE10"></label><button class="btn primary" data-a="saineiCouponApply">Aplicar cupón</button></div><div class="card" style="padding:16px;margin:12px 0"><h3>Códigos disponibles</h3><table class="table"><thead><tr><th>Código</th><th>Promoción</th><th>Descuento</th><th>Vigencia</th></tr></thead><tbody>'+(a.length?a.map(function(p){return '<tr><td><strong>'+api.escape(p.code)+'</strong></td><td>'+api.escape(p.name)+'</td><td>'+Number(p.percent||0)+'%</td><td>'+(active(p)?'Vigente':'Inactivo / fuera de fecha')+'</td></tr>';}).join(''):'<tr><td colspan="4">Creá una promoción y asignale un código desde la sección Promociones.</td></tr>')+'</tbody></table></div>';}
+ api.addAction('saineiCouponApply',function(){var code=String(document.getElementById('saineiCouponCode').value||'').trim().toUpperCase(),p=rows().filter(function(x){return String(x.code||'').toUpperCase()===code&&active(x);})[0];if(!p){api.toast('Cupón inválido, inactivo o fuera de vigencia.');return;}if(!api.applyDiscount(p.percent)){api.toast('El descuento supera tu límite autorizado ('+api.maxDiscount()+'%).');return;}api.log('Aplicó cupón '+code+' ('+p.percent+'%)');api.toast('Cupón aplicado al ticket actual.');});
+ api.addTab({id:'cupones',label:'Cupones',canView:function(u){return !!u;},render:render});
+}});
+})();

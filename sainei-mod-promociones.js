@@ -18,15 +18,16 @@ window.SAINEI_POS_MODULES.push({
   function tile(l,v){return '<div class="tile"><div class="muted">'+esc(l)+'</div><strong>'+esc(v)+'</strong></div>';}
   function openForm(){
    if(!admin()){api.toast('Solo el administrador puede configurar promociones.');return;}
-   api.openModal('<h2>Nueva promoción</h2><label>Nombre<input id="promo-name" class="input" maxlength="60" placeholder="Ej.: Descuento de lanzamiento"></label><label>Descuento (%)<input id="promo-percent" class="input" type="number" min="0.1" max="100" step="0.1" value="5"></label><label>Desde<input id="promo-from" class="input" type="date"></label><label>Hasta<input id="promo-to" class="input" type="date"></label><p class="muted">El descuento se aplicará a toda la venta actual cuando se seleccione. No se acumula automáticamente con otros descuentos.</p><p id="promo-error" class="err"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button><button class="btn primary" data-a="promo-guardar">Guardar</button></div>');
+   api.openModal('<h2>Nueva promoción</h2><label>Nombre<input id="promo-name" class="input" maxlength="60" placeholder="Ej.: Descuento de lanzamiento"></label><label>Código de cupón (opcional)<input id="promo-code" class="input" maxlength="30" placeholder="CLIENTE10"></label><label>Descuento (%)<input id="promo-percent" class="input" type="number" min="0.1" max="100" step="0.1" value="5"></label><label>Desde<input id="promo-from" class="input" type="date"></label><label>Hasta<input id="promo-to" class="input" type="date"></label><p class="muted">El descuento se aplicará a toda la venta actual cuando se seleccione. No se acumula automáticamente con otros descuentos.</p><p id="promo-error" class="err"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button><button class="btn primary" data-a="promo-guardar">Guardar</button></div>');
   }
   function save(){
    var s=api.state(),name=document.getElementById('promo-name'),percent=document.getElementById('promo-percent'),from=document.getElementById('promo-from'),to=document.getElementById('promo-to'),err=document.getElementById('promo-error');if(!err)return;
-   var n=String(name&&name.value||'').trim(),p=Number(percent&&percent.value),f=String(from&&from.value||''),t=String(to&&to.value||'');
+   var n=String(name&&name.value||'').trim(),p=Number(percent&&percent.value),f=String(from&&from.value||''),t=String(to&&to.value||''),code=String(document.getElementById('promo-code')&&document.getElementById('promo-code').value||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,'');
    if(!admin()){err.textContent='Acción reservada al administrador.';return;}
-   if(!n||!Number.isFinite(p)||p<=0||p>100|| (f&&t&&f>t)){err.textContent='Revisá el nombre, el porcentaje y las fechas.';return;}
+   if(!n||!Number.isFinite(p)||p<=0||p>100|| (f&&t&&f>t)||(code&&code.length<3)){err.textContent='Revisá el nombre, el porcentaje y las fechas.';return;}
    s.promotions=Array.isArray(s.promotions)?s.promotions:[];
-   var record={id:api.newId('move'),name:n,percent:p,from:f,to:t,enabled:true,createdAt:new Date().toISOString()};s.promotions.push(record);
+   if(code&&(s.promotions||[]).some(function(x){return String(x.code||'').toUpperCase()===code;})){err.textContent='Ese código ya existe.';return;}
+   var record={id:api.newId('move'),name:n,code:code,percent:p,from:f,to:t,enabled:true,createdAt:new Date().toISOString()};s.promotions.push(record);
    Promise.resolve(api.save()).then(function(ok){if(ok===false){s.promotions=s.promotions.filter(function(x){return x!==record;});err.textContent='No se confirmó el guardado. La promoción no quedó registrada.';return;}api.closeModal();api.refresh();api.toast('Promoción guardada.');}).catch(function(){s.promotions=s.promotions.filter(function(x){return x!==record;});err.textContent='No se pudo guardar la promoción. La promoción no quedó registrada.';});
   }
   function apply(el){
