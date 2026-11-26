@@ -17,6 +17,9 @@ const server = read('server.js');
 const discovery = read('descubrir-servidor-sainei.ps1');
 const clientLauncher = read('2-Abrir-Caja.bat');
 const firewall = read('configurar-firewall-sainei.ps1');
+const remoteFirewall = read('configurar-acceso-remoto-tailscale.ps1');
+const readme = read('README.md');
+const windowsGuide = read('docs/INICIO-SIN-COSTO-WINDOWS.md');
 const updaterBat = read('ACTUALIZAR-SAINEl-POS.bat');
 const updater = read('actualizar-sainei-pos.ps1');
 const lanConnector = read('Conectar-desde-otra-PC.bat');
@@ -83,6 +86,12 @@ if (!clientLauncher.includes('cliente.url') || !clientLauncher.includes('descubr
 }
 if (!server.includes("process.env.SAINEI_PORT || '8090'") || !clientLauncher.includes('set "PORT=8090"') || !scheduled.includes("Connect('127.0.0.1',8090)") || !scheduled.includes('http://localhost:8090') || !firewall.includes('$port = 8090') || !firewall.includes('TCP 8090')) {
   throw new Error('El servidor, lanzador, inicio automatico y firewall deben usar el puerto 8090.');
+}
+if (!remoteFirewall.includes('$port = 8090') || !remoteFirewall.includes('TCP 8090') || !remoteFirewall.includes(':8090')) {
+  throw new Error('El acceso remoto Tailscale debe usar el puerto 8090.');
+}
+if (/8080/.test(readme) || /8080/.test(windowsGuide)) {
+  throw new Error('La documentación de instalación debe usar exclusivamente el puerto 8090.');
 }
 if (!firewall.includes('UDP -LocalPort 45808') || !firewall.includes('TCP -LocalPort')) {
   throw new Error('El firewall debe permitir el servicio y el descubrimiento solo en LAN privada.');
