@@ -81,7 +81,10 @@ if (!discovery.includes('SAINEI_POS_DISCOVER_V1') || !discovery.includes('IPAddr
 if (!clientLauncher.includes('cliente.url') || !clientLauncher.includes('descubrir-servidor-sainei.ps1')) {
   throw new Error('La caja cliente debe reconectar al servidor detectado.');
 }
-if (!server.includes("process.env.SAINEI_PORT || '8090'") || !clientLauncher.includes('set "PORT=8090"') || !scheduled.includes("Connect('127.0.0.1',8090)") || !scheduled.includes('http://localhost:8090') || !firewall.includes('$port = 8090') || !firewall.includes('TCP 8090')) {\n  throw new Error('El servidor, lanzador, inicio automatico y firewall deben usar el puerto 8090.');\n}\nif (!firewall.includes('UDP -LocalPort 45808') || !firewall.includes('TCP -LocalPort')) {
+if (!server.includes("process.env.SAINEI_PORT || '8090'") || !clientLauncher.includes('set "PORT=8090"') || !scheduled.includes("Connect('127.0.0.1',8090)") || !scheduled.includes('http://localhost:8090') || !firewall.includes('$port = 8090') || !firewall.includes('TCP 8090')) {
+  throw new Error('El servidor, lanzador, inicio automatico y firewall deben usar el puerto 8090.');
+}
+if (!firewall.includes('UDP -LocalPort 45808') || !firewall.includes('TCP -LocalPort')) {
   throw new Error('El firewall debe permitir el servicio y el descubrimiento solo en LAN privada.');
 }
 for (const file of ['2-Abrir-Caja.bat', 'Conectar-desde-otra-PC.bat', 'respaldar-sainei-pos-windows.bat']) read(file);
