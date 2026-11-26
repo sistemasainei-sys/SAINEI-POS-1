@@ -26,7 +26,8 @@ window.SAINEI_POS_MODULES.push({
    if(!admin()){err.textContent='Acción reservada al administrador.';return;}
    if(!n||!Number.isFinite(p)||p<=0||p>100|| (f&&t&&f>t)||(code&&code.length<3)){err.textContent='Revisá el nombre, el porcentaje y las fechas.';return;}
    s.promotions=Array.isArray(s.promotions)?s.promotions:[];
-   if(code&&(s.promotions||[]).some(function(x){return String(x.code||'').toUpperCase()===code;})){err.textContent='Ese código ya existe.';return;}\n   var record={id:api.newId('move'),name:n,code:code,percent:p,from:f,to:t,enabled:true,createdAt:new Date().toISOString()};s.promotions.push(record);
+   if(code&&(s.promotions||[]).some(function(x){return String(x.code||'').toUpperCase()===code;})){err.textContent='Ese código ya existe.';return;}
+   var record={id:api.newId('move'),name:n,code:code,percent:p,from:f,to:t,enabled:true,createdAt:new Date().toISOString()};s.promotions.push(record);
    Promise.resolve(api.save()).then(function(ok){if(ok===false){s.promotions=s.promotions.filter(function(x){return x!==record;});err.textContent='No se confirmó el guardado. La promoción no quedó registrada.';return;}api.closeModal();api.refresh();api.toast('Promoción guardada.');}).catch(function(){s.promotions=s.promotions.filter(function(x){return x!==record;});err.textContent='No se pudo guardar la promoción. La promoción no quedó registrada.';});
   }
   function apply(el){
