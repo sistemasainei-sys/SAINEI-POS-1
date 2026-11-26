@@ -109,6 +109,15 @@ actions['proveedor-pagar']({ dataset: { id: '7' } });
 if (!openedModal.includes('Gs. 80') || !openedModal.includes('Registrar pago')) {
   throw new Error('El formulario de pago no muestra el saldo pendiente correcto.');
 }
+const bankTab = registered.find((x) => x.id === 'bancos-cheques');
+if (!bankTab || !bankTab.canView({ role: 'admin' }) || bankTab.canView({ role: 'cajero' })) throw new Error('Bancos y cheques no tiene permisos correctos.');
+const valuationTab = registered.find((x) => x.id === 'valoracion-stock');
+if (!valuationTab || !valuationTab.canView({ role: 'admin' }) || valuationTab.canView({ role: 'cajero' })) throw new Error('Valoración de stock no tiene permisos correctos.');
+const valuationSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
+valuationTab.render(valuationSec);
+if (!valuationSec.innerHTML.includes('Valoración de inventario') || !valuationSec.innerHTML.includes('Valor total a costo')) throw new Error('No se genera el informe de valoración.');
+const rotationTab = registered.find((x) => x.id === 'rotacion-stock');
+if (!rotationTab || !rotationTab.canView({ role: 'admin' }) || rotationTab.canView({ role: 'cajero' })) throw new Error('Rotación de stock no tiene permisos correctos.');
 const loyaltyTab = registered.find((x) => x.id === 'fidelizacion');
 if (!loyaltyTab) throw new Error('No se registró Fidelización.');
 const loyaltySec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
