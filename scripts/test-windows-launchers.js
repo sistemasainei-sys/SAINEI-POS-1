@@ -14,6 +14,8 @@ const scheduled = read('configurar-inicio-automatico-sainei.ps1');
 const firewallElevated = read('configurar-firewall-elevado.ps1');
 const vbs = read('servidor-oculto.vbs');
 const server = read('server.js');
+const uninstaller = read('Desinstalar.bat');
+const uninstallScript = read('desinstalar-sainei-pos.ps1');
 const discovery = read('descubrir-servidor-sainei.ps1');
 const clientLauncher = read('2-Abrir-Caja.bat');
 const firewall = read('configurar-firewall-sainei.ps1');
@@ -24,6 +26,9 @@ const updaterBat = read('ACTUALIZAR-SAINEl-POS.bat');
 const updater = read('actualizar-sainei-pos.ps1');
 const lanConnector = read('Conectar-desde-otra-PC.bat');
 
+if (!uninstaller.includes('desinstalar-sainei-pos.ps1') || !uninstallScript.includes('SAINEI POS - Servidor automatico') || !uninstallScript.includes("'SAINEI-POS'") || /Remove-Item|rmdir|del\s+.*sainei\.db/i.test(uninstallScript)) {
+  throw new Error('El desinstalador debe detener la tarea actual y los servidores SAINEI sin borrar los datos.');
+}
 if (!mainLauncher.includes('instalar-sainei-pos-windows.bat')) {
   throw new Error('1-INSTALAR.bat debe delegar al instalador principal.');
 }

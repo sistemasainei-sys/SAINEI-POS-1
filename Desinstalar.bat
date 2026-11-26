@@ -5,9 +5,13 @@ if %errorlevel% neq 0 (
   powershell -NoProfile -Command "Start-Process -FilePath '%~f0' -Verb RunAs"
   exit /b
 )
-schtasks /Delete /TN "SAINEI POS Servidor" /F >nul 2>&1
-netsh advfirewall firewall delete rule name="SAINEI POS" >nul 2>&1
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0desinstalar-sainei-pos.ps1"
+if errorlevel 1 (
+  echo Hubo un problema al quitar el inicio automatico. Revisa los permisos de Windows.
+  pause
+  exit /b 1
+)
 del "%USERPROFILE%\Desktop\SAINEI POS.lnk" >nul 2>&1
-echo Se quito el inicio automatico, la regla del firewall y el acceso directo.
-echo Los DATOS del negocio NO se borraron: siguen en la carpeta "datos".
+echo Se detuvo y quito el inicio automatico y las reglas de red de SAINEI POS.
+echo Los DATOS del negocio NO se borraron: siguen en %%LOCALAPPDATA%%\SAINEI-POS\datos.
 pause
