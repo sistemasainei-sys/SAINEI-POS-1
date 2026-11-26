@@ -10,7 +10,7 @@ try { ({ DatabaseSync } = require('node:sqlite')); } catch (e) {
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const a = argv.find(x => x.startsWith('--' + n + '=')); return a ? a.split('=').slice(1).join('=') : d; };
 const DEMO = argv.includes('--demo');
-const PORT = parseInt(arg('port', process.env.PORT || process.env.SAINEI_PORT || '8080'), 10);
+const PORT = parseInt(arg('port', process.env.PORT || process.env.SAINEI_PORT || '8090'), 10);
 const ROOT = __dirname;
 const DATA = path.resolve(arg('data', process.env.SAINEI_DATA || path.join(ROOT, DEMO ? 'datos-prueba' : 'datos')));
 const APP = path.resolve(arg('app', fs.existsSync(path.join(ROOT, 'index.html')) ? path.join(ROOT, 'index.html') : path.join(ROOT, 'app', 'index.html')));
