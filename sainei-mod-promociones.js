@@ -1,21 +1,46 @@
 (function(){
 'use strict';
 window.SAINEI_POS_MODULES=window.SAINEI_POS_MODULES||[];
-window.SAINEI_POS_MODULES.push({init:function(api){
-  function list(){var s=api.state();s.check=s.check||{};s.check.saineiPromotions=Array.isArray(s.check.saineiPromotions)?s.check.saineiPromotions:[];return s.check.saineiPromotions;}
-  function esc(v){return api.escape(String(v==null?'':v));}
-  function active(p){var n=new Date(),a=p.from?new Date(p.from+'T00:00:00'):null,b=p.to?new Date(p.to+'T23:59:59'):null;return p.enabled!==false&&(!a||n>=a)&&(!b||n<=b);}
-  function render(){var root=document.getElementById('v-promociones');if(!root)return;var admin=api.isAdmin(),items=list();
-    root.innerHTML='<div class="section-head"><div><h2>Promociones y cupones</h2><p>Descuentos porcentuales con vigencia y control de permisos.</p></div></div>'+
-    '<div class="card"><h3>Aplicar cupón</h3><label>Código del cupón<input id="saineiCoupon" maxlength="24" autocomplete="off" placeholder="BIENVENIDO10"></label><button class="primary" data-a="saineiCouponApply">Aplicar al ticket actual</button><p class="muted">Respeta el límite de descuento autorizado para tu usuario.</p></div>'+
-    (admin?'<div class="card"><h3>Crear promoción</h3><div class="form-grid"><label>Código<input id="saineiPromoCode" maxlength="24" placeholder="VERANO10"></label><label>Descuento (%)<input id="saineiPromoPct" type="number" min="1" max="100" value="10"></label><label>Desde<input id="saineiPromoFrom" type="date"></label><label>Hasta<input id="saineiPromoTo" type="date"></label></div><button class="primary" data-a="saineiPromoAdd">Guardar promoción</button></div>':'')+
-    '<div class="card"><h3>Promociones registradas</h3><div class="table-wrap"><table><thead><tr><th>Código</th><th>Descuento</th><th>Vigencia</th><th>Estado</th>'+(admin?'<th></th>':'')+'</tr></thead><tbody>'+
-    (items.length?items.map(function(p){return '<tr><td><strong>'+esc(p.code)+'</strong></td><td>'+Number(p.percent)+'%</td><td>'+esc(p.from||'Sin inicio')+' – '+esc(p.to||'Sin vencimiento')+'</td><td>'+(active(p)?'Activa':'Inactiva/vencida')+'</td>'+(admin?'<td><button data-a="saineiPromoToggle" data-v="'+esc(p.id)+'">'+(p.enabled===false?'Activar':'Desactivar')+'</button></td>':'')+'</tr>';}).join(''):'<tr><td colspan="'+(admin?5:4)+'">Todavía no hay promociones.</td></tr>')+'</tbody></table></div></div>';
+window.SAINEI_POS_MODULES.push({
+ init:function(api){
+  api.addTab({id:'promociones',label:'Promociones',canView:function(u){return !!u;},render:render});
+  api.addAction('promo-nueva',openForm);
+  api.addAction('promo-guardar',save);
+  api.addAction('promo-aplicar',apply);
+  api.addAction('promo-eliminar',remove);
+  function esc(v){return api.escape(v==null?'':String(v));}
+  function admin(){return api.isAdmin();}
+  function active(p){var d=new Date(),today=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');return p.enabled!==false&&(!p.from||p.from<=today)&&(!p.to||p.to>=today);}
+  function render(sec){
+   var s=api.state(),rows=Array.isArray(s.promotions)?s.promotions.slice().sort(function(a,b){return String(b.from||'').localeCompare(String(a.from||''));}):[];
+   sec.innerHTML='<div class="card" style="padding:16px;margin:12px 0"><div class="sec-head"><h2>Promociones</h2>'+(admin()?'<button class="btn primary" data-a="promo-nueva">Nueva promoción</button>':'')+'</div><p class="muted">Configurá descuentos porcentuales con fechas de vigencia. Aplicar una promoción carga el descuento en la caja; el límite de descuento de cada usuario sigue vigente.</p><div class="tiles">'+tile('Campañas',String(rows.length))+tile('Vigentes',String(rows.filter(active).length))+'</div></div><div class="card" style="padding:16px;margin:12px 0;overflow:auto"><table class="table"><thead><tr><th>Promoción</th><th class="r">Descuento</th><th>Vigencia</th><th>Estado</th><th></th></tr></thead><tbody>'+(rows.length?rows.map(function(p){return '<tr><td><strong>'+esc(p.name)+'</strong></td><td class="r">'+Number(p.percent||0)+'%</td><td>'+esc(p.from||'Desde ahora')+' – '+esc(p.to||'Sin vencimiento')+'</td><td>'+(active(p)?'<span class="pill ok">Vigente</span>':(p.enabled===false?'<span class="pill low">Pausada</span>':'<span class="pill">Fuera de fecha</span>'))+'</td><td><button class="btn" data-a="promo-aplicar" data-id="'+p.id+'" '+(!active(p)?'disabled':'')+'>Aplicar en caja</button> '+(admin()?'<button class="btn" data-a="promo-eliminar" data-id="'+p.id+'">Eliminar</button>':'')+'</td></tr>';}).join(''):'<tr><td colspan="5">No hay promociones configuradas.</td></tr>')+'</tbody></table></div>';
   }
-  api.addAction('saineiPromoAdd',function(){if(!api.isAdmin())return;var code=(document.getElementById('saineiPromoCode').value||'').trim().toUpperCase().replace(/[^A-Z0-9_-]/g,''),pct=Number(document.getElementById('saineiPromoPct').value),from=document.getElementById('saineiPromoFrom').value,to=document.getElementById('saineiPromoTo').value;
-    if(code.length<3||!Number.isFinite(pct)||pct<=0||pct>100||(from&&to&&from>to)){api.toast('Revisá código, porcentaje y fechas.');return;}var a=list();if(a.some(function(p){return p.code===code;})){api.toast('Ese código ya existe.');return;}a.push({id:api.newId('promo'),code:code,percent:pct,from:from,to:to,enabled:true,createdAt:new Date().toISOString()});api.save();render();api.toast('Promoción guardada.');});
-  api.addAction('saineiPromoToggle',function(el){if(!api.isAdmin())return;var p=list().find(function(x){return String(x.id)===String(el.getAttribute('data-v'));});if(!p)return;p.enabled=p.enabled===false;api.save();render();api.toast('Estado actualizado.');});
-  api.addAction('saineiCouponApply',function(){var code=(document.getElementById('saineiCoupon').value||'').trim().toUpperCase(),p=list().find(function(x){return x.code===code&&active(x);});if(!p){api.toast('Cupón inválido, inactivo o fuera de vigencia.');return;}if(!api.applyDiscount(p.percent)){api.toast('El descuento supera el límite permitido para tu usuario.');return;}api.log('Aplicó cupón '+p.code+' ('+p.percent+'%)');api.save();api.toast('Cupón aplicado: '+p.percent+'%.');});
-  api.addTab({id:'promociones',label:'Promociones',canView:true,render:render});
-}});
+  function tile(l,v){return '<div class="tile"><div class="muted">'+esc(l)+'</div><strong>'+esc(v)+'</strong></div>';}
+  function openForm(){
+   if(!admin()){api.toast('Solo el administrador puede configurar promociones.');return;}
+   api.openModal('<h2>Nueva promoción</h2><label>Nombre<input id="promo-name" class="input" maxlength="60" placeholder="Ej.: Descuento de lanzamiento"></label><label>Descuento (%)<input id="promo-percent" class="input" type="number" min="0.1" max="100" step="0.1" value="5"></label><label>Desde<input id="promo-from" class="input" type="date"></label><label>Hasta<input id="promo-to" class="input" type="date"></label><p class="muted">El descuento se aplicará a toda la venta actual cuando se seleccione. No se acumula automáticamente con otros descuentos.</p><p id="promo-error" class="err"></p><div class="actions"><button class="btn" data-a="close">Cancelar</button><button class="btn primary" data-a="promo-guardar">Guardar</button></div>');
+  }
+  function save(){
+   var s=api.state(),name=document.getElementById('promo-name'),percent=document.getElementById('promo-percent'),from=document.getElementById('promo-from'),to=document.getElementById('promo-to'),err=document.getElementById('promo-error');if(!err)return;
+   var n=String(name&&name.value||'').trim(),p=Number(percent&&percent.value),f=String(from&&from.value||''),t=String(to&&to.value||'');
+   if(!admin()){err.textContent='Acción reservada al administrador.';return;}
+   if(!n||!Number.isFinite(p)||p<=0||p>100|| (f&&t&&f>t)){err.textContent='Revisá el nombre, el porcentaje y las fechas.';return;}
+   s.promotions=Array.isArray(s.promotions)?s.promotions:[];
+   var record={id:api.newId('move'),name:n,percent:p,from:f,to:t,enabled:true,createdAt:new Date().toISOString()};s.promotions.push(record);
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){s.promotions=s.promotions.filter(function(x){return x!==record;});err.textContent='No se confirmó el guardado. La promoción no quedó registrada.';return;}api.closeModal();api.refresh();api.toast('Promoción guardada.');}).catch(function(){s.promotions=s.promotions.filter(function(x){return x!==record;});err.textContent='No se pudo guardar la promoción. La promoción no quedó registrada.';});
+  }
+  function apply(el){
+   var s=api.state(),id=Number(el&&el.dataset&&el.dataset.id),p=(s.promotions||[]).filter(function(x){return Number(x.id)===id;})[0];
+   if(!p||!active(p))return;
+   if(!api.applyDiscount(p.percent)){api.toast('El descuento supera tu límite autorizado ('+api.maxDiscount()+'%).');return;}
+   api.toast('Promoción aplicada a la venta actual. Revisá el total antes de cobrar.');
+  }
+  function remove(el){
+   if(!admin())return;
+   var s=api.state(),id=Number(el&&el.dataset&&el.dataset.id);if(!window.confirm('¿Eliminar esta promoción?'))return;
+   var before=s.promotions||[],removed=before.filter(function(x){return Number(x.id)===id;});s.promotions=before.filter(function(x){return Number(x.id)!==id;});
+   Promise.resolve(api.save()).then(function(ok){if(ok===false){s.promotions=before;api.toast('No se confirmó el cambio. La promoción se conservó.');return;}api.refresh();api.toast('Promoción eliminada.');}).catch(function(){s.promotions=before;api.toast('No se pudo guardar. La promoción se conservó.');});
+  }
+ }
+});
 })();
