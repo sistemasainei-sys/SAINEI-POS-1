@@ -19,6 +19,6 @@ Write-Host 'Inicio automatico de SAINEI POS configurado para este usuario.' -For
 Write-Host 'El servidor se iniciara al iniciar sesion en Windows.'
 $ready = $false
 for ($i = 0; $i -lt 30; $i++) {
-  try { $client = [System.Net.Sockets.TcpClient]::new(); $client.Connect('127.0.0.1',8080); $client.Dispose(); $ready = $true; break } catch { Start-Sleep -Seconds 1 }
+  try { $client = [System.Net.Sockets.TcpClient]::new(); $client.Connect('127.0.0.1',8090); $client.Dispose(); $ready = $true; break } catch { Start-Sleep -Seconds 1 }
 }
-if ($ready) { Start-Process 'http://localhost:8080' } else { Write-Warning 'El servidor aun no responde en el puerto 8080. Revisa el registro de SAINEI POS.' }
+if ($ready) { Start-Process 'http://localhost:8090' } else { Write-Warning 'El servidor aun no responde en el puerto 8090. Revisa el registro de SAINEI POS.' }
