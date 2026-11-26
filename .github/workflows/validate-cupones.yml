@@ -1,0 +1,21 @@
+name: Validar promociones y cupones
+on:
+  pull_request:
+    paths:
+      - "sainei-mod-promociones.js"
+      - "sainei-mod-cupones.js"
+      - ".github/workflows/validate-cupones.yml"
+  push:
+    branches: ["pendientes-comerciales-sainei"]
+jobs:
+  syntax:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Verificar sintaxis de módulos
+        run: |
+          node --check sainei-mod-promociones.js
+          node --check sainei-mod-cupones.js
