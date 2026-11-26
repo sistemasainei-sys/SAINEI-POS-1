@@ -123,6 +123,8 @@ if (!rotationTab || !rotationTab.canView({ role: 'admin' }) || rotationTab.canVi
 const rotationSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; }, querySelector() { return { value: '', addEventListener() {} }; } };
 rotationTab.render(rotationSec);
 if (!rotationSec.innerHTML.includes('Producto de prueba') || !rotationSec.innerHTML.includes('3.000')) throw new Error('La rotación no descuenta correctamente las unidades devueltas.');
+state.clients = [{ id: 3, name: 'Cliente prueba', phone: '0981' }];
+state.sales = [{ id: 9, clientId: 3, total: 25000, items: [], returns: [{ amount: 5000 }] }];
 const loyaltyTab = registered.find((x) => x.id === 'fidelizacion');
 if (!loyaltyTab) throw new Error('No se registró Fidelización.');
 const loyaltySec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
