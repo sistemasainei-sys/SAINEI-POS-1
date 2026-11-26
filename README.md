@@ -21,7 +21,7 @@ SAINEI POS está preparado para guardar los datos comerciales en la computadora 
 - La primera computadora instalada, si no encuentra otro servidor SAINEI POS activo en la red, queda configurada automáticamente como servidor y guarda la base de datos del comercio.
 - Al instalar en otra computadora con el servidor encendido y en la misma red privada, el instalador detecta el servidor por LAN y la configura como caja cliente, sin crear otra base de datos comercial.
 - Las cajas cliente guardan la dirección detectada y vuelven a buscar el servidor si cambia su IP. Si el servidor está apagado durante la instalación inicial, la computadora se configura como servidor; por eso instalar las cajas con la PC principal encendida.
-- El servidor anuncia su presencia por UDP 45808 y el firewall privado permite TCP 8090 y UDP 45808 únicamente desde la subred local.
+- El servidor anuncia su presencia por UDP 45808 y el firewall privado permite TCP 9000 y UDP 45808 únicamente desde la subred local.
 - Para operar dentro del local, basta con que la computadora principal y la red local estén funcionando; no se necesita internet para las operaciones locales.
 - Si la computadora principal se apaga, las otras cajas no pueden operar hasta que vuelva a encenderse.
 - Node.js 22.13 o superior es requisito únicamente en la PC servidor; las cajas cliente detectadas no necesitan instalar Node.js. No requiere licencia, código de activación, pago de activación ni conexión con Render.
@@ -46,7 +46,7 @@ El iniciador guarda la base SQLite en `%LOCALAPPDATA%\SAINEI-POS\datos`, separad
 4. El instalador encuentra el servidor por la red, guarda su dirección y crea el acceso directo `SAINEI POS`. No instala Node.js ni crea otra base de datos comercial.
 5. Abrir el acceso directo e iniciar sesión con el usuario de esa caja.
 
-Si la detección no funciona, verificar que Windows tenga la red marcada como Privada y que el firewall permita TCP 8090 y UDP 45808 desde la subred local. No abrir puertos del router ni exponer el servidor directamente a internet.
+Si la detección no funciona, verificar que Windows tenga la red marcada como Privada y que el firewall permita TCP 9000 y UDP 45808 desde la subred local. No abrir puertos del router ni exponer el servidor directamente a internet.
 
 ## Actualizar el programa sin borrar datos
 
@@ -114,4 +114,4 @@ Ejecutar `1-INSTALAR.bat` (o directamente `instalar-sainei-pos-windows.bat`). Si
 
 ## Inicio automático con Windows
 
-El instalador configura una tarea programada para iniciar el servidor SAINEI POS al iniciar sesión en la cuenta de Windows que realizó la instalación. El servidor se ejecuta en segundo plano y el instalador espera hasta 30 segundos a que responda en el puerto 8090 para abrir `http://localhost:8090`. Los datos permanecen en `%LOCALAPPDATA%\SAINEI-POS\datos`. Si el servidor no responde, revisar `servidor.log` y `servidor-inicio.log` dentro de esa carpeta. Para que otras computadoras operen, la PC principal debe permanecer encendida y el usuario de Windows debe mantener su sesión iniciada.
+El instalador configura una tarea programada para iniciar el servidor SAINEI POS al iniciar sesión en la cuenta de Windows que realizó la instalación. El servidor se ejecuta en segundo plano y el instalador espera hasta 30 segundos a que responda en el puerto 9000 para abrir `http://localhost:9000`. Los datos permanecen en `%LOCALAPPDATA%\SAINEI-POS\datos`. Si el servidor no responde, revisar `servidor.log` y `servidor-inicio.log` dentro de esa carpeta. Para que otras computadoras operen, la PC principal debe permanecer encendida y el usuario de Windows debe mantener su sesión iniciada.

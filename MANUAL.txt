@@ -63,7 +63,7 @@ OTRAS PC Y CELULAR
   detecta automáticamente el servidor y configura esa computadora como caja cliente.
   Si no abre: revisá que ambas estén en la misma red y que Windows la tenga marcada como Privada.
 - Cualquier PC o celular: abrí el navegador y escribí la dirección, por ejemplo
-  http://192.168.1.20:8080 . Ingresá con tu usuario. El dueño puede ver el panel y los reportes desde el celular.
+  http://192.168.1.20:9000 . Ingresá con tu usuario. El dueño puede ver el panel y los reportes desde el celular.
 - Recomendación: en el router, reservá una IP fija para la PC principal así la dirección no cambia.
 
 USUARIOS Y PERMISOS
@@ -101,7 +101,7 @@ INSTALAR COMO APLICACIÓN (en cualquier dispositivo)
 ---------------------------------------------------
 SAINEI POS también se instala como una app con su ícono. La app se abre en pantalla completa, como cualquier otra.
 - PC principal (Windows): el acceso "SAINEI POS" del Escritorio ya abre el programa como aplicación. Si preferís,
-  en Edge abrí http://localhost:8080 y elegí menú (...) > Aplicaciones > Instalar este sitio como una aplicación.
+  en Edge abrí http://localhost:9000 y elegí menú (...) > Aplicaciones > Instalar este sitio como una aplicación.
 - Otra PC con Windows: Conectar-desde-otra-PC.bat abre la app en su propia ventana.
 - Android: abrí la dirección en Chrome, menú (⋮) > "Agregar a la pantalla principal" (o "Instalar app").
 - iPhone / iPad: abrí la dirección en Safari, botón Compartir > "Agregar a inicio".
@@ -114,7 +114,7 @@ PROBLEMAS FRECUENTES
 --------------------
 - "Sin conexión con el servidor": la PC principal está apagada, dormida o cambió de dirección. Encendela y esperá unos segundos.
 - Otra PC no abre la dirección: misma red/Wi-Fi, firewall (volvé a ejecutar 1-INSTALAR.bat en la principal).
-- El puerto 8080 está ocupado: cerrá otra copia del servidor. El servidor guarda registros en datos\servidor.log.
+- El puerto 9000 está ocupado: cerrá otra copia del servidor. El servidor guarda registros en datos\servidor.log.
 - Se olvidó la clave del principal: "Olvidé mi clave" en la pantalla de ingreso, con el código de recuperación.
 - Reiniciar el servidor cierra las sesiones: cada usuario ingresa de nuevo (las ventas guardadas no se pierden).
 - Quitar el sistema: "Desinstalar.bat" (no borra los datos).

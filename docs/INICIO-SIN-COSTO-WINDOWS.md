@@ -28,15 +28,15 @@ La PC principal debe permanecer encendida, con la sesión de Windows iniciada y 
 
 ## Acceso remoto seguro desde fuera del comercio
 
-El acceso remoto recomendado es mediante **Tailscale (VPN privada)**. No se debe publicar el puerto 8090 directamente en internet ni configurar reenvío de puertos en el router.
+El acceso remoto recomendado es mediante **Tailscale (VPN privada)**. No se debe publicar el puerto 9000 directamente en internet ni configurar reenvío de puertos en el router.
 
 1. Instala Tailscale en la PC principal y en cada dispositivo remoto autorizado.
 2. Inicia sesión en la misma red privada de Tailscale (tailnet) y verifica que ambos dispositivos se vean entre sí.
 3. En la PC principal, abre PowerShell como administrador y ejecuta `configurar-acceso-remoto-tailscale.ps1` desde la carpeta de SAINEI POS.
-4. En el dispositivo remoto, abre `http://IP-TAILSCALE-DE-LA-PC-PRINCIPAL:8090` (usa la IP Tailscale real de la PC principal).
+4. En el dispositivo remoto, abre `http://IP-TAILSCALE-DE-LA-PC-PRINCIPAL:9000` (usa la IP Tailscale real de la PC principal).
 5. Inicia sesión en SAINEI POS con el usuario y clave del comercio.
 
-El script crea una regla de Windows Firewall limitada a la interfaz Tailscale, TCP 8090 y el rango privado Tailscale `100.64.0.0/10`. El acceso queda además sujeto a la autenticación y permisos propios de SAINEI POS y a los dispositivos autorizados en Tailscale. Protege la cuenta Tailscale con autenticación multifactor y no compartas invitaciones ni dispositivos. Si Tailscale no está instalado o su interfaz no está activa, el script falla sin abrir el acceso.
+El script crea una regla de Windows Firewall limitada a la interfaz Tailscale, TCP 9000 y el rango privado Tailscale `100.64.0.0/10`. El acceso queda además sujeto a la autenticación y permisos propios de SAINEI POS y a los dispositivos autorizados en Tailscale. Protege la cuenta Tailscale con autenticación multifactor y no compartas invitaciones ni dispositivos. Si Tailscale no está instalado o su interfaz no está activa, el script falla sin abrir el acceso.
 
 Para retirar el acceso remoto, elimina la regla **SAINEI POS - Acceso remoto Tailscale** desde Firewall de Windows con seguridad avanzada. La regla de LAN privada sigue funcionando por separado.
 
@@ -49,7 +49,7 @@ Hay dos situaciones distintas:
 - **Sin internet, con la red local activa:** las cajas siguen conectadas a la PC principal y pueden operar normalmente.
 - **Sin conexión entre una caja y la PC principal (Wi-Fi/LAN caída o servidor apagado):** esa caja no puede confirmar ventas ni sincronizar cambios. La pantalla de reconexión lo informa; no se guardan ventas falsas ni se crea una segunda base independiente en cada caja.
 
-En una sola PC, el sistema se usa desde `http://localhost:8090`. Para varias cajas, mantén activa la red local aunque no haya internet. La conexión remota por Tailscale sí necesita que ambos extremos tengan internet.
+En una sola PC, el sistema se usa desde `http://localhost:9000`. Para varias cajas, mantén activa la red local aunque no haya internet. La conexión remota por Tailscale sí necesita que ambos extremos tengan internet.
 
 ## Datos, copias y actualizaciones
 
@@ -62,7 +62,7 @@ En una sola PC, el sistema se usa desde `http://localhost:8090`. Para varias caj
 ## Seguridad y límites
 
 - Configura la red de Windows como **Privada**. El firewall permite el acceso LAN únicamente desde la subred local.
-- No abras el puerto 8090 en el router ni publiques la dirección LAN en internet.
+- No abras el puerto 9000 en el router ni publiques la dirección LAN en internet.
 - El acceso remoto solo se habilita después de instalar y autorizar Tailscale y ejecutar el script específico.
 - Cada comercio debe tener su propia instalación y base de datos.
 - La instalación automática de Node.js requiere Windows Package Manager (`winget`) e internet. Si el equipo no tiene winget, instala Node.js LTS 22.13 o superior y vuelve a ejecutar el instalador.

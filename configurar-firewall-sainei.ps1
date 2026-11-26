@@ -1,7 +1,7 @@
 # Ejecutar PowerShell como Administrador en la PC que sera servidor.
 $ErrorActionPreference = 'Stop'
 $ruleName = 'SAINEI POS - Red local privada'
-$port = 8090
+$port = 9000
 try {
   $existing = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
   if ($existing) { Remove-NetFirewallRule -DisplayName $ruleName }
@@ -9,7 +9,7 @@ try {
     -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port `
     -Profile Private -RemoteAddress LocalSubnet `
     -Description 'Permite SAINEI POS solo desde equipos de la red privada local.' | Out-Null
-  Write-Host 'Regla creada: TCP 8090 solo desde la subred local y perfil Privado.' -ForegroundColor Green
+  Write-Host 'Regla creada: TCP 9000 solo desde la subred local y perfil Privado.' -ForegroundColor Green
   $discoveryRule = Get-NetFirewallRule -DisplayName 'SAINEI POS - Descubrimiento LAN' -ErrorAction SilentlyContinue
   if ($discoveryRule) { Remove-NetFirewallRule -DisplayName 'SAINEI POS - Descubrimiento LAN' }
   New-NetFirewallRule -DisplayName 'SAINEI POS - Descubrimiento LAN' `

@@ -84,14 +84,14 @@ if (!discovery.includes('SAINEI_POS_DISCOVER_V1') || !discovery.includes('IPAddr
 if (!clientLauncher.includes('cliente.url') || !clientLauncher.includes('descubrir-servidor-sainei.ps1')) {
   throw new Error('La caja cliente debe reconectar al servidor detectado.');
 }
-if (!server.includes("process.env.SAINEI_PORT || '8090'") || !clientLauncher.includes('set "PORT=8090"') || !scheduled.includes("Connect('127.0.0.1',8090)") || !scheduled.includes('http://localhost:8090') || !firewall.includes('$port = 8090') || !firewall.includes('TCP 8090')) {
-  throw new Error('El servidor, lanzador, inicio automatico y firewall deben usar el puerto 8090.');
+if (!server.includes("process.env.SAINEI_PORT || '9000'") || !clientLauncher.includes('set "PORT=9000"') || !scheduled.includes("Connect('127.0.0.1',9000)") || !scheduled.includes('http://localhost:9000') || !firewall.includes('$port = 9000') || !firewall.includes('TCP 9000')) {
+  throw new Error('El servidor, lanzador, inicio automatico y firewall deben usar el puerto 9000.');
 }
-if (!remoteFirewall.includes('$port = 8090') || !remoteFirewall.includes('TCP 8090') || !remoteFirewall.includes(':8090')) {
-  throw new Error('El acceso remoto Tailscale debe usar el puerto 8090.');
+if (!remoteFirewall.includes('$port = 9000') || !remoteFirewall.includes('TCP 9000') || !remoteFirewall.includes(':9000')) {
+  throw new Error('El acceso remoto Tailscale debe usar el puerto 9000.');
 }
 if (/8080/.test(readme) || /8080/.test(windowsGuide)) {
-  throw new Error('La documentación de instalación debe usar exclusivamente el puerto 8090.');
+  throw new Error('La documentación de instalación debe usar exclusivamente el puerto 9000.');
 }
 if (!firewall.includes('UDP -LocalPort 45808') || !firewall.includes('TCP -LocalPort')) {
   throw new Error('El firewall debe permitir el servicio y el descubrimiento solo en LAN privada.');

@@ -1,7 +1,7 @@
 @echo off
 setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
-set "PORT=8090"
+set "PORT=9000"
 set "CLIENT_CONFIG=%LOCALAPPDATA%\SAINEI-POS\cliente.url"
 if exist "%CLIENT_CONFIG%" (
   set /p CLIENT_URL=<"%CLIENT_CONFIG%"
