@@ -19,3 +19,4 @@ jobs:
         run: |
           node --check sainei-mod-promociones.js
           node --check sainei-mod-cupones.js
+          node scripts/test-cupones.js
