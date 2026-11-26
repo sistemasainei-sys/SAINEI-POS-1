@@ -113,7 +113,7 @@ const bankTab = registered.find((x) => x.id === 'bancos-cheques');
 if (!bankTab || !bankTab.canView({ role: 'admin' }) || bankTab.canView({ role: 'cajero' })) throw new Error('Bancos y cheques no tiene permisos correctos.');
 const valuationTab = registered.find((x) => x.id === 'valoracion-stock');
 if (!valuationTab || !valuationTab.canView({ role: 'admin' }) || valuationTab.canView({ role: 'cajero' })) throw new Error('Valoración de stock no tiene permisos correctos.');
-const valuationSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; } };
+const valuationSec = { html: '', set innerHTML(v) { this.html = v; }, get innerHTML() { return this.html; }, querySelector() { return { addEventListener() {} }; } };
 valuationTab.render(valuationSec);
 if (!valuationSec.innerHTML.includes('Valoración de inventario') || !valuationSec.innerHTML.includes('Valor total a costo')) throw new Error('No se genera el informe de valoración.');
 const rotationTab = registered.find((x) => x.id === 'rotacion-stock');
