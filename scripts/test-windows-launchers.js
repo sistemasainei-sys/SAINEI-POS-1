@@ -18,6 +18,7 @@ const uninstaller = read('Desinstalar.bat');
 const uninstallScript = read('desinstalar-sainei-pos.ps1');
 const discovery = read('descubrir-servidor-sainei.ps1');
 const clientLauncher = read('2-Abrir-Caja.bat');
+const serverLauncher = read('Iniciar-Servidor.bat');
 const firewall = read('configurar-firewall-sainei.ps1');
 const remoteFirewall = read('configurar-acceso-remoto-tailscale.ps1');
 const readme = read('README.md');
@@ -89,8 +90,17 @@ if (!discovery.includes('SAINEI_POS_DISCOVER_V1') || !discovery.includes('IPAddr
 if (!clientLauncher.includes('cliente.url') || !clientLauncher.includes('descubrir-servidor-sainei.ps1')) {
   throw new Error('La caja cliente debe reconectar al servidor detectado.');
 }
-if (!server.includes("process.env.SAINEI_PORT || '9000'") || !clientLauncher.includes('set "PORT=9000"') || !scheduled.includes("Connect('127.0.0.1',9000)") || !scheduled.includes('http://localhost:9000') || !firewall.includes('$port = 9000') || !firewall.includes('TCP 9000')) {
-  throw new Error('El servidor, lanzador, inicio automatico y firewall deben usar el puerto 9000.');
+if (!server.includes("process.env.SAINEI_PORT || '9000'") || !server.includes("service: 'SAINEI_POS'") || !clientLauncher.includes('set "PORT=9000"') || !scheduled.includes('http://localhost:9000') || !firewall.includes('$port = 9000') || !firewall.includes('TCP 9000')) {
+  throw new Error('El servidor, lanzador, inicio automatico y firewall deben usar el puerto 9000 y validar la identidad del servicio.');
+}
+if (!clientLauncher.includes("$r.service -eq 'SAINEI_POS'") || !clientLauncher.includes('El puerto 9000 esta ocupado por otro servicio')) {
+  throw new Error('El acceso directo debe identificar SAINEI POS y rechazar servicios ajenos que ocupen el puerto 9000.');
+}
+if (!serverLauncher.includes('set "SERVER_EXIT=%ERRORLEVEL%"') || serverLauncher.includes(':loop') || serverLauncher.includes('goto loop')) {
+  throw new Error('El iniciador manual no debe reiniciar indefinidamente cuando el puerto esta ocupado.');
+}
+if (!scheduled.includes("$response.service -eq 'SAINEI_POS'") || !scheduled.includes('No se abrira una pagina que pueda pertenecer a otro programa')) {
+  throw new Error('El inicio automatico debe comprobar la respuesta real de SAINEI POS antes de abrir el navegador.');
 }
 if (!remoteFirewall.includes('$port = 9000') || !remoteFirewall.includes('TCP 9000') || !remoteFirewall.includes(':9000')) {
   throw new Error('El acceso remoto Tailscale debe usar el puerto 9000.');
