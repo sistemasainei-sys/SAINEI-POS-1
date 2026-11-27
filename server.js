@@ -798,7 +798,7 @@ async function handle(req, res) {
     if (p === '/favicon.ico') { res.writeHead(204); return res.end(); }
     return fail(res, 404, 'No encontrado');
   }
-  if (p === '/api/ping') return send(res, 200, { ok: true, server: true });
+  if (p === '/api/ping') return send(res, 200, { ok: true, service: 'SAINEI_POS', server: true, port: PORT });
   if (p === '/api/modules' && m === 'GET') {
     const modules = fs.readdirSync(ROOT).filter(f => /^sainei-mod-[a-z0-9_-]+\.js$/i.test(f) && fs.statSync(path.join(ROOT, f)).isFile()).sort();
     return send(res, 200, { modules });
