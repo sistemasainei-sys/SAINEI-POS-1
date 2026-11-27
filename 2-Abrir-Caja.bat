@@ -2,13 +2,22 @@
 setlocal EnableExtensions EnableDelayedExpansion
 cd /d "%~dp0"
 set "PORT=9000"
+set "BASE_URL=http://localhost:%PORT%"
 set "CLIENT_CONFIG=%LOCALAPPDATA%\SAINEI-POS\cliente.url"
+if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
+set "CLIENT_CONFIG=%LOCALAPPDATA%\SAINEI-POS\cliente.url"
+
 if exist "%CLIENT_CONFIG%" (
   set /p CLIENT_URL=<"%CLIENT_CONFIG%"
-  if not defined CLIENT_URL (
-    del "%CLIENT_CONFIG%" >nul 2>nul
-  ) else (
-    powershell -NoProfile -ExecutionPolicy Bypass -Command "try{(Invoke-WebRequest -UseBasicParsing '!CLIENT_URL!/api/ping' -TimeoutSec 3).StatusCode}catch{exit 1}" >nul 2>&1
+  if defined CLIENT_URL (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "try{$r=Invoke-RestMethod -Uri '!CLIENT_URL!/api/ping' -TimeoutSec 3;if($r.service -eq 'SAINEI_POS' -and $r.server -eq $true){exit 0}else{exit 2}}catch{exit 1}" >nul 2>&1
+    if errorlevel 2 (
+      echo ERROR: La direccion guardada responde, pero no se identifico un servidor SAINEI POS.
+      echo Direccion: !CLIENT_URL!
+      echo No se abrira una aplicacion desconocida ni se cambiara la configuracion.
+      pause
+      exit /b 2
+    )
     if errorlevel 1 (
       echo Buscando nuevamente el servidor SAINEI POS en la red...
       powershell -NoProfile -ExecutionPolicy Bypass -File "%~dp0descubrir-servidor-sainei.ps1" > "%TEMP%\sainei-servidor-url.txt"
@@ -22,14 +31,35 @@ if exist "%CLIENT_CONFIG%" (
     )
     start "" "!CLIENT_URL!"
     exit /b 0
+  ) else (
+    del "%CLIENT_CONFIG%" >nul 2>nul
   )
 )
-powershell -NoProfile -Command "try{(Invoke-WebRequest -UseBasicParsing http://localhost:%PORT%/api/ping -TimeoutSec 2).StatusCode}catch{exit 1}" >nul 2>&1
-if errorlevel 1 (
-  echo Iniciando el servidor...
-  start "" wscript.exe "%~dp0servidor-oculto.vbs"
-  ping -n 6 127.0.0.1 >nul
+
+powershell -NoProfile -ExecutionPolicy Bypass -Command "try{$r=Invoke-RestMethod -Uri '%BASE_URL%/api/ping' -TimeoutSec 2;if($r.service -eq 'SAINEI_POS' -and $r.server -eq $true){exit 0}else{exit 2}}catch{exit 1}" >nul 2>&1
+if errorlevel 2 (
+  echo ERROR: El puerto 9000 esta ocupado por otro servicio, no por SAINEI POS.
+  echo No se iniciara otro servidor ni se tocara ningun dato.
+  echo Cierra la aplicacion que usa ese puerto o solicita asistencia tecnica.
+  pause
+  exit /b 2
 )
+if errorlevel 1 (
+  echo Iniciando el servidor SAINEI POS...
+  start "" wscript.exe "%~dp0servidor-oculto.vbs"
+  set "READY=0"
+  for /L %%I in (1,1,20) do (
+    powershell -NoProfile -ExecutionPolicy Bypass -Command "try{$r=Invoke-RestMethod -Uri '%BASE_URL%/api/ping' -TimeoutSec 1;if($r.service -eq 'SAINEI_POS' -and $r.server -eq $true){exit 0}else{exit 1}}catch{exit 1}" >nul 2>&1
+    if not errorlevel 1 set "READY=1"
+    if "!READY!"=="1" goto servidor_listo
+    ping -n 2 127.0.0.1 >nul
+  )
+  echo ERROR: SAINEI POS no respondio despues de iniciar.
+  echo Revisa el registro: %LOCALAPPDATA%\SAINEI-POS\datos\servidor.log
+  pause
+  exit /b 3
+)
+:servidor_listo
 set "BROWSER="
 if exist "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" set "BROWSER=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
 if not defined BROWSER if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" set "BROWSER=%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
@@ -41,5 +71,5 @@ if not defined BROWSER (
   pause
   exit /b 1
 )
-start "" "%BROWSER%" --app="http://localhost:%PORT%" --user-data-dir="%LOCALAPPDATA%\SAINEI-POS" --window-size=1280,800
+start "" "%BROWSER%" --app="%BASE_URL%" --user-data-dir="%LOCALAPPDATA%\SAINEI-POS" --window-size=1280,800
 exit /b
