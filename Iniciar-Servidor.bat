@@ -22,13 +22,18 @@ if not exist "%~dp0server.js" (
   pause
   exit /b 2
 )
-:loop
+echo Iniciando SAINEI POS en el puerto 9000...
 node "%~dp0server.js"
-if errorlevel 2 (
-  echo ERROR: El servidor no pudo iniciarse. Revisa servidor.log.
+set "SERVER_EXIT=%ERRORLEVEL%"
+if not "%SERVER_EXIT%"=="0" (
+  echo.
+  echo ERROR: El servidor SAINEI POS se detuvo con codigo %SERVER_EXIT%.
+  echo No se reiniciara en bucle. Revisa:
+  echo %SAINEI_DATA%\servidor.log
+  echo Si el puerto 9000 esta ocupado, identifica el proceso antes de detenerlo.
   pause
-  exit /b 2
+  exit /b %SERVER_EXIT%
 )
-echo El servidor se detuvo. Reiniciando en 5 segundos...
-ping -n 6 127.0.0.1 >nul
-goto loop
+echo El servidor SAINEI POS se cerro correctamente.
+pause
+endlocal
