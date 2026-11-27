@@ -16,9 +16,21 @@ $principal = New-ScheduledTaskPrincipal -UserId ("{0}\{1}" -f $env:USERDOMAIN, $
 Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description 'Inicia el servidor SAINEI POS al iniciar sesion en esta PC.' -Force | Out-Null
 Start-ScheduledTask -TaskName $taskName
 Write-Host 'Inicio automatico de SAINEI POS configurado para este usuario.' -ForegroundColor Green
-Write-Host 'El servidor se iniciara al iniciar sesion en Windows.'
+Write-Host 'Comprobando la respuesta real de SAINEI POS en el puerto 9000...'
 $ready = $false
 for ($i = 0; $i -lt 30; $i++) {
-  try { $client = [System.Net.Sockets.TcpClient]::new(); $client.Connect('127.0.0.1',9000); $client.Dispose(); $ready = $true; break } catch { Start-Sleep -Seconds 1 }
+  try {
+    $response = Invoke-RestMethod -Uri 'http://localhost:9000/api/ping' -TimeoutSec 2
+    if ($response.service -eq 'SAINEI_POS' -and $response.server -eq $true -and [int]$response.port -eq 9000) {
+      $ready = $true
+      break
+    }
+  } catch {}
+  Start-Sleep -Seconds 1
 }
-if ($ready) { Start-Process 'http://localhost:9000' } else { Write-Warning 'El servidor aun no responde en el puerto 9000. Revisa el registro de SAINEI POS.' }
+if ($ready) {
+  Start-Process 'http://localhost:9000'
+} else {
+  Write-Warning 'SAINEI POS no respondio correctamente en el puerto 9000. No se abrira una pagina que pueda pertenecer a otro programa. Revisa servidor.log.'
+  exit 1
+}
