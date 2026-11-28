@@ -6,15 +6,14 @@ New-Item -ItemType Directory -Force -Path $data | Out-Null
 $env:SAINEI_DATA = $data
 Set-Location $root
 $node = (Get-Command node.exe -ErrorAction Stop).Source
-$uri = 'http://127.0.0.1:9000/api/ping'
-
 function Test-SaineiServer {
-  try {
-    $response = Invoke-RestMethod -Uri $uri -TimeoutSec 2
-    return ($response.service -eq 'SAINEI_POS' -and $response.server -eq $true -and [int]$response.port -eq 9000)
-  } catch {
-    return $false
+  for ($port = 9000; $port -le 9010; $port++) {
+    try {
+      $response = Invoke-RestMethod -Uri ('http://127.0.0.1:' + $port + '/api/ping') -TimeoutSec 1
+      if ($response.service -eq 'SAINEI_POS' -and $response.server -eq $true -and [int]$response.port -eq $port) { return $true }
+    } catch {}
   }
+  return $false
 }
 
 # La tarea programada y el acceso directo pueden ejecutarse casi al mismo tiempo.
