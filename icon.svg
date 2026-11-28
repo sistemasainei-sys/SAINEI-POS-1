@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+<defs>
+ <linearGradient id="rim" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#0878e8"/><stop offset=".55" stop-color="#0878e8"/><stop offset="1" stop-color="#f28c28"/></linearGradient>
+ <linearGradient id="bolt" x1="0" y1="0" x2="1" y2="1"><stop stop-color="#ffd44d"/><stop offset="1" stop-color="#f28c28"/></linearGradient>
+</defs>
+<rect width="512" height="512" rx="112" fill="#07111e"/>
+<rect x="14" y="14" width="484" height="484" rx="100" fill="none" stroke="url(#rim)" stroke-width="12"/>
+<path d="M116 188c0-63 50-108 115-108h88c-28 17-45 35-57 58h-30c-35 0-59 19-59 49 0 29 21 46 57 46h20l-37 49h-15c-50 0-82-39-82-94z" fill="#0878e8"/>
+<path d="M297 68h60l-45 93h57L229 339l34-129h-55z" fill="url(#bolt)" stroke="#ffb02e" stroke-width="4" stroke-linejoin="round"/>
+<g fill="none" stroke="#d8e8f8" stroke-width="8" stroke-linecap="round" stroke-linejoin="round">
+ <path d="M183 103h80l18 18"/><path d="M172 124h51"/><path d="M163 145h43"/>
+</g>
+<g transform="translate(320 105)" fill="#f3f7fb" stroke="#172536" stroke-width="7">
+ <rect x="0" y="0" width="91" height="51" rx="15"/><circle cx="65" cy="25" r="17" fill="#14283d"/><circle cx="65" cy="25" r="8" fill="#42a5ff" stroke="none"/><path d="M22 50l-8 19h30l-3-19" fill="#c6d5e4"/>
+</g>
+<text x="256" y="405" text-anchor="middle" font-family="Arial,sans-serif" font-size="89" font-weight="900" letter-spacing="-5" fill="#f4f7fb">SA<tspan fill="#0878e8">IN</tspan><tspan fill="#f28c28">EI</tspan></text>
+<path d="M94 430h324" stroke="url(#rim)" stroke-width="7" stroke-linecap="round"/>
+</svg>
