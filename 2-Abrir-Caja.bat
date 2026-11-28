@@ -12,7 +12,7 @@ if not exist "%CLIENT_CONFIG%" (
     if defined CLIENT_URL (
       if not exist "%LOCALAPPDATA%\SAINEI-POS" mkdir "%LOCALAPPDATA%\SAINEI-POS"
       >"%CLIENT_CONFIG%" echo !CLIENT_URL!
-      start "" "!CLIENT_URL!"
+      call :launch_app "!CLIENT_URL!"
       del "%PORT_FILE%" >nul 2>nul
       exit /b 0
     )
@@ -21,7 +21,7 @@ if not exist "%CLIENT_CONFIG%" (
 if exist "%CLIENT_CONFIG%" (
   set /p CLIENT_URL=<"%CLIENT_CONFIG%"
   if defined CLIENT_URL (
-    start "" "!CLIENT_URL!"
+    call :launch_app "!CLIENT_URL!"
     exit /b 0
   )
 )
@@ -58,5 +58,24 @@ if not defined BROWSER (
   start "" "%BASE_URL%"
   exit /b 0
 )
-start "" "%BROWSER%" --app="%BASE_URL%" --user-data-dir="%LOCALAPPDATA%\SAINEI-POS" --window-size=1280,800
+call :launch_app "%BASE_URL%"
+exit /b 0
+
+:launch_app
+set "APP_URL=%~1"
+if not defined APP_URL exit /b 2
+if not defined BROWSER (
+  if exist "%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe" set "BROWSER=%ProgramFiles(x86)%\Microsoft\Edge\Application\msedge.exe"
+  if not defined BROWSER if exist "%ProgramFiles%\Microsoft\Edge\Application\msedge.exe" set "BROWSER=%ProgramFiles%\Microsoft\Edge\Application\msedge.exe"
+  if not defined BROWSER if exist "%ProgramFiles%\Google\Chrome\Application\chrome.exe" set "BROWSER=%ProgramFiles%\Google\Chrome\Application\chrome.exe"
+  if not defined BROWSER if exist "%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe" set "BROWSER=%ProgramFiles(x86)%\Google\Chrome\Application\chrome.exe"
+  if not defined BROWSER if exist "%LocalAppData%\Google\Chrome\Application\chrome.exe" set "BROWSER=%LocalAppData%\Google\Chrome\Application\chrome.exe"
+)
+if not defined BROWSER (
+  echo ERROR: No se encontro Microsoft Edge ni Google Chrome para abrir SAINEI POS como aplicacion.
+  start "" "%APP_URL%"
+  exit /b 0
+)
+if not exist "%LOCALAPPDATA%\SAINEI-POS\PerfilAplicacion" mkdir "%LOCALAPPDATA%\SAINEI-POS\PerfilAplicacion"
+start "" "%BROWSER%" --app="%APP_URL%" --user-data-dir="%LOCALAPPDATA%\SAINEI-POS\PerfilAplicacion" --window-size=1360,900
 exit /b 0
