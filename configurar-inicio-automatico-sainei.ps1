@@ -10,20 +10,19 @@ New-Item -ItemType Directory -Force -Path $data | Out-Null
 $env:SAINEI_DATA = $data
 $logOut = Join-Path $data 'servidor-salida.log'
 $logErr = Join-Path $data 'servidor-error.log'
-$uri = 'http://127.0.0.1:9000/api/ping'
+$uri = $null
+function Get-SaineiServer {
+  for ($port = 9000; $port -le 9010; $port++) {
+    try {
+      $response = Invoke-RestMethod -Uri ('http://127.0.0.1:' + $port + '/api/ping') -TimeoutSec 1
+      if ($response.service -eq 'SAINEI_POS' -and $response.server -eq $true -and [int]$response.port -eq $port) { return $port }
+    } catch {}
+  }
+  return $null
+}
 
 # Comprobar primero si ya existe un servidor SAINEI POS.
-$alreadyRunning = $false
-try {
-  $existing = Invoke-RestMethod -Uri $uri -TimeoutSec 2
-  if ($existing.service -eq 'SAINEI_POS' -and $existing.server -eq $true -and [int]$existing.port -eq 9000) {
-    $alreadyRunning = $true
-  } else {
-    throw 'El puerto 9000 esta ocupado por otro programa. No se modifico ese proceso.'
-  }
-} catch {
-  if ($_.Exception.Message -like '*ocupado por otro programa*') { throw }
-}
+$alreadyRunning = [bool](Get-SaineiServer)
 
 if (-not $alreadyRunning) {
   $node = Get-Command node.exe -ErrorAction Stop
@@ -44,8 +43,7 @@ if (-not $alreadyRunning) {
       throw "El servidor SAINEI POS se cerro al iniciar. Codigo: $($process.ExitCode). $details"
     }
     try {
-      $response = Invoke-RestMethod -Uri $uri -TimeoutSec 2
-      if ($response.service -eq 'SAINEI_POS' -and $response.server -eq $true -and [int]$response.port -eq 9000) { $ready = $true; break }
+      if (Get-SaineiServer) { $ready = $true; break }
     } catch {}
   }
   if (-not $ready) {
@@ -71,6 +69,6 @@ try {
   Write-Warning "El servidor funciona ahora, pero no se pudo configurar el inicio automatico: $($_.Exception.Message)"
 }
 # No se abrira una pagina que pueda pertenecer a otro programa: solo se abre tras validar SAINEI_POS.
-Write-Host 'Comprobacion correcta: SAINEI POS responde en el puerto 9000.' -ForegroundColor Green
+Write-Host 'Comprobacion correcta: SAINEI POS responde en un puerto local disponible.' -ForegroundColor Green
 Start-Process 'http://localhost:9000'
 exit 0
