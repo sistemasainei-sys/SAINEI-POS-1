@@ -90,11 +90,11 @@ if (!discovery.includes('SAINEI_POS_DISCOVER_V1') || !discovery.includes('IPAddr
 if (!clientLauncher.includes('cliente.url') || !clientLauncher.includes('descubrir-servidor-sainei.ps1')) {
   throw new Error('La caja cliente debe reconectar al servidor detectado.');
 }
-if (!server.includes("process.env.SAINEI_PORT || '9000'") || !server.includes("service: 'SAINEI_POS'") || !clientLauncher.includes('set "PORT=9000"') || !scheduled.includes('http://localhost:9000') || !firewall.includes('$port = 9000') || !firewall.includes('TCP 9000')) {
-  throw new Error('El servidor, lanzador, inicio automatico y firewall deben usar el puerto 9000 y validar la identidad del servicio.');
+if (!server.includes("process.env.SAINEI_PORT || '9000'") || !server.includes("service: 'SAINEI_POS'") || !server.includes('PORT < 9010') || !clientLauncher.includes('9000') || !scheduled.includes('for ($port = 9000; $port -le 9010; $port++)') || !firewall.includes("$ports = '9000-9010'")) {
+  throw new Error('El servidor y los iniciadores deben detectar puertos locales alternativos y validar la identidad del servicio.');
 }
-if (!clientLauncher.includes("$r.service -eq 'SAINEI_POS'") || !clientLauncher.includes('El puerto 9000 esta ocupado por otro servicio')) {
-  throw new Error('El acceso directo debe identificar SAINEI POS y rechazar servicios ajenos que ocupen el puerto 9000.');
+if (!clientLauncher.includes("$r.service -eq 'SAINEI_POS'") || !clientLauncher.includes('9000 a 9010')) {
+  throw new Error('El acceso directo debe identificar SAINEI POS y buscar los puertos alternativos.');
 }
 if (!serverLauncher.includes('set "SERVER_EXIT=%ERRORLEVEL%"') || serverLauncher.includes(':loop') || serverLauncher.includes('goto loop')) {
   throw new Error('El iniciador manual no debe reiniciar indefinidamente cuando el puerto esta ocupado.');
