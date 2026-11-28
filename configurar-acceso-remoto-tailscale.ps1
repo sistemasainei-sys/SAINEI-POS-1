@@ -3,7 +3,7 @@
 # No abre puertos en el router ni publica SAINEI POS en internet.
 $ErrorActionPreference = 'Stop'
 $ruleName = 'SAINEI POS - Acceso remoto Tailscale'
-$port = 9000
+$ports = '9000-9010'
 try {
   $adapters = @(Get-NetAdapter -IncludeHidden | Where-Object {
     $_.Status -eq 'Up' -and ($_.Name -match 'Tailscale' -or $_.InterfaceDescription -match 'Tailscale')
@@ -15,11 +15,11 @@ try {
   $existing = Get-NetFirewallRule -DisplayName $ruleName -ErrorAction SilentlyContinue
   if ($existing) { Remove-NetFirewallRule -DisplayName $ruleName }
   New-NetFirewallRule -DisplayName $ruleName `
-    -Direction Inbound -Action Allow -Protocol TCP -LocalPort $port `
+    -Direction Inbound -Action Allow -Protocol TCP -LocalPort $ports `
     -Profile Any -InterfaceAlias $adapter.Name -RemoteAddress '100.64.0.0/10' `
-    -Description 'SAINEI POS: permite TCP 9000 solo por la interfaz Tailscale y direcciones privadas del tailnet.' | Out-Null
+    -Description 'SAINEI POS: permite TCP 9000-9010 solo por la interfaz Tailscale y direcciones privadas del tailnet.' | Out-Null
   Write-Host ('Acceso remoto habilitado por Tailscale en la interfaz: ' + $adapter.Name) -ForegroundColor Green
-  Write-Host 'En el dispositivo remoto abre http://IP-TAILSCALE-DE-LA-PC-PRINCIPAL:9000'
+  Write-Host 'En el dispositivo remoto abre http://IP-TAILSCALE-DE-LA-PC-PRINCIPAL:9000-9010'
   Write-Host 'No abras TCP 9000 en el router. Protege el tailnet y autoriza solo tus propios dispositivos.'
 } catch {
   Write-Error ('No se pudo configurar el acceso remoto: ' + $_.Exception.Message)
