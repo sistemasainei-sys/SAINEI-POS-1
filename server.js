@@ -10,7 +10,8 @@ try { ({ DatabaseSync } = require('node:sqlite')); } catch (e) {
 const argv = process.argv.slice(2);
 const arg = (n, d) => { const a = argv.find(x => x.startsWith('--' + n + '=')); return a ? a.split('=').slice(1).join('=') : d; };
 const DEMO = argv.includes('--demo');
-const PORT = parseInt(arg('port', process.env.PORT || process.env.SAINEI_PORT || '9000'), 10);
+let PORT = parseInt(arg('port', process.env.PORT || process.env.SAINEI_PORT || '9000'), 10);
+const FIXED_PORT = Boolean(process.env.PORT || process.argv.some(x => x.startsWith('--port=')));
 const ROOT = __dirname;
 const DATA = path.resolve(arg('data', process.env.SAINEI_DATA || path.join(ROOT, DEMO ? 'datos-prueba' : 'datos')));
 const APP = path.resolve(arg('app', fs.existsSync(path.join(ROOT, 'index.html')) ? path.join(ROOT, 'index.html') : path.join(ROOT, 'app', 'index.html')));
@@ -956,7 +957,16 @@ async function handle(req, res) {
 const server = http.createServer((req, res) => {
   handle(req, res).catch(e => { log('ERROR ' + req.method + ' ' + req.url + ': ' + (e && e.stack || e)); if (!res.headersSent) fail(res, e && e.code === 413 ? 413 : (e && e.code === 400 ? 400 : 500), e && e.code ? e.message : 'Error interno del servidor'); else res.end(); });
 });
-server.on('error', e => { log(e.code === 'EADDRINUSE' ? 'El puerto ' + PORT + ' ya esta en uso. Cerra otra copia del servidor o cambia el puerto.' : 'ERROR del servidor: ' + e.message); process.exit(1); });
+server.on('error', e => {
+  if (e.code === 'EADDRINUSE' && !FIXED_PORT && PORT < 9010) {
+    log('El puerto ' + PORT + ' ya esta en uso; intentando automaticamente el puerto ' + (PORT + 1) + '.');
+    PORT += 1;
+    setTimeout(() => server.listen(PORT, '0.0.0.0'), 250);
+    return;
+  }
+  log(e.code === 'EADDRINUSE' ? 'El puerto ' + PORT + ' ya esta en uso y no quedan puertos alternativos.' : 'ERROR del servidor: ' + e.message);
+  process.exit(1);
+});
 server.listen(PORT, '0.0.0.0', () => {
   const ips = []; for (const l of Object.values(os.networkInterfaces())) for (const a of (l || [])) if (a.family === 'IPv4' && !a.internal) ips.push(a.address);
   const lines = ['SAINEI POS - servidor ' + (DEMO ? 'DE PRUEBA ' : '') + 'en marcha', 'Datos: ' + DATA, 'En esta PC:      http://localhost:' + PORT, ...ips.map(i => 'Desde otras PC:   http://' + i + ':' + PORT)];
