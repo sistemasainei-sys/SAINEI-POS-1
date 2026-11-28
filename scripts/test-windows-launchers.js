@@ -102,8 +102,8 @@ if (!serverLauncher.includes('set "SERVER_EXIT=%ERRORLEVEL%"') || serverLauncher
 if (!scheduled.includes("$response.service -eq 'SAINEI_POS'") || !scheduled.includes('No se abrira una pagina que pueda pertenecer a otro programa')) {
   throw new Error('El inicio automatico debe comprobar la respuesta real de SAINEI POS antes de abrir el navegador.');
 }
-if (!remoteFirewall.includes('$port = 9000') || !remoteFirewall.includes('TCP 9000') || !remoteFirewall.includes(':9000')) {
-  throw new Error('El acceso remoto Tailscale debe usar el puerto 9000.');
+if (!remoteFirewall.includes("$ports = '9000-9010'") || !remoteFirewall.includes('TCP 9000-9010') || !remoteFirewall.includes(':9000')) {
+  throw new Error('El acceso remoto Tailscale debe permitir el rango local alternativo de SAINEI POS.');
 }
 if (/8080/.test(readme) || /8080/.test(windowsGuide)) {
   throw new Error('La documentación de instalación debe usar exclusivamente el puerto 9000.');
