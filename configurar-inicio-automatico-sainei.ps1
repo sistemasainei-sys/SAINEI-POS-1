@@ -1,36 +1,76 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 $runner = Join-Path $root 'ejecutar-servidor-sainei.ps1'
+$server = Join-Path $root 'server.js'
 if (-not (Test-Path $runner)) { throw "No se encuentra el iniciador: $runner" }
-$node = Get-Command node.exe -ErrorAction Stop
-$version = (& $node.Source -p "process.versions.node").Trim()
-$parts = $version.Split('.')
-if ([int]$parts[0] -lt 22 -or ([int]$parts[0] -eq 22 -and [int]$parts[1] -lt 13)) { throw "Se requiere Node.js 22.13 o superior. Version detectada: $version" }
-$taskName = 'SAINEI POS - Servidor automatico'
-$powerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
-$arguments = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $runner + '"'
-$action = New-ScheduledTaskAction -Execute $powerShell -Argument $arguments -WorkingDirectory $root
-$trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
-$settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
-$principal = New-ScheduledTaskPrincipal -UserId ("{0}\{1}" -f $env:USERDOMAIN, $env:USERNAME) -LogonType Interactive -RunLevel Limited
-Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description 'Inicia el servidor SAINEI POS al iniciar sesion en esta PC.' -Force | Out-Null
-Start-ScheduledTask -TaskName $taskName
-Write-Host 'Inicio automatico de SAINEI POS configurado para este usuario.' -ForegroundColor Green
-Write-Host 'Comprobando la respuesta real de SAINEI POS en el puerto 9000...'
-$ready = $false
-for ($i = 0; $i -lt 30; $i++) {
-  try {
-    $response = Invoke-RestMethod -Uri 'http://localhost:9000/api/ping' -TimeoutSec 2
-    if ($response.service -eq 'SAINEI_POS' -and $response.server -eq $true -and [int]$response.port -eq 9000) {
-      $ready = $true
-      break
+if (-not (Test-Path $server)) { throw "No se encuentra server.js: $server" }
+if (-not $env:LOCALAPPDATA) { throw 'No se encontro LOCALAPPDATA.' }
+$data = Join-Path $env:LOCALAPPDATA 'SAINEI-POS\datos'
+New-Item -ItemType Directory -Force -Path $data | Out-Null
+$env:SAINEI_DATA = $data
+$logOut = Join-Path $data 'servidor-salida.log'
+$logErr = Join-Path $data 'servidor-error.log'
+$uri = 'http://127.0.0.1:9000/api/ping'
+
+# Comprobar primero si ya existe un servidor SAINEI POS.
+$alreadyRunning = $false
+try {
+  $existing = Invoke-RestMethod -Uri $uri -TimeoutSec 2
+  if ($existing.service -eq 'SAINEI_POS' -and $existing.server -eq $true -and [int]$existing.port -eq 9000) {
+    $alreadyRunning = $true
+  } else {
+    throw 'El puerto 9000 esta ocupado por otro programa. No se modifico ese proceso.'
+  }
+} catch {
+  if ($_.Exception.Message -like '*ocupado por otro programa*') { throw }
+}
+
+if (-not $alreadyRunning) {
+  $node = Get-Command node.exe -ErrorAction Stop
+  $version = (& $node.Source -p "process.versions.node").Trim()
+  $parts = $version.Split('.')
+  if ([int]$parts[0] -lt 22 -or ([int]$parts[0] -eq 22 -and [int]$parts[1] -lt 13)) {
+    throw "Se requiere Node.js 22.13 o superior. Version detectada: $version"
+  }
+  # Arranque directo para que la instalacion inicial no dependa del Programador de tareas.
+  $process = Start-Process -FilePath $node.Source -ArgumentList @('server.js') -WorkingDirectory $root -WindowStyle Hidden -PassThru -RedirectStandardOutput $logOut -RedirectStandardError $logErr
+  $ready = $false
+  for ($i = 0; $i -lt 40; $i++) {
+    Start-Sleep -Milliseconds 750
+    if ($process.HasExited) {
+      $details = ''
+      if (Test-Path $logErr) { $details = Get-Content $logErr -Raw -ErrorAction SilentlyContinue }
+      if (Test-Path (Join-Path $data 'servidor.log')) { $details += (Get-Content (Join-Path $data 'servidor.log') -Tail 30 -ErrorAction SilentlyContinue | Out-String) }
+      throw "El servidor SAINEI POS se cerro al iniciar. Codigo: $($process.ExitCode). $details"
     }
-  } catch {}
-  Start-Sleep -Seconds 1
+    try {
+      $response = Invoke-RestMethod -Uri $uri -TimeoutSec 2
+      if ($response.service -eq 'SAINEI_POS' -and $response.server -eq $true -and [int]$response.port -eq 9000) { $ready = $true; break }
+    } catch {}
+  }
+  if (-not $ready) {
+    $details = ''
+    if (Test-Path $logErr) { $details = Get-Content $logErr -Raw -ErrorAction SilentlyContinue }
+    if (Test-Path (Join-Path $data 'servidor.log')) { $details += (Get-Content (Join-Path $data 'servidor.log') -Tail 30 -ErrorAction SilentlyContinue | Out-String) }
+    throw "SAINEI POS no respondio en http://localhost:9000/api/ping. Registro: $data. $details"
+  }
 }
-if ($ready) {
-  Start-Process 'http://localhost:9000'
-} else {
-  Write-Warning 'SAINEI POS no respondio correctamente en el puerto 9000. No se abrira una pagina que pueda pertenecer a otro programa. Revisa servidor.log.'
-  exit 1
+
+# El inicio automatico se registra despues de comprobar el servidor.
+try {
+  $taskName = 'SAINEI POS - Servidor automatico'
+  $powerShell = Join-Path $env:SystemRoot 'System32\WindowsPowerShell\v1.0\powershell.exe'
+  $arguments = '-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File "' + $runner + '"'
+  $action = New-ScheduledTaskAction -Execute $powerShell -Argument $arguments -WorkingDirectory $root
+  $trigger = New-ScheduledTaskTrigger -AtLogOn -User $env:USERNAME
+  $settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -RestartCount 3 -RestartInterval (New-TimeSpan -Minutes 1) -ExecutionTimeLimit ([TimeSpan]::Zero)
+  $principal = New-ScheduledTaskPrincipal -UserId ("{0}\{1}" -f $env:USERDOMAIN, $env:USERNAME) -LogonType Interactive -RunLevel Limited
+  Register-ScheduledTask -TaskName $taskName -Action $action -Trigger $trigger -Settings $settings -Principal $principal -Description 'Inicia el servidor SAINEI POS al iniciar sesion en esta PC.' -Force | Out-Null
+  Write-Host 'Inicio automatico configurado.' -ForegroundColor Green
+} catch {
+  Write-Warning "El servidor funciona ahora, pero no se pudo configurar el inicio automatico: $($_.Exception.Message)"
 }
+# No se abrira una pagina que pueda pertenecer a otro programa: solo se abre tras validar SAINEI_POS.
+Write-Host 'Comprobacion correcta: SAINEI POS responde en el puerto 9000.' -ForegroundColor Green
+Start-Process 'http://localhost:9000'
+exit 0
