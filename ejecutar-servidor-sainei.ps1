@@ -1,7 +1,7 @@
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $MyInvocation.MyCommand.Path
 if (-not $env:LOCALAPPDATA) { throw 'No se encontro LOCALAPPDATA para guardar los datos del usuario.' }
-$data = Join-Path $env:LOCALAPPDATA 'SAINEI-POS\\datos'
+$data = Join-Path $env:LOCALAPPDATA 'SAINEI-POS\datos'
 New-Item -ItemType Directory -Force -Path $data | Out-Null
 $env:SAINEI_DATA = $data
 Set-Location $root
