@@ -3273,5 +3273,19 @@ function loadSaineiModules(){
  }).catch(function(e){console.warn('No se pudieron consultar los módulos adicionales',e);});
 }
 if(CUSTOMER)startCustomer();else if(/^https?:$/.test(location.protocol)){loadSaineiModules().then(boot);}else boot();
+// Instalación como aplicación de escritorio (PWA) en Edge/Chrome.
+(function(){
+ var deferred=null,btn=document.createElement('button');
+ btn.type='button';btn.textContent='Instalar SAINEI POS';
+ btn.setAttribute('aria-label','Instalar SAINEI POS en esta computadora');
+ btn.style.cssText='position:fixed;right:18px;bottom:18px;z-index:9999;padding:12px 18px;border:0;border-radius:12px;background:#0755a4;color:#fff;font-weight:700;box-shadow:0 4px 18px #0003;cursor:pointer;display:none';
+ document.addEventListener('DOMContentLoaded',function(){document.body.appendChild(btn);});
+ window.addEventListener('beforeinstallprompt',function(e){e.preventDefault();deferred=e;btn.style.display='block';});
+ btn.addEventListener('click',function(){
+   if(!deferred){alert('Para instalar SAINEI POS, abre el menú de Chrome o Edge y elige “Instalar SAINEI POS” o “Aplicaciones > Instalar este sitio como aplicación”.');return;}
+   deferred.prompt();deferred.userChoice.then(function(){deferred=null;btn.style.display='none';});
+ });
+ window.addEventListener('appinstalled',function(){btn.style.display='none';deferred=null;});
+})();
 })();
 </script>
