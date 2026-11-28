@@ -28,6 +28,9 @@ on:
       - '*.bat'
       - '*.ps1'
       - '*.vbs'
+      - 'index.html'
+      - '*.js'
+      - '*.css'
       - 'package.json'
       - 'docs/INICIO-SIN-COSTO-WINDOWS.md'
       - '.github/workflows/windows-installer-package.yml'
@@ -54,23 +57,22 @@ jobs:
       - name: Ejecutar pruebas del proyecto
         run: npm test
 
-      - name: Crear paquete instalable
+      - name: Preparar carpeta instalable
         shell: pwsh
         run: |
-          $out = Join-Path $env:RUNNER_TEMP 'SAINEI-POS-Windows.zip'
-          git archive --format=zip --output=$out HEAD
-          if (!(Test-Path $out)) { throw 'No se generó el paquete ZIP.' }
-          $hash = (Get-FileHash $out -Algorithm SHA256).Hash
-          "SHA256  $hash" | Set-Content (Join-Path $env:RUNNER_TEMP 'SHA256.txt')
-          "Paquete: $out"
-          "SHA256: $hash"
+          $out = Join-Path $env:RUNNER_TEMP 'SAINEI-POS-Windows'
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          git archive HEAD | tar -x -C $out
+          if (!(Test-Path (Join-Path $out '1-INSTALAR.bat'))) { throw 'Falta 1-INSTALAR.bat en el paquete.' }
+          if (!(Test-Path (Join-Path $out 'server.js'))) { throw 'Falta server.js en el paquete.' }
+          if (!(Test-Path (Join-Path $out 'index.html'))) { throw 'Falta index.html en el paquete.' }
+          "Paquete SAINEI POS preparado: $out"
 
       - name: Publicar paquete Windows
         uses: actions/upload-artifact@v4
         with:
           name: SAINEI-POS-Windows
-          path: |
-            ${{ runner.temp }}/SAINEI-POS-Windows.zip
-            ${{ runner.temp }}/SHA256.txt
+          path: ${{ runner.temp }}/SAINEI-POS-Windows/
           if-no-files-found: error
+          include-hidden-files: true
           retention-days: 30
