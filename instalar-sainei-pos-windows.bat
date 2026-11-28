@@ -95,7 +95,7 @@ echo Configurando firewall para permitir cajas en la red privada local...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0configurar-firewall-elevado.ps1"
 if errorlevel 1 echo AVISO: No se pudo configurar el firewall. La deteccion automatica de cajas puede requerir configurar el firewall manualmente.
 
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$p='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$p;$s.WorkingDirectory='%~dp0';$s.Save()"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$iconPath=Join-Path $env:LOCALAPPDATA 'SAINEI-POS\sainei.ico';$b64Path='%~dp0sainei-icon.ico.b64';if(Test-Path $b64Path){[IO.File]::WriteAllBytes($iconPath,[Convert]::FromBase64String((Get-Content $b64Path -Raw)))};$p='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$p;$s.WorkingDirectory='%~dp0';if(Test-Path $iconPath){$s.IconLocation=$iconPath+',0'};$s.Save()"
 if errorlevel 1 (
   echo No se pudo crear el acceso directo del Escritorio.
   pause
@@ -109,7 +109,7 @@ exit /b 0
 
 :mantener_cliente
 if not defined SAINEI_SERVER_URL set /p SAINEI_SERVER_URL=<"%LOCALAPPDATA%\SAINEI-POS\cliente.url"
-powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$target='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$target;$s.WorkingDirectory='%~dp0';$s.Save()"
+powershell.exe -NoProfile -ExecutionPolicy Bypass -Command "$iconPath=Join-Path $env:LOCALAPPDATA 'SAINEI-POS\sainei.ico';$b64Path='%~dp0sainei-icon.ico.b64';if(Test-Path $b64Path){[IO.File]::WriteAllBytes($iconPath,[Convert]::FromBase64String((Get-Content $b64Path -Raw)))};$target='%~dp02-Abrir-Caja.bat';$s=(New-Object -ComObject WScript.Shell).CreateShortcut([Environment]::GetFolderPath('Desktop')+'\SAINEI POS.lnk');$s.TargetPath=$target;$s.WorkingDirectory='%~dp0';if(Test-Path $iconPath){$s.IconLocation=$iconPath+',0'};$s.Save()"
 echo.
 echo SERVIDOR SAINEI POS DETECTADO: !SAINEI_SERVER_URL!
 echo Esta computadora quedo configurada como CAJA CLIENTE.
