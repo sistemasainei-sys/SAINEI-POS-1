@@ -5,6 +5,19 @@ if not defined LOCALAPPDATA set "LOCALAPPDATA=%USERPROFILE%\AppData\Local"
 set "CLIENT_CONFIG=%LOCALAPPDATA%\SAINEI-POS\cliente.url"
 set "PORT_FILE=%TEMP%\sainei-port-%RANDOM%.txt"
 set "PORT="
+if not exist "%CLIENT_CONFIG%" (
+  powershell.exe -NoProfile -ExecutionPolicy Bypass -File "%~dp0descubrir-servidor-sainei.ps1" > "%PORT_FILE%" 2>nul
+  if not errorlevel 1 (
+    set /p CLIENT_URL=<"%PORT_FILE%"
+    if defined CLIENT_URL (
+      if not exist "%LOCALAPPDATA%\SAINEI-POS" mkdir "%LOCALAPPDATA%\SAINEI-POS"
+      >"%CLIENT_CONFIG%" echo !CLIENT_URL!
+      start "" "!CLIENT_URL!"
+      del "%PORT_FILE%" >nul 2>nul
+      exit /b 0
+    )
+  )
+)
 if exist "%CLIENT_CONFIG%" (
   set /p CLIENT_URL=<"%CLIENT_CONFIG%"
   if defined CLIENT_URL (
